@@ -278,7 +278,7 @@ class PaginatorSource(menus.ListPageSource):
 
     def __init__(self, entries, *, per_page=8):
         super().__init__(entries, per_page=per_page)
-        self.colour = 
+        self.colour = 16099001
 
     async def format_page(self, menu: menus.Menu, page):
         embed = discord.Embed(title='Coming Up...', colour=self.colour)
@@ -416,7 +416,7 @@ class Music(commands.Cog):
 
         return player.dj == ctx.author or ctx.author.guild_permissions.kick_members
 
-    @commands.command()
+    @commands.command(name="connect",aliases=["join"])
     async def connect(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
         """Connect to a voice channel."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -430,7 +430,7 @@ class Music(commands.Cog):
 
         await player.connect(channel.id)
 
-    @commands.command()
+    @commands.command(name="play",aliases=["p"])
     async def play(self, ctx: commands.Context, *, query: str):
         """Play or queue a song with the given query."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
