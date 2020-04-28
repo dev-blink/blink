@@ -121,7 +121,7 @@ class Player(wavelink.Player):
 
         embed = discord.Embed(title=f'Music Controller | {channel.name}', colour=self.bot.colour)
         embed.description = f'Now Playing:\n**`{track.title}`**\n\n'
-        #embed.set_thumbnail(url=track.thumb)
+        embed.set_thumbnail(url=track.thumb)
 
         embed.add_field(name='Duration', value=str(datetime.timedelta(milliseconds=int(track.length))))
         embed.add_field(name='Queue Length', value=str(qsize))
