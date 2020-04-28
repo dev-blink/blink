@@ -433,6 +433,7 @@ class Music(commands.Cog):
     @commands.command(name="play",aliases=["p"])
     async def play(self, ctx: commands.Context, *, query: str):
         """Play or queue a song with the given query."""
+        await ctx.send("IMPORTANT: THIS IS A BETA FEATURE IT PROBABLY DOESNT WORK...")
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
