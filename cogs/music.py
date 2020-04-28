@@ -119,7 +119,7 @@ class Player(wavelink.Player):
         channel = self.bot.get_channel(int(self.channel_id))
         qsize = self.queue.qsize()
 
-        embed = discord.Embed(title=f'Music Controller | {channel.name}', colour=0xebb145)
+        embed = discord.Embed(title=f'Music Controller | {channel.name}', colour=self.bot.colour)
         embed.description = f'Now Playing:\n**`{track.title}`**\n\n'
         #embed.set_thumbnail(url=track.thumb)
 
@@ -278,9 +278,10 @@ class PaginatorSource(menus.ListPageSource):
 
     def __init__(self, entries, *, per_page=8):
         super().__init__(entries, per_page=per_page)
+        self.colour = 
 
     async def format_page(self, menu: menus.Menu, page):
-        embed = discord.Embed(title='Coming Up...', colour=0x4f0321)
+        embed = discord.Embed(title='Coming Up...', colour=self.colour)
         embed.description = '\n'.join(f'`{index}. {title}`' for index, title in enumerate(page, 1))
 
         return embed
@@ -686,7 +687,7 @@ class Music(commands.Cog):
 
         await player.invoke_controller()
 
-    @commands.command(aliases=['swap'])
+    @commands.command(name="givedj",aliases=['swap',"dj"])
     async def swap_dj(self, ctx: commands.Context, *, member: discord.Member = None):
         """Swap the current DJ to another member in the voice channel."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
