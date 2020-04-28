@@ -4,7 +4,7 @@ from discord.ext import commands
 import discord
 import blink
 import datetime
-from music import IncorrectChannelError, NoChannelProvided
+from cogs.music import IncorrectChannelError, NoChannelProvided
 
 class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
