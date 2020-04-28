@@ -1,4 +1,7 @@
 TOKEN
-__pycache__
-.vscode
+
+__pycache__\
+.vscode\
 .gitattributes
+cogs\__pycache__\
+.gitignore
