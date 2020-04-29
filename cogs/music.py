@@ -96,7 +96,7 @@ class Player(wavelink.Player):
         elif not await self.is_position_fresh():
             try:
                 await self.controller.message.delete()
-            except discord.HTTPException:
+            except:
                 pass
 
             self.controller.stop()
@@ -148,7 +148,7 @@ class Player(wavelink.Player):
         """Clear internal states, remove player controller and disconnect."""
         try:
             await self.controller.message.delete()
-        except discord.HTTPException:
+        except:
             pass
 
         self.controller.stop()
@@ -628,31 +628,6 @@ class Music(commands.Cog):
 
         await player.set_volume(vol)
 
-    @commands.command(aliases=['eq'])
-    async def equalizer(self, ctx: commands.Context, *, equalizer: str):
-        """Change the players equalizer."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
-
-        if not player.is_connected:
-            return
-
-        if not self.is_privileged(ctx):
-            return await ctx.send('Only the DJ or admins may change the equalizer.')
-
-        eqs = {'flat': wavelink.Equalizer.flat(),
-               'boost': wavelink.Equalizer.boost(),
-               'metal': wavelink.Equalizer.metal(),
-               'piano': wavelink.Equalizer.piano()}
-
-        eq = eqs.get(equalizer.lower(), None)
-
-        if not eq:
-            joined = "\n".join(eqs.keys())
-            return await ctx.send(f'Invalid EQ provided. Valid EQs:\n\n{joined}')
-
-        await ctx.send(f'Successfully changed equalizer to {equalizer}', delete_after=15)
-        await player.set_eq(eq)
-
     @commands.command(name="queue",aliases=['q', 'que'])
     async def queue(self, ctx: commands.Context):
         """Display the players queued songs."""
@@ -676,7 +651,7 @@ class Music(commands.Cog):
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
-            return
+            return await ctx.send("Nothing is playing.")
 
         await player.invoke_controller()
 
@@ -714,5 +689,5 @@ class Music(commands.Cog):
                 return await ctx.send(f'{member.mention} is now the DJ.')
 
 
-def setup(bot: commands.Bot):
+def setup(bot):
     bot.add_cog(Music(bot))
