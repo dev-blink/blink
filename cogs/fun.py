@@ -12,6 +12,7 @@ class Fun(commands.Cog,name="Fun"):
     
     @commands.command(name="random")
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def random(self,ctx,*,term=None):
         """Prints a random member of a role (if none specified @everyone)"""
 
@@ -30,6 +31,7 @@ class Fun(commands.Cog,name="Fun"):
         return await ctx.send(embed=embed)
 
     @commands.command(name="8ball",aliases=["roll8ball","eightball"])
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def _8ball(self, ctx,*,question:str=None):
         """Shakes an 8ball"""
         responses = ['● It is certain.', '● It is decidedly so.', '● Without a doubt.', '● Yes - definitely.', '● You may rely on it.', '● As I see it, yes.', '● Most likely.', '● Outlook good.', '● Yes.', '● Signs point to yes.', '● Reply hazy, try again.', '● Ask again later.', '● Better not tell you now.', '● Cannot predict now.', '● Concentrate and ask again.', "● Don't count on it.", '● My reply is no.', '● My sources say no.', '● Outlook not so good.', '● Very doubtful.']
@@ -45,6 +47,7 @@ class Fun(commands.Cog,name="Fun"):
     
     @commands.command(name="ship")
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True)
     async def ship(self,ctx,member1:discord.Member=None,member2:discord.Member=None):
         """Creates a ship name between 2 members"""
         if not member1:
@@ -61,6 +64,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.command(name="dong",aliases=["dicksize","penissize","penis","dick"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def dick_size(self,ctx,member:discord.Member=None):
         """Dong size..."""
         if not member:
@@ -70,6 +74,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.command(name="bigtext",aliases=["big"])
     @commands.cooldown(1,5,commands.BucketType.user)
+    @commands.bot_has_permissions(send_messages=True)
     async def bigtext(self,ctx,*,text:str=""):
         """Convert something into big text"""
         if len(text) > 30:
@@ -81,6 +86,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.command(name="thot",aliases=["thotrate","howthot"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def thotrate(self,ctx,member:discord.Member=None):
         """How thotty are you?"""
         if not member:
@@ -89,6 +95,7 @@ class Fun(commands.Cog,name="Fun"):
     
     @commands.command(name="gay",aliases=["gayrate","howgay"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def gayrate(self,ctx,member:discord.Member=None):
         """How gay are you?"""
         if not member:
@@ -98,6 +105,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.command(name="nonce",aliases=["noncerate","hownonce"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def noncerate(self,ctx,member:discord.Member=None):
         """How much of a nonce are you?"""
         if not member:

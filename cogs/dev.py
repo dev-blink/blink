@@ -14,6 +14,7 @@ class Owner(commands.Cog, name="Developer"):
     # Hidden means it won't show up on the default help.
     @commands.command(name='load', hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def load_cog(self, ctx, *, cog: str):
         """Command which Loads a Module."""
 
@@ -26,6 +27,7 @@ class Owner(commands.Cog, name="Developer"):
 
     @commands.command(name='unload', hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def unload_cog(self, ctx, *, cog: str):
         """Command which Unloads a Module."""
 
@@ -38,6 +40,7 @@ class Owner(commands.Cog, name="Developer"):
 
     @commands.command(name='reload',aliases=["rl"], hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def reload_cog(self, ctx, *, cog: str):
         """Command which Reloads a Module."""
         try:
@@ -50,6 +53,7 @@ class Owner(commands.Cog, name="Developer"):
         
     @commands.command(name='cogs',aliases=["loaded","loadedcogs"], hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def query_cog(self, ctx):
         """Displays loaded cogs"""
         embed=discord.Embed(title="Loaded Cogs", description=', '.join(self.bot.cogs),colour=0xf5a6b9)
@@ -66,17 +70,21 @@ class Owner(commands.Cog, name="Developer"):
     
     @commands.command(name="say",aliases=["repeat"],hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def repeat(self,ctx,*term):
         """Repeats a phrase"""
         if term == None:
             await ctx.message.add_reaction("\U000026d4")
         else:
             await ctx.send(" ".join(term))
-            await ctx.message.delete()
-        
+            try:
+                await ctx.message.delete()
+            except:
+                pass
     @commands.command(name="op",aliases=["su"], hidden=True)
     @commands.is_owner()
     @commands.guild_only()
+    @commands.bot_has_permissions(add_reactions=True,manage_roles=True)
     async def forcerole(self, ctx , id: int = None):
         """Forces a role giveout"""
         if not id:
@@ -99,6 +107,7 @@ class Owner(commands.Cog, name="Developer"):
 
     @commands.command(name="reloadall",aliases=["rla","rlall"],hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def reloadallcogs(self,ctx):
         """Reloads all cogs"""
         for cog in self.bot.startingcogs:
@@ -112,12 +121,14 @@ class Owner(commands.Cog, name="Developer"):
 
     @commands.command(name="boot",aliases=["bootup","startup"],hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def bootinfo(self,ctx):
         return await ctx.send(self.bot.bootlog)
 
 
     @commands.command(name="memcheck",hidden=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(send_messages=True)
     async def leak_checker(self,ctx):
         bot = self.bot
         typestats = objgraph.typestats(shortnames=False)

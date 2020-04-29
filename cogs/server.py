@@ -6,14 +6,27 @@ import blink
 class Server(commands.Cog,name="Server"):
     def __init__(self, bot):
         self.bot = bot
+    
+    def memberscheck(self):
+        def predicate(self,ctx):
+            pass
+            if ctx.command.endswith("members"):
+                return True
+            elif ctx.author.guild_permissions.manage_roles:
+                return True
+            else:
+                return False
+        return commands.check(predicate)
+
+
     @commands.command(name="members")
     @commands.guild_only()
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    @commands.check(memberscheck)
     async def members(self, ctx, *, term=None):
         """Shows members for a given role (or all)"""
         if not term:
-            return await Server.users(self,ctx)
-        if not ctx.author.guild_permissions.manage_roles:
-            return await ctx.send(f'you do not have permission to use the command **`{ctx.command}`** in that way.')
+            return await self.users(ctx)
         role = find(lambda r: r.name.lower() == term.lower(), ctx.guild.roles)
         if not role:
             role = find(lambda r: r.name.lower().startswith(term.lower()), ctx.guild.roles)
@@ -34,6 +47,7 @@ class Server(commands.Cog,name="Server"):
 
     @commands.command(name="muted",aliases=["mutes","currentmutes"])
     @commands.guild_only()
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     @commands.has_permissions(manage_roles=True)
     async def muted(self, ctx):
         """Shows currently muted members"""
@@ -52,6 +66,7 @@ class Server(commands.Cog,name="Server"):
 
     @commands.command(name="users",aliases=["membercount"])
     @commands.guild_only()
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def users(self,ctx):
         """Shows the user count for the guild."""
         embed=discord.Embed(title=(ctx.guild.name + ":"),colour=self.bot.colour)
@@ -62,6 +77,7 @@ class Server(commands.Cog,name="Server"):
 
     @commands.command(name="lock")
     @commands.guild_only()
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,manage_channels=True)
     @commands.has_permissions(manage_channels=True)
     async def lockchannel(self,ctx,channel:discord.TextChannel = None):
         """Locks a channel."""
@@ -74,6 +90,7 @@ class Server(commands.Cog,name="Server"):
     @commands.command(name="unlock")
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,manage_channels=True)
     async def unlocklockchannel(self,ctx,channel:discord.TextChannel = None):
         """Unlocks a channel."""
         if not channel:

@@ -18,18 +18,23 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         error : Exception"""
 
 
-        ignored = (commands.CommandNotFound, commands.UserInputError)
+        ignored = (commands.CommandNotFound)
         error = getattr(error, 'original', error)
 
         
         if isinstance(error, ignored):
             return
+        
+        elif isinstance(error,commands.MissingRequiredArgument):
+            return await ctx.send(error)
 
+        elif isinstance(error,commands.BotMissingPermissions):
+            return await ctx.send(f"***ERROR*** :{error}")
         elif isinstance(error, commands.DisabledCommand):
             return await ctx.send(f'**`{ctx.command}`** has been disabled.')
         
         elif isinstance(error, commands.MissingPermissions):
-            return await ctx.send(f'you do not have permission to use the command **`{ctx.command}`**')
+            return await ctx.send(f'You do not have permission to use the command **`{ctx.command}`**')
 
         elif isinstance(error, commands.NotOwner):
             return await ctx.message.add_reaction("\U000026d4")

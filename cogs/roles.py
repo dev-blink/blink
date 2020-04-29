@@ -10,6 +10,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
     @commands.command(name="role",aliases=["changerole","setrole"])
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     async def role(self, ctx,user: discord.Member=None, *,term):
         """Changes roles for a user."""
         if not ctx.guild.me.guild_permissions.manage_roles:
@@ -38,6 +39,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
 
     @commands.command(name='roles',aliases=["showroles"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def showroles(self, ctx, *, member: discord.Member=None):
         """Shows a members roles."""
 
@@ -63,6 +65,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
 
     @commands.command(name="createrole",aliases=["newrole","+role","role+","addrole"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     @commands.has_permissions(manage_roles=True)
     async def addrole(self,ctx,*rolename):
         """Creates a new role"""
@@ -77,6 +80,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
     
     @commands.command(name="rolecolour",aliases=["rolecolor"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     @commands.has_permissions(manage_roles=True)
     async def rolecolour(self,ctx,term=None,colour: discord.Colour=None):
         """Sets a role colour from a hex code."""

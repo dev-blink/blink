@@ -25,6 +25,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
     
 
     @commands.command(name="pid",aliases=["parseid"])
+    @commands.bot_has_permissions(embed_links=True,send_messages=True)
     async def parse_id(self,ctx,obj):
         """Parses a discord ID."""
         if not obj:
@@ -48,6 +49,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         return await ctx.send(embed=embed)
 
     @commands.command(name="lookup")
+    @commands.bot_has_permissions(embed_links=True,send_messages=True)
     async def lookup_user(self,ctx,userid:int=None):
         """Looks up a user by their ID"""
         if not userid:
@@ -65,6 +67,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         return await ctx.send(embed=embed)
     
     @commands.command(name="checktoken",aliases=["tokencheck"])
+    @commands.bot_has_permissions(embed_links=True,send_messages=True)
     @commands.cooldown(1,30,commands.BucketType.user)
     async def token_eval(self,ctx,token:str=None):
         """Check a bot token."""

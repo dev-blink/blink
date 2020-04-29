@@ -11,6 +11,7 @@ class Media(commands.Cog,name="Media"):
     
 
     @commands.command(name="enlarge")
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def enlarge_emoji(self,ctx, emoji:discord.PartialEmoji=None):
         """Enlarges a custom emoji"""
         if not emoji:
@@ -21,6 +22,7 @@ class Media(commands.Cog,name="Media"):
 
 
     @commands.command(name="meme",aliases=["memes"])
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_memes(self,ctx):
         """Gets a meme from r/memes"""
@@ -29,13 +31,13 @@ class Media(commands.Cog,name="Media"):
         r = await r.json()
         r = box.Box(r)
         data = random.choice(r.data.children).data
-        print(f"DATA{data}")
         embed = discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
         embed.set_image(url=data.url)
         await session.close()
         return await ctx.send(embed=embed)
     
     @commands.command(name="dankmeme",aliases=["dankmemes"])
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_dankmemes(self,ctx):
         """Gets a meme from r/dankmemes"""
@@ -44,7 +46,6 @@ class Media(commands.Cog,name="Media"):
         r = await r.json()
         r = box.Box(r)
         data = random.choice(r.data.children).data
-        print(f"DATA{data}")
         embed = discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
         embed.set_image(url=data.url)
         await session.close()

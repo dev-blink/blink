@@ -19,12 +19,14 @@ class Members(commands.Cog,name="Member"):
 
     @commands.command(name="joined",aliases=["joinedat","joindate"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True)
     async def joined(self, ctx, *, member: discord.Member):
         """Says when a member joined."""
         await ctx.send(f'{member.display_name} joined on {member.joined_at}')
 
     @commands.command(name='toprole', aliases=['top_role'])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True)
     async def show_toprole(self, ctx, *, member: discord.Member=None):
         """Shows the members Top Role."""
 
@@ -36,6 +38,7 @@ class Members(commands.Cog,name="Member"):
     @commands.command(name='perms', aliases=['perms_for', 'permissions'])
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def check_permissions(self, ctx, *, member: discord.Member=None):
         """Checks a members guild permissions"""
 
@@ -54,6 +57,7 @@ class Members(commands.Cog,name="Member"):
 
     @commands.command(name="whois",aliases=["userinfo","who"])
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def whois(self, ctx, user: discord.Member=None):    
         """Shows various info about a user"""    
         if not user:
@@ -95,6 +99,7 @@ class Members(commands.Cog,name="Member"):
 
 
     @commands.command(name="avatar",aliases=["av","pfp"])
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def av(self, ctx, user: discord.Member=None):
         """Shows a user's avatar"""  
         if not user:
@@ -107,6 +112,7 @@ class Members(commands.Cog,name="Member"):
 
     @commands.command(name="status")
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def status(self, ctx, *, user:discord.Member=None):
         """Shows a user's status"""
@@ -148,6 +154,7 @@ class Members(commands.Cog,name="Member"):
     @commands.command(name="listening",aliases=["playing","spotify"])
     @commands.guild_only()
     @commands.cooldown(1,10, commands.BucketType.user)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def spotifystatus(self,ctx,user: discord.Member=None):
         """Displays a members spotify status"""
         if not user:

@@ -38,6 +38,7 @@ class Moderation(commands.Cog, name="Moderation"):
             
     @commands.command(name="ban",aliases=["banish"])
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx, user: discord.Member=None, *reason):
         """Bans a user."""
@@ -62,6 +63,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command(name="unban",aliases=["unbanish"])
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def unban(self, ctx, *, username:int):
         """Unbans a user by their id."""
         if not username: # checks if there is a user
@@ -84,6 +86,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command(name="softban",aliases=["softbanish"])
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def softban(self, ctx, user: discord.Member=None, *reason):
         """Bans and unbans a member to delete their messages."""
         reason = " ".join(reason)
@@ -109,6 +112,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command(name="mute",aliases=["silence"])
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     async def mute(self, ctx, user: discord.Member=None, *reason):
         """Mutes a user."""
         reason = " ".join(reason)
@@ -124,6 +128,7 @@ class Moderation(commands.Cog, name="Moderation"):
     
     @commands.command(name="kick")
     @commands.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, user: discord.Member=None, *reason):
         """Kicks a user."""
@@ -150,6 +155,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command(name="purge",aliases=["prune"])
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def purge(self, ctx, limit: int):
         """Bulk deletes messages."""
         
@@ -159,6 +165,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command(name="unmute")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     async def unmute(self, ctx, user: discord.Member=None):
         """Unmutes a muted user."""
         if not user: # checks if there is a user
@@ -173,6 +180,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_channels=True)
     async def block(self, ctx, user: discord.Member=None):
         """Blocks a user from chatting in current channel."""
                                 
@@ -188,6 +196,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_channels=True)
     async def unblock(self, ctx, user: discord.Member=None):
         """Unblocks a user from current channel."""
                                 
@@ -200,6 +209,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def clean(self,ctx, user: discord.Member = None,count:int =None):
         """Cleans a set amount of messages from a user (defaults to bot users and 50 messages)"""
         #CLEAN COMMAND CHECKS
