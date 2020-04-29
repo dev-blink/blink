@@ -116,7 +116,8 @@ class Owner(commands.Cog, name="Developer"):
         return await ctx.send(self.bot.bootlog)
 
 
-    @commands.command(name="memcheck")
+    @commands.command(name="memcheck",hidden=True)
+    @commands.is_owner()
     async def leak_checker(self,ctx):
         bot = self.bot
         typestats = objgraph.typestats(shortnames=False)
