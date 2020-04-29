@@ -23,7 +23,7 @@ def get_prefix(bot, message):
     #Guild prefix - mention or prefixes
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
-loading_extensions = ["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music"]
+loading_extensions = ["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music","cogs.media"]
 loading_extensions.append("jishaku")
 
 INITIALIZED = False

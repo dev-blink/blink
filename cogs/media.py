@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
 import blink
+import aiohttp
+import box
+import random
 
-
-class FetchMedia(commands.Cog,name="Media"):
+class Media(commands.Cog,name="Media"):
     def __init__(self,bot):
         self.bot = bot
         self.colour = self.bot.colour
@@ -19,6 +21,34 @@ class FetchMedia(commands.Cog,name="Media"):
         return await ctx.send(embed=embed)
 
 
+    @commands.command(name="meme",aliases=["memes"])
+    @commands.cooldown(1,3,commands.BucketType.member)
+    async def r_memes(self,ctx):
+        session = aiohttp.ClientSession()
+        r = await session.get("https://reddit.com/r/memes.json")
+        r = await r.json()
+        r = box.Box(r)
+        data = random.choice(r.data.children).data
+        print(f"DATA{data}")
+        embed = discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
+        embed.set_image(url=data.url)
+        await session.close()
+        return await ctx.send(embed=embed)
+    
+    @commands.command(name="dankmeme",aliases=["dankmemes"])
+    @commands.cooldown(1,3,commands.BucketType.member)
+    async def r_dankmemes(self,ctx):
+        session = aiohttp.ClientSession()
+        r = await session.get("https://reddit.com/r/dankmemes.json")
+        r = await r.json()
+        r = box.Box(r)
+        data = random.choice(r.data.children).data
+        print(f"DATA{data}")
+        embed = discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
+        embed.set_image(url=data.url)
+        await session.close()
+        return await ctx.send(embed=embed)
+
 
 def setup(bot):
-    bot.add_cog(FetchMedia(bot))
+    bot.add_cog(Media(bot))
