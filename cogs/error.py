@@ -19,7 +19,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         error : Exception"""
 
 
-        ignored = (commands.CommandNotFound, commands.UserInputError, IncorrectChannelError, NoChannelProvided)
+        ignored = (commands.CommandNotFound, commands.UserInputError)
         error = getattr(error, 'original', error)
 
         
@@ -51,6 +51,12 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
                 await ctx.reinvoke()
                 return
             return await ctx.message.add_reaction("\U000023f2")
+        
+        elif isinstance(error, IncorrectChannelError):
+            return
+
+        elif isinstance(error, NoChannelProvided):
+            return await ctx.send('You must be in a voice channel or provide one to connect to.')
             
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

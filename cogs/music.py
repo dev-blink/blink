@@ -353,14 +353,6 @@ class Music(commands.Cog):
 
         elif after.channel == channel and player.dj not in channel.members:
             player.dj = member
-
-    async def cog_command_error(self, ctx: commands.Context, error: Exception):
-        """Cog wide error handler."""
-        if isinstance(error, IncorrectChannelError):
-            return
-
-        if isinstance(error, NoChannelProvided):
-            return await ctx.send('You must be in a voice channel or provide one to connect to.')
         
 
     async def cog_check(self, ctx: commands.Context):
@@ -434,7 +426,6 @@ class Music(commands.Cog):
     @commands.command(name="play",aliases=["p"])
     async def play(self, ctx: commands.Context, *, query: str):
         """Play or queue a song with the given query."""
-        await ctx.send("IMPORTANT: THIS IS A BETA FEATURE IT PROBABLY DOESNT WORK...")
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
@@ -487,7 +478,7 @@ class Music(commands.Cog):
         else:
             await ctx.send(f'{ctx.author.mention} has voted to pause the player.', delete_after=15)
 
-    @commands.command()
+    @commands.command(name="unpause",aliases=["resume"])
     async def resume(self, ctx: commands.Context):
         """Resume a currently paused player."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -511,7 +502,7 @@ class Music(commands.Cog):
         else:
             await ctx.send(f'{ctx.author.mention} has voted to resume the player.', delete_after=15)
 
-    @commands.command()
+    @commands.command(name="skip")
     async def skip(self, ctx: commands.Context):
         """Skip the currently playing song."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -541,7 +532,7 @@ class Music(commands.Cog):
         else:
             await ctx.send(f'{ctx.author.mention} has voted to skip the song.', delete_after=15)
 
-    @commands.command()
+    @commands.command(name="stop")
     async def stop(self, ctx: commands.Context):
         """Stop the player and clear all internal states."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -562,7 +553,7 @@ class Music(commands.Cog):
         else:
             await ctx.send(f'{ctx.author.mention} has voted to stop the player.', delete_after=15)
 
-    @commands.command(aliases=['v', 'vol'])
+    @commands.command(name="volume",aliases=['vol'])
     async def volume(self, ctx: commands.Context, *, vol: int):
         """Change the players volume, between 1 and 100."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -662,7 +653,7 @@ class Music(commands.Cog):
         await ctx.send(f'Successfully changed equalizer to {equalizer}', delete_after=15)
         await player.set_eq(eq)
 
-    @commands.command(aliases=['q', 'que'])
+    @commands.command(name="queue",aliases=['q', 'que'])
     async def queue(self, ctx: commands.Context):
         """Display the players queued songs."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
@@ -679,7 +670,7 @@ class Music(commands.Cog):
 
         await paginator.start(ctx)
 
-    @commands.command(aliases=['np', 'now_playing', 'current'])
+    @commands.command(name="nowplaying",aliases=['np', 'now_playing', 'current'])
     async def nowplaying(self, ctx: commands.Context):
         """Update the player controller."""
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
