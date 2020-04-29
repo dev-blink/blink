@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import datetime
 import blink
+import psutil
+import platform
 
 class Info(commands.Cog,name="Info"):
     def __init__(self,bot):
@@ -48,6 +50,12 @@ class Info(commands.Cog,name="Info"):
     @commands.command(name="uptime")
     async def uptime(self,ctx):
         return await ctx.send(embed=discord.Embed(title="Bot uptime:",description=f"Bot has been online for: {blink.prettydelta((datetime.datetime.utcnow() - self.bot.boottime).total_seconds())}",colour=self.bot.colour))
+    
+    @commands.command(name="hardware",aliases=["system","sys"])
+    async def sys_stats(self,ctx):
+        embed = discord.Embed(title="System metrics",
+        description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
+        return await ctx.send(embed=embed)
 
 
 def setup(bot):
