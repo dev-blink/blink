@@ -4,7 +4,6 @@ import blink
 import aiohttp
 import box
 import random
-
 class Media(commands.Cog,name="Media"):
     def __init__(self,bot):
         self.bot = bot
@@ -24,6 +23,7 @@ class Media(commands.Cog,name="Media"):
     @commands.command(name="meme",aliases=["memes"])
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_memes(self,ctx):
+        """Gets a meme from r/memes"""
         session = aiohttp.ClientSession()
         r = await session.get("https://reddit.com/r/memes.json")
         r = await r.json()
@@ -38,6 +38,7 @@ class Media(commands.Cog,name="Media"):
     @commands.command(name="dankmeme",aliases=["dankmemes"])
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_dankmemes(self,ctx):
+        """Gets a meme from r/dankmemes"""
         session = aiohttp.ClientSession()
         r = await session.get("https://reddit.com/r/dankmemes.json")
         r = await r.json()
