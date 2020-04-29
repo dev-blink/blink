@@ -29,7 +29,7 @@ loading_extensions.append("jishaku")
 INITIALIZED = False
 print("Initializing AutoShardedBot and global vars.")
 activity = discord.Game(name="Bot is starting, please wait.")
-bot = commands.AutoShardedBot(command_prefix=get_prefix, description="Blink! | General use bot built on discord.py",activity=activity,status=discord.Status.dnd)
+bot = commands.AutoShardedBot(command_prefix=get_prefix, description="Blink! | General use bot built on discord.py",activity=activity,status=discord.Status.dnd,help_command=None)
 bot.load_extension("cogs.PRELOAD")
 bot.startingcogs = loading_extensions
 bot.colour = 0xf5a6b9
