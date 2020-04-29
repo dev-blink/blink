@@ -52,7 +52,7 @@ class Owner(commands.Cog, name="Developer"):
         embed=discord.Embed(title="Loaded Cogs", description=', '.join(self.bot.cogs),colour=0xf5a6b9)
         await ctx.send(embed=embed)
     
-    @commands.command(name='endbot',aliases=["killbot","quit","close"], hidden=True)
+    @commands.command(name='close-bot',aliases=["killbot","closebot"], hidden=True)
     @commands.is_owner()
     async def kill_bot(self,ctx):
         """Logsout"""
