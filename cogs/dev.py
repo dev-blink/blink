@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 from discord.utils import find
 import blink
+import objgraph
+import discord
+from collections import Counter
 
 
 class Owner(commands.Cog, name="Developer"):
@@ -113,6 +116,30 @@ class Owner(commands.Cog, name="Developer"):
         return await ctx.send(self.bot.bootlog)
 
 
+    @commands.command(name="memcheck")
+    async def leak_checker(self,ctx):
+        bot = self.bot
+        typestats = objgraph.typestats(shortnames=False)
+
+        def sanity(left, name, *, _stats=typestats):
+            try:
+                right = _stats[name]
+            except KeyError:
+                return f'{name}: {left}. Not found'
+            else:    
+                cmp = '!=' if left != right else '=='
+                return f'{name}: {left} {cmp} {right}'
+
+        def get_all_overwrites():
+            return sum(len(c._overwrites) for c in bot.get_all_channels())
+
+        def get_all_roles():
+           return sum(len(g.roles) for g in bot.guilds)
+
+        # Cache sanity
+        channels = Counter(type(c) for c in bot.get_all_channels())
+
+        return await ctx.send(f"```{sanity(channels[discord.TextChannel], 'discord.channel.TextChannel')}\n{sanity(channels[discord.VoiceChannel], 'discord.channel.VoiceChannel')}\n{sanity(128, 'discord.channel.DMChannel')}\n{sanity(channels[discord.CategoryChannel], 'discord.channel.CategoryChannel')}\n{sanity(len(bot.guilds), 'discord.guild.Guild')}\n{sanity(5000, 'discord.message.Message')}\n{sanity(len(bot.users), 'discord.user.User')}\n{sanity(sum(1 for _ in bot.get_all_members()), 'discord.member.Member')}\n{sanity(len(bot.emojis), 'discord.emoji.Emoji')}\n{sanity(get_all_overwrites(), 'discord.abc._Overwrites')}\n{sanity(get_all_roles(), 'discord.role.Role')}```")
 
 def setup(bot):
     bot.add_cog(Owner(bot))

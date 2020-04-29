@@ -53,8 +53,7 @@ class Info(commands.Cog,name="Info"):
     
     @commands.command(name="hardware",aliases=["system","sys"])
     async def sys_stats(self,ctx):
-        embed = discord.Embed(title="System metrics",
-        description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
+        embed = discord.Embed(title="System metrics",description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
         return await ctx.send(embed=embed)
 
 
