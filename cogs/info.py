@@ -4,7 +4,7 @@ import datetime
 import blink
 import psutil
 import platform
-
+import time
 class Info(commands.Cog,name="Info"):
     def __init__(self,bot):
         self.bot = bot
@@ -42,7 +42,7 @@ class Info(commands.Cog,name="Info"):
     async def info(self,ctx):
         """Shows info about the bot"""
         owner = self.bot.get_user(171197717559771136)
-        embed = discord.Embed(title=f"blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154) || [Click for support](https://discord.gg/pCVhrMF)",colour=self.colour)
+        embed = discord.Embed(title=f"blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154/vote) || [Click for support](https://discord.gg/pCVhrMF)",colour=self.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
@@ -56,6 +56,11 @@ class Info(commands.Cog,name="Info"):
         embed = discord.Embed(title="System metrics",description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
         return await ctx.send(embed=embed)
 
-
+    @commands.command(name="ping")
+    async def ping(self,ctx):
+        before = time.monotonic()
+        message = await ctx.send("pong")
+        ping = (time.monotonic() - before) * 1000
+        await message.edit(embed=discord.Embed(title=f"\U0001f3d3 {int(ping)}ms\n"),content=None)
 def setup(bot):
     bot.add_cog(Info(bot))
