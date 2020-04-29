@@ -4,7 +4,6 @@ from discord.ext import commands
 import discord
 import blink
 import datetime
-from cogs.music import IncorrectChannelError, NoChannelProvided
 
 class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
@@ -52,11 +51,13 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
                 return
             return await ctx.message.add_reaction("\U000023f2")
         
-        elif isinstance(error, IncorrectChannelError):
+        elif isinstance(error, blink.IncorrectChannelError):
             return
 
-        elif isinstance(error, NoChannelProvided):
+        elif isinstance(error, blink.NoChannelProvided):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')
+        elif isinstance(error,commands.NSFWChannelRequired):
+            return await ctx.send("I am unable to display NSFW images in this channel")
             
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

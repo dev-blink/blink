@@ -1,5 +1,6 @@
 from discord.utils import find
 from random import Random as RAND
+from discord.ext import commands
 
 async def searchrole(roles:list,term:str):
     """Custom role search for discord.py"""
@@ -64,3 +65,13 @@ def prand(spice:float,uid:int,start:int,stop:int,inverse:bool=False):
         rng = RAND(x=(b))
         return rng.randint(start,stop)
     
+
+#MUSIC ERRORS
+class NoChannelProvided(commands.CommandError):
+    """Error raised when no suitable voice channel was supplied."""
+    pass
+
+
+class IncorrectChannelError(commands.CommandError):
+    """Error raised when commands are issued outside of the players session channel."""
+    pass

@@ -9,19 +9,11 @@ import re
 import typing
 import wavelink
 from discord.ext import commands, menus
+import blink
 
 # URL matching REGEX...
 URL_REG = re.compile(r'https?://(?:www\.)?.+')
 
-
-class NoChannelProvided(commands.CommandError):
-    """Error raised when no suitable voice channel was supplied."""
-    pass
-
-
-class IncorrectChannelError(commands.CommandError):
-    """Error raised when commands are issued outside of the players session channel."""
-    pass
 
 
 class Track(wavelink.Track):
@@ -372,7 +364,7 @@ class Music(commands.Cog):
         if player.context:
             if player.context.channel != ctx.channel:
                 await ctx.send(f'{ctx.author.mention}, you must be in {player.context.channel.mention} for this session.')
-                raise IncorrectChannelError
+                raise blink.IncorrectChannelError
 
         if ctx.command.name == 'connect' and not player.context:
             return
@@ -389,7 +381,7 @@ class Music(commands.Cog):
         if player.is_connected:
             if ctx.author not in channel.members:
                 await ctx.send(f'{ctx.author.mention}, you must be in `{channel.name}` to use voice commands.')
-                raise IncorrectChannelError
+                raise blink.IncorrectChannelError
 
     def required(self, ctx: commands.Context):
         """Method which returns required votes based on amount of members in a channel."""
@@ -419,7 +411,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', channel)
         if channel is None:
-            raise NoChannelProvided
+            raise blink.NoChannelProvided
 
         await player.connect(channel.id)
 
