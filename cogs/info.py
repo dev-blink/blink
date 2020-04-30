@@ -69,6 +69,6 @@ class Info(commands.Cog,name="Info"):
         before = time.monotonic()
         message = await ctx.send("pong")
         ping = (time.monotonic() - before) * 1000
-        await message.edit(embed=discord.Embed(title=f"\U0001f3d3 Pong",description=f"Ping: {int(ping)}ms\nLatency: {round((self.bot.latency * 1000),4)}ms"),content=None)
+        await message.edit(embed=discord.Embed(title=f"\U0001f3d3 Pong",description=f"Ping: {int(ping)}ms\nLatency: {round((self.bot.latency * 1000),4)}ms",colour=self.bot.colour),content=None)
 def setup(bot):
     bot.add_cog(Info(bot))
