@@ -71,7 +71,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         elif isinstance(error,commands.NSFWChannelRequired):
             return await ctx.send("I am unable to display NSFW images in this channel")
         
-        await ctx.send(embed=discord.Embed(title="Uh Oh!",description="An error has occured, if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
+        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
         if not "beta" in self.bot.user.name:
