@@ -23,7 +23,7 @@ def get_prefix(bot, message):
     #Guild prefix - mention or prefixes
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
-loading_extensions = ["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music","cogs.media"]
+loading_extensions = ["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music"]
 loading_extensions.append("jishaku")
 
 INITIALIZED = False
@@ -43,7 +43,7 @@ def load_extensions():
         except Exception as e:
             print("unable to load: " + extension + " Exception was raised: " + str(e))
             global loadexceptions
-            loadexceptions = loadexceptions + f"Unable to load: {extension} Exception was raised: {e}"
+            loadexceptions = loadexceptions + f"Unable to load: {extension} Exception was raised: {e}\n"
     print("Finished loading cogs\n")
 
 
