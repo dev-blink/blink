@@ -48,6 +48,7 @@ class Player(wavelink.Player):
         self.skip_votes = set()
         self.shuffle_votes = set()
         self.stop_votes = set()
+        self.volume = 70
 
     async def do_next(self) -> None:
         if self.is_playing or self.waiting:
@@ -111,13 +112,11 @@ class Player(wavelink.Player):
         channel = self.bot.get_channel(int(self.channel_id))
         qsize = self.queue.qsize()
 
-        embed = discord.Embed(title=f'{self.dj.name} | **Music Controller** | {channel.name}', colour=self.bot.colour,url=track.uri)
-        embed.description = f'**Current Track**:\n**`{track.title}`**\n\n'
+        embed = discord.Embed(title=f'{self.dj.name} | **Music Controller** | {channel.name}', colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
         embed.add_field(name='**Duration**', value=str(datetime.timedelta(milliseconds=int(track.length))))
         embed.add_field(name='**Queue Length**', value=str(qsize))
         embed.add_field(name='**Volume**', value=f'**`{self.volume}%`**')
-        embed.add_field(name='\uFEFF', value=f"Requested by : {track.requester.mention}")
-
+        embed.set_footer(text=f"Played by: {track.requester.nick or track.requester.name}",icon_url=track.requester.avatar_url_as(static_format="png"))
         return embed
 
     async def is_position_fresh(self) -> bool:
@@ -488,7 +487,7 @@ class Music(commands.Cog):
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
-            return
+            return await ctx.send("Skip what? (I am not connected)")
 
         if self.is_privileged(ctx):
             await ctx.send('An admin or DJ has skipped the song.', delete_after=10)
@@ -506,11 +505,11 @@ class Music(commands.Cog):
         player.skip_votes.add(ctx.author)
 
         if len(player.skip_votes) >= required:
-            await ctx.send('Vote to skip passed. Skipping song.', delete_after=10)
+            await ctx.send(f'Skipping song. ({len(player.skip_votes)}/{required}) votes')
             player.skip_votes.clear()
             await player.stop()
         else:
-            await ctx.send(f'{ctx.author.mention} has voted to skip the song.', delete_after=15)
+            await ctx.send(f'{ctx.author.mention} has voted to skip the song ({len(player.skip_votes)}/{required})')
 
     @commands.command(name="stop")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -519,7 +518,7 @@ class Music(commands.Cog):
         player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
-            return
+            return await ctx.send("Stop what? (I am not connected)")
 
         if self.is_privileged(ctx):
             await ctx.send('An admin or DJ has stopped the player.', delete_after=10)
@@ -529,10 +528,10 @@ class Music(commands.Cog):
         player.stop_votes.add(ctx.author)
 
         if len(player.stop_votes) >= required:
-            await ctx.send('Vote to stop passed. Stopping the player.', delete_after=10)
+            await ctx.send(f'Player stoping ({len(player.stop_votes)}/{required}) votes.', delete_after=10)
             await player.teardown()
         else:
-            await ctx.send(f'{ctx.author.mention} has voted to stop the player.', delete_after=15)
+            await ctx.send(f'{ctx.author.mention} has voted to stop playing ({len(player.stop_votes)}/{required})', delete_after=15)
 
     @commands.command(name="volume",aliases=['vol'])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -573,43 +572,11 @@ class Music(commands.Cog):
         player.shuffle_votes.add(ctx.author)
 
         if len(player.shuffle_votes) >= required:
-            await ctx.send('Vote to shuffle passed. Shuffling the playlist.', delete_after=10)
+            await ctx.send(f'Shuffling playlist ({len(player.shuffle_votes)}/{required})', delete_after=10)
             player.shuffle_votes.clear()
             random.shuffle(player.queue._queue)
         else:
-            await ctx.send(f'{ctx.author.mention} has voted to shuffle the playlist.', delete_after=15)
-
-    @commands.command(hidden=True)
-    async def vol_up(self, ctx: commands.Context):
-        """Command used for volume up button."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
-
-        if not player.is_connected or not self.is_privileged(ctx):
-            return
-
-        vol = int(math.ceil((player.volume + 10) / 10)) * 10
-
-        if vol > 100:
-            vol = 100
-            await ctx.send('Maximum volume reached', delete_after=7)
-
-        await player.set_volume(vol)
-
-    @commands.command(hidden=True)
-    async def vol_down(self, ctx: commands.Context):
-        """Command used for volume down button."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
-
-        if not player.is_connected or not self.is_privileged(ctx):
-            return
-
-        vol = int(math.ceil((player.volume - 10) / 10)) * 10
-
-        if vol < 0:
-            vol = 0
-            await ctx.send('Player is currently muted', delete_after=10)
-
-        await player.set_volume(vol)
+            await ctx.send(f'{ctx.author.mention} has voted to shuffle the playlist ({len(player.shuffle_votes)}/{required})', delete_after=15)
 
     @commands.command(name="queue",aliases=['q', 'que'])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
