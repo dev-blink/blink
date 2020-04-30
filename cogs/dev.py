@@ -66,7 +66,8 @@ class Owner(commands.Cog, name="Developer"):
         await ctx.send("Quitting safely.")
         await self.bot.logout()
         await self.bot.close()
-        exit(2)
+        await self.bot.loop.close()
+        exit()
     
     @commands.command(name="say",aliases=["repeat"],hidden=True)
     @commands.is_owner()
