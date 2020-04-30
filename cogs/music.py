@@ -111,17 +111,12 @@ class Player(wavelink.Player):
         channel = self.bot.get_channel(int(self.channel_id))
         qsize = self.queue.qsize()
 
-        embed = discord.Embed(title=f'Music Controller | {channel.name}', colour=self.bot.colour)
-        embed.description = f'Now Playing:\n**`{track.title}`**\n\n'
-        if track.thumb:
-            embed.set_thumbnail(url=track.thumb)
-
-        embed.add_field(name='Duration', value=str(datetime.timedelta(milliseconds=int(track.length))))
-        embed.add_field(name='Queue Length', value=str(qsize))
-        embed.add_field(name='Volume', value=f'**`{self.volume}%`**')
-        embed.add_field(name='Requested By', value=track.requester.mention)
-        embed.add_field(name='DJ', value=self.dj.mention)
-        embed.add_field(name='Video URL', value=f'[Click Here!]({track.uri})')
+        embed = discord.Embed(title=f'{self.dj.name} | **Music Controller** | {channel.name}', colour=self.bot.colour,url=track.uri)
+        embed.description = f'**Current Track**:\n**`{track.title}`**\n\n'
+        embed.add_field(name='**Duration**', value=str(datetime.timedelta(milliseconds=int(track.length))))
+        embed.add_field(name='**Queue Length**', value=str(qsize))
+        embed.add_field(name='**Volume**', value=f'**`{self.volume}%`**')
+        embed.add_field(name='\uFEFF', value=f"Requested by : {track.requester.mention}")
 
         return embed
 
@@ -235,26 +230,6 @@ class InteractiveController(menus.Menu):
 
         await self.bot.invoke(ctx)
 
-    @menus.button(emoji='\u2795')
-    async def volup_command(self, payload: discord.RawReactionActionEvent):
-        """Volume up button"""
-        ctx = self.update_context(payload)
-
-        command = self.bot.get_command('vol_up')
-        ctx.command = command
-
-        await self.bot.invoke(ctx)
-
-    @menus.button(emoji='\u2796')
-    async def voldown_command(self, payload: discord.RawReactionActionEvent):
-        """Volume down button."""
-        ctx = self.update_context(payload)
-
-        command = self.bot.get_command('vol_down')
-        ctx.command = command
-
-        await self.bot.invoke(ctx)
-
     @menus.button(emoji='\U0001F1F6')
     async def queue_command(self, payload: discord.RawReactionActionEvent):
         """Player queue button."""
@@ -304,8 +279,16 @@ class Music(commands.Cog):
 
             for node in previous.values():
                 await node.destroy()
-
-        nodes = {'MAIN': {'host': 'localhost',
+        if self.bot.user.name == "blink beta":
+            nodes = {'MAIN': {'host': '192.168.1.154',
+                          'port': 2333,
+                          'rest_uri': 'http://192.168.1.154:2333',
+                          'password': 'password',
+                          'identifier': 'MAIN',
+                          'region': 'us_east'
+                          }}
+        else:
+            nodes = {'MAIN': {'host': 'localhost',
                           'port': 2333,
                           'rest_uri': 'http://localhost:2333',
                           'password': 'password',
