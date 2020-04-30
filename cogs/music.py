@@ -107,7 +107,7 @@ class Player(wavelink.Player):
         """Method which builds our players controller embed."""
         track = self.current
         if not track:
-            return
+            return discord.Embed(title="Nothing playing :(",colour=self.bot.embed)
 
         channel = self.bot.get_channel(int(self.channel_id))
         qsize = self.queue.qsize()
