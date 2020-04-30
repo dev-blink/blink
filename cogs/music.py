@@ -424,7 +424,10 @@ class Music(commands.Cog):
                            f' with {len(tracks.tracks)} songs to the queue.\n```', delete_after=15)
         else:
             track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
-            embed = discord.Embed(title=f"{ctx.author.nick or ctx.author.name} added to the queue",description=f"[{track.title}]({track.uri})\nDuration: {blink.prettydelta(track.duration // 1000)}\nPosition in queue: {player.queue.qsize() + 1}",colour=self.bot.colour)
+            embed = discord.Embed(title=track.title,url=track.uri,colour=self.bot.colour)
+            embed.add_field(name="**Duration**",value=blink.prettydelta(track.duration // 1000))
+            embed.add_field(name="**Queue position**",value=f"{player.queue.qsize() + 1}")
+            embed.add_field(name="**Added by**",value=ctx.author.mention)
             embed.set_image(url=f"https://img.youtube.com/vi/{track.uri[32:]}/maxresdefault.jpg")
             await ctx.send(embed=embed,delete_after=15)
             await player.queue.put(track)
