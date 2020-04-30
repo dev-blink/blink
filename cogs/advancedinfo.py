@@ -84,7 +84,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
             nonlocal embed
             if len(clientinstance.guilds) == 0:
                 embed = discord.Embed(title=f"{clientinstance.user.name}#{clientinstance.user.discriminator} can see no guilds.")
-                clientinstance.logout()
+                await clientinstance.logout()
                 return
             largest_guild = sorted(clientinstance.guilds,key=lambda x: x.member_count,reverse=True)[0]
             embed = discord.Embed(title=f"{clientinstance.user.name}#{clientinstance.user.discriminator} bot info",description=f"```Servers: {len(clientinstance.guilds)}\nMembers: {len(list(clientinstance.get_all_members())) - 1}\nLargest server: {largest_guild.name} ({largest_guild.member_count} members)```",colour=self.bot.colour)
