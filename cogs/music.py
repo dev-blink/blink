@@ -113,7 +113,7 @@ class Player(wavelink.Player):
         qsize = self.queue.qsize()
 
         embed = discord.Embed(title=f'{self.dj.name} | **Music Controller** | {channel.name}', colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
-        embed.add_field(name='**Duration**', value=str(datetime.timedelta(milliseconds=int(track.length))))
+        embed.add_field(name='**Duration**', value=str(blink.prettydelta(track.length // 1000)))
         embed.add_field(name='**Queue Length**', value=str(qsize))
         embed.add_field(name='**Volume**', value=f'**`{self.volume}%`**')
         embed.set_footer(text=f"Played by: {track.requester.nick or track.requester.name}",icon_url=track.requester.avatar_url_as(static_format="png"))
@@ -424,7 +424,10 @@ class Music(commands.Cog):
                            f' with {len(tracks.tracks)} songs to the queue.\n```', delete_after=15)
         else:
             track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
-            await ctx.send(f'```ini\nAdded {track.title} to the Queue\n```', delete_after=15)
+            embed = discord.Embed(title=f"{ctx.author.nick or ctx.author.name} added to the queue",description=f"[{track.title}]({track.uri})\nDuration: {blink.prettydelta(track.duration // 1000)}\nPosition in queue: {player.queue.qsize() + 1}",colour=self.bot.colour)
+            if track.thumb:
+                embed.set_thumbnail(url=track.thumb)
+            await ctx.send(embed=embed,delete_after=15)
             await player.queue.put(track)
 
         if not player.is_playing:
