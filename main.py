@@ -16,6 +16,8 @@ def get_prefix(bot, message):
         #? in dms
         return '?'
     if bot.user.name == "blink beta":
+        if message.guild.id in [336642139381301249,264445053596991498]:
+            return 'beta;'
         return '?'
 
     if message.guild.id in [336642139381301249,264445053596991498]:
