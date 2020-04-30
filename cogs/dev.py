@@ -44,8 +44,13 @@ class Owner(commands.Cog, name="Developer"):
     async def reload_cog(self, ctx, *, cog: str):
         """Command which Reloads a Module."""
         try:
-            self.bot.unload_extension("cogs." + cog)
-            self.bot.load_extension("cogs." + cog)
+            if cog in ["jsk","jishaku"]:
+                cog.replace("jsk","jishaku")
+                self.bot.unload_extension(cog)
+                self.bot.load_extension(cog)
+            else:
+                self.bot.unload_extension("cogs." + cog)
+                self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
