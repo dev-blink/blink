@@ -4,6 +4,7 @@ from discord.ext import commands
 import discord
 import blink
 import datetime
+from discord.ext import menus
 
 class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
@@ -27,6 +28,12 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         
         elif isinstance(error,commands.MissingRequiredArgument):
             return await ctx.send(error)
+        
+        elif isinstance(error,commands.TooManyArguments):
+            return await ctx.send("Too many arguments passed...")
+        
+        elif isinstance(error,menus.CannotAddReactions):
+            return await ctx.send("I am unable to initialize the reaction menu. Please give me permissions to add reactions.")
 
         elif isinstance(error,commands.BotMissingPermissions):
             return await ctx.send(f"***ERROR*** :{error}")
@@ -63,11 +70,12 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')
         elif isinstance(error,commands.NSFWChannelRequired):
             return await ctx.send("I am unable to display NSFW images in this channel")
-            
+        
+        await ctx.send(embed=discord.Embed(title="Uh Oh!",description="An error has occured, if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
         if not "beta" in self.bot.user.name:
-            await self.errorreport.send(f"Error occureed in guild: {ctx.guild}\nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__)))+ f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
+            await self.errorreport.send(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__)))+ f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
 
     
                 
