@@ -19,7 +19,7 @@ class Stats(commands.Cog,name="Stats"):
 
     @commands.Cog.listener("on_guild_join")
     async def guild_join(self,guild):
-        embed = discord.Embed(title=f"Bot added to guild",colour=0x00ff3c,description=f"Total guilds: {len(self.bot.guilds)}")
+        embed = discord.Embed(title=f"Bot added to guild {guild.id}",colour=0x00ff3c,description=f"Total guilds: {len(self.bot.guilds)}")
         embed.add_field(name="Guild name:",value=f"{guild.name}")
         embed.add_field(name="Guild members:",value=f"{guild.member_count}")
         embed.add_field(name="Guild owner:",value=f"{guild.owner.name}#{guild.owner.discriminator}\n{guild.owner.mention}")
@@ -29,7 +29,7 @@ class Stats(commands.Cog,name="Stats"):
 
     @commands.Cog.listener("on_guild_remove")
     async def guild_remove(self,guild):
-        embed = discord.Embed(title=f"Bot removed from guild",colour=0xff0003,description=f"Total guilds: {len(self.bot.guilds)}")
+        embed = discord.Embed(title=f"Bot removed from guild {guild.id}",colour=0xff0003,description=f"Total guilds: {len(self.bot.guilds)}")
         embed.add_field(name="Guild name:",value=f"{guild.name}")
         embed.add_field(name="Guild members:",value=f"{guild.member_count}")
         embed.add_field(name="Guild owner:",value=f"{guild.owner.name}#{guild.owner.discriminator}\n{guild.owner.mention}")
