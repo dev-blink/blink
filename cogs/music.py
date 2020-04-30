@@ -425,8 +425,7 @@ class Music(commands.Cog):
         else:
             track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
             embed = discord.Embed(title=f"{ctx.author.nick or ctx.author.name} added to the queue",description=f"[{track.title}]({track.uri})\nDuration: {blink.prettydelta(track.duration // 1000)}\nPosition in queue: {player.queue.qsize() + 1}",colour=self.bot.colour)
-            if track.thumb:
-                embed.set_thumbnail(url=track.thumb)
+            embed.set_thumbnail(url=f"https://img.youtube.com/vi/{track['info']['uri'][32:]}/maxresdefault.jpg")
             await ctx.send(embed=embed,delete_after=15)
             await player.queue.put(track)
 
