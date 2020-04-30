@@ -112,11 +112,12 @@ class Player(wavelink.Player):
         channel = self.bot.get_channel(int(self.channel_id))
         qsize = self.queue.qsize()
 
-        embed = discord.Embed(title=f'{self.dj.name} | **Music Controller** | {channel.name}', colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
+        embed = discord.Embed(colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
+        embed.set_author(name=f"Music Controller | {channel.name}",icon_url=self.dj.avatar_url_as(static_format="png"))
         embed.add_field(name='**Duration**', value=str(blink.prettydelta(track.length // 1000)))
         embed.add_field(name='**Queue Length**', value=str(qsize))
         embed.add_field(name='**Volume**', value=f'**`{self.volume}%`**')
-        embed.set_footer(text=f"Played by: {track.requester.nick or track.requester.name}",icon_url=track.requester.avatar_url_as(static_format="png"))
+        embed.set_footer(text=f"Played by: {track.requester.nick or track.requester.name}")
         return embed
 
     async def is_position_fresh(self) -> bool:
