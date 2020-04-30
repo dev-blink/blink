@@ -20,7 +20,7 @@ def get_prefix(bot, message):
             return 'beta;'
         return '?'
 
-    if message.guild.id in [336642139381301249,264445053596991498]:
+    if message.guild.id in [336642139381301249,264445053596991498,265828729970753537]:
         prefixes = ["b;","B;"]
     #Guild prefix - mention or prefixes
     return commands.when_mentioned_or(*prefixes)(bot, message)
