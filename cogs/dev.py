@@ -45,7 +45,7 @@ class Owner(commands.Cog, name="Developer"):
         """Command which Reloads a Module."""
         try:
             if cog in ["jsk","jishaku"]:
-                cog.replace("jsk","jishaku")
+                cog="jishaku"
                 self.bot.unload_extension(cog)
                 self.bot.load_extension(cog)
             else:
