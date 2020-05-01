@@ -21,10 +21,8 @@ class Owner(commands.Cog, name="Developer"):
         try:
             if cog in ["jsk","jishaku"]:
                 cog="jishaku"
-                self.bot.unload_extension(cog)
                 self.bot.load_extension(cog)
             else:
-                self.bot.unload_extension("cogs." + cog)
                 self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
@@ -43,10 +41,8 @@ class Owner(commands.Cog, name="Developer"):
             if cog in ["jsk","jishaku"]:
                 cog="jishaku"
                 self.bot.unload_extension(cog)
-                self.bot.load_extension(cog)
             else:
                 self.bot.unload_extension("cogs." + cog)
-                self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
