@@ -10,19 +10,16 @@ STARTUPTIME = datetime.datetime.utcnow()
 
 def get_prefix(bot, message):
     prefixes = [';','b;','B;']
-
-    # Non Guild prefix
+    
     if not message.guild:
-        #? in dms
         return '?'
+
     if bot.user.name == "blink beta":
-        if message.guild.id in [336642139381301249,264445053596991498]:
-            return 'beta;'
-        return '?'
+        return 'beta;'
 
     if message.guild.id in [336642139381301249,264445053596991498,265828729970753537]:
         prefixes = ["b;","B;"]
-    #Guild prefix - mention or prefixes
+    
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 loading_extensions = ["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music"]
