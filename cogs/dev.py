@@ -5,7 +5,7 @@ import blink
 import objgraph
 import discord
 from collections import Counter
-
+import asyncio
 
 class Owner(commands.Cog, name="Developer"):
     def __init__(self, bot):
@@ -19,7 +19,13 @@ class Owner(commands.Cog, name="Developer"):
         """Command which Loads a Module."""
 
         try:
-            self.bot.load_extension("cogs." + cog)
+            if cog in ["jsk","jishaku"]:
+                cog="jishaku"
+                self.bot.unload_extension(cog)
+                self.bot.load_extension(cog)
+            else:
+                self.bot.unload_extension("cogs." + cog)
+                self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -30,9 +36,17 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True)
     async def unload_cog(self, ctx, *, cog: str):
         """Command which Unloads a Module."""
-
+        if cog == "music":
+            if not await self.musiccheck(ctx):
+                return
         try:
-            self.bot.unload_extension("cogs." + cog)
+            if cog in ["jsk","jishaku"]:
+                cog="jishaku"
+                self.bot.unload_extension(cog)
+                self.bot.load_extension(cog)
+            else:
+                self.bot.unload_extension("cogs." + cog)
+                self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -43,6 +57,9 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True)
     async def reload_cog(self, ctx, *, cog: str):
         """Command which Reloads a Module."""
+        if cog == "music":
+            if not await self.musiccheck(ctx):
+                return
         try:
             if cog in ["jsk","jishaku"]:
                 cog="jishaku"
@@ -61,13 +78,15 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def query_cog(self, ctx):
         """Displays loaded cogs"""
-        embed=discord.Embed(title="Loaded Cogs", description=', '.join(self.bot.cogs),colour=0xf5a6b9)
+        embed=discord.Embed(title="Loaded Cogs", description='\n,'.join(self.bot.cogs),colour=0xf5a6b9)
         await ctx.send(embed=embed)
     
     @commands.command(name='close-bot',aliases=["killbot","closebot"], hidden=True)
     @commands.is_owner()
     async def kill_bot(self,ctx):
         """Logsout"""
+        if not await self.musiccheck(ctx):
+            return
         await ctx.send("Quitting safely.")
         await self.bot.logout()
         await self.bot.close()
@@ -116,6 +135,8 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True)
     async def reloadallcogs(self,ctx):
         """Reloads all cogs"""
+        if not await self.musiccheck(ctx):
+            return
         for cog in self.bot.startingcogs:
             try:
                 self.bot.unload_extension(cog)
@@ -135,7 +156,7 @@ class Owner(commands.Cog, name="Developer"):
     @commands.command(name="memcheck",hidden=True)
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True)
-    async def leak_checker(self,ctx):
+    async def leak_checker(self,ctx): 
         bot = self.bot
         typestats = objgraph.typestats(shortnames=False)
 
@@ -158,6 +179,24 @@ class Owner(commands.Cog, name="Developer"):
         channels = Counter(type(c) for c in bot.get_all_channels())
 
         return await ctx.send(f"```{sanity(channels[discord.TextChannel], 'discord.channel.TextChannel')}\n{sanity(channels[discord.VoiceChannel], 'discord.channel.VoiceChannel')}\n{sanity(128, 'discord.channel.DMChannel')}\n{sanity(channels[discord.CategoryChannel], 'discord.channel.CategoryChannel')}\n{sanity(len(bot.guilds), 'discord.guild.Guild')}\n{sanity(5000, 'discord.message.Message')}\n{sanity(len(bot.users), 'discord.user.User')}\n{sanity(sum(1 for _ in bot.get_all_members()), 'discord.member.Member')}\n{sanity(len(bot.emojis), 'discord.emoji.Emoji')}\n{sanity(get_all_overwrites(), 'discord.abc._Overwrites')}\n{sanity(get_all_roles(), 'discord.role.Role')}```")
+
+    async def musiccheck(self,ctx):
+            if not len(self.bot.wavelink.players)  == 0:
+                m = await ctx.send(f"There {'are' if len(self.bot.wavelink.players) > 1 else 'is'} {len(self.bot.wavelink.players)} player{'s' if len(self.bot.wavelink.players) > 1 else ''} playing continue?")
+                await m.add_reaction("\U00002714")
+                def check(reaction, user):
+                    return user == ctx.author and str(reaction.emoji) == '\U00002714'
+
+                try:
+                    await self.bot.wait_for('reaction_add', timeout=3, check=check)
+                except asyncio.TimeoutError:
+                    await m.add_reaction("\U0000231b")
+                    return False
+                else:
+                    return True
+            else:
+                return True
+
 
 def setup(bot):
     bot.add_cog(Owner(bot))
