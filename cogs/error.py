@@ -44,7 +44,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(f'You do not have permission to use the command **`{ctx.command}`**')
 
         elif isinstance(error, commands.NotOwner):
-            return await ctx.message.add_reaction("\U000026d4")
+            try:
+                return await ctx.message.add_reaction("\U000026d4")
+            except:
+                pass
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
@@ -55,14 +58,16 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send("I do not have permission to do that.")
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send('Somthing went wrong, (BadArgument)')
+            return await ctx.send(error)
 
         elif isinstance(error, commands.CommandOnCooldown):
             if ctx.author.id in self.bot.owner_ids:
                 await ctx.reinvoke()
                 return
-            return await ctx.message.add_reaction("\U000023f2")
-        
+            try:
+                return await ctx.message.add_reaction("\U000023f2")
+            except:
+                pass
         elif isinstance(error, blink.IncorrectChannelError):
             return
 
