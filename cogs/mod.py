@@ -229,10 +229,12 @@ class Moderation(commands.Cog, name="Moderation"):
                 count = 50
         if not cleanbot:
             await ctx.channel.purge(limit=count, check=checkuser)
-            return await ctx.send(f"Cleaned {count} messages from user: {user.mention}")
+            await ctx.message.delete()
+            return await ctx.send(f"Cleaned {count} messages from user: {user.mention}",delete_after=4)
         else:
             await ctx.channel.purge(limit=count, check=checkbot)
-            return await ctx.send(f"Cleaned {count} messages from bots")
+            await ctx.message.delete()
+            return await ctx.send(f"Cleaned {count} messages from bots",delete_after=4)
 
 
                                 
