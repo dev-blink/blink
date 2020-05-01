@@ -1,7 +1,7 @@
 from discord.utils import find
 from random import Random as RAND
 from discord.ext import commands
-
+import math
 async def searchrole(roles:list,term:str):
     """Custom role search for discord.py"""
     role = find(lambda r: r.name.lower() == term.lower(), roles)
@@ -11,6 +11,11 @@ async def searchrole(roles:list,term:str):
         role = find(lambda r: term.lower() in r.name.lower(), roles)
     return role
 
+
+def ordinal(n:int):
+    """Turns an int into its ordinal (1 -> 1st)"""
+    x = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])
+    return x(n)
 
 
 class Config():
