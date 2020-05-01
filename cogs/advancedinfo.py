@@ -35,7 +35,10 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
             rm = ["<",">","@","&","#","!"]
             for x in rm:
                 id = id.replace(x,"")
-        id = int(id)
+        try:
+            id = int(id)
+        except:
+            return await ctx.send("Not a valid ID.")
         binaryid = bin(int(id))[2:]
         time = binaryid[:42]
         worker = binaryid[42:47]
