@@ -73,8 +73,8 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         """Check a bot token."""
         if not token:
             return await ctx.send("No token")
-        if not len(token.split(".")) == 3 or len(token) not in range(55,65):
-            return await ctx.send(discord.Embed(title="Invalid token...",colour=discord.Colour.red()))
+        if not __import__("re").compile(r"([a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84})").match(token):
+            return await ctx.send("Invalid token.")
         
         embed=discord.Embed(title="No return")
 
