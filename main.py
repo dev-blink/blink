@@ -5,6 +5,7 @@ import os
 import sys, traceback
 import blink
 import datetime
+import asyncpg
 
 STARTUPTIME = datetime.datetime.utcnow()
 
@@ -58,6 +59,11 @@ async def on_ready():
 
 
 async def init():
+    print("\nINIT DATABASE\n")
+    cn = {"user":"blink","password":"local","database":"main","host":"localhost"}
+    bot.DB = await asyncpg.create_pool(**cn)
+    await bot.DB.execute("CREATE TABLE globalmsg(id bigint PRIMARY KEY,messages integer)")
+    print("DATABASE INITIALIZED")
     print(f'\nLogged in as: {bot.user.name} - {bot.user.id}\nDiscord.py Version: {discord.__version__}')
     bot.statsserver = bot.get_guild(blink.Config.statsserver())
     game = discord.Streaming(name='; (b;)', url='https://www.twitch.tv/#')
