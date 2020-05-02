@@ -24,6 +24,8 @@ class MessageLB(commands.Cog,name="Message Leaderboard"):
         if not member:
             member = ctx.author
         count = await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id = $1",member.id)
+        if not count:
+            return await ctx.send("Nothing in our database.")
         embed = discord.Embed(description=f'{count["messages"]} messages sent.',colour=self.bot.colour)
         embed.set_author(name=f"{member}",icon_url=member.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
