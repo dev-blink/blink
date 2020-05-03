@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.utils import find
 import blink
+
+
 class RoleManagement(commands.Cog,name="Role Management"):
     def __init__(self,bot):
-        self.bot = bot
-    
+        self.bot=bot
 
     @commands.command(name="role",aliases=["changerole","setrole"])
     @commands.guild_only()
@@ -19,11 +19,10 @@ class RoleManagement(commands.Cog,name="Role Management"):
             return
         if not user:
             return await ctx.send("I am unable to find that user.")
-        role = await blink.searchrole(ctx.guild.roles,term)
+        role=await blink.searchrole(ctx.guild.roles,term)
         if not role:
             return await ctx.send("I could not find that role.")
 
-        
         if not ctx.author == ctx.guild.owner:
             if role >= ctx.author.top_role:
                 return await ctx.send("You are unable to give that role. (Check your role position.)")
@@ -31,11 +30,10 @@ class RoleManagement(commands.Cog,name="Role Management"):
             return await ctx.send("I am unable to assign that role. (Check my role position.)")
         if role in user.roles:
             await user.remove_roles(role, reason=(ctx.author.name + "#" + str(ctx.author.discriminator)),atomic=True)
-            return await ctx.send("Removed role **`%s`** from "%role.name + user.mention)
+            return await ctx.send("Removed role **`%s`** from "% role.name + user.mention)
         else:
             await user.add_roles(role, reason=(ctx.author.name + "#" + str(ctx.author.discriminator)),atomic=True)
-            return await ctx.send("Added role **`%s`** to "%role.name + user.mention)
-    
+            return await ctx.send("Added role **`%s`** to "% role.name + user.mention)
 
     @commands.command(name='roles',aliases=["showroles"])
     @commands.guild_only()
@@ -44,24 +42,22 @@ class RoleManagement(commands.Cog,name="Role Management"):
         """Shows a members roles."""
 
         if not member:
-            member = ctx.author
-        
-        roles = ""
+            member=ctx.author
+
+        roles=""
         for role in member.roles:
             if len(member.roles) == 1:
                 roles="No roles"
             else:
-                roles = roles +(role.name + "\n")
+                roles=roles +(role.name + "\n")
 
-        embed = discord.Embed(colour=self.bot.colour)
+        embed=discord.Embed(colour=self.bot.colour)
         embed.set_author(icon_url=member.avatar_url_as(static_format='png'), name=str(member))
 
         # \uFEFF is a Zero-Width Space
         embed.add_field(name=f"Roles for {member.name}#{member.discriminator} in {ctx.guild.name}", value=roles)
 
         await ctx.send(embed=embed)
-        
-
 
     @commands.command(name="createrole",aliases=["newrole","+role","role+","addrole"])
     @commands.guild_only()
@@ -77,7 +73,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
         except Exception as e:
             print(e)
             return await ctx.send("I am unable to create that role.")
-    
+
     @commands.command(name="rolecolour",aliases=["rolecolor"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
@@ -88,7 +84,7 @@ class RoleManagement(commands.Cog,name="Role Management"):
             return await ctx.send("Please specify a role.")
         if not colour:
             return await ctx.send("Please specify a colour.")
-        role = await blink.searchrole(ctx.guild.roles,term)
+        role=await blink.searchrole(ctx.guild.roles,term)
         if not role:
             return await ctx.send("I could not find that role.")
         if not ctx.author == ctx.guild.owner:

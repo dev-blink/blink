@@ -5,23 +5,25 @@ import blink
 import psutil
 import platform
 import time
+
+
 class Info(commands.Cog,name="Info"):
     def __init__(self,bot):
-        self.bot = bot
-        self.colour = bot.colour
+        self.bot=bot
+        self.colour=bot.colour
 
     @commands.command(name="prefix")
     @commands.bot_has_permissions(send_messages=True)
     async def prefix(self, ctx, *, member: discord.Member=None):
         """Shows the bot's prefix."""
-        await ctx.send("The bot prefix is ';' you can also use 'b;' or a ping." )
+        await ctx.send("The bot prefix is ';' you can also use 'b;' or a ping.")
 
     @commands.command(name="creator")
     @commands.bot_has_permissions(send_messages=True)
     async def creator(self, ctx, *, member: discord.Member=None):
         """Shows the bot's creator."""
         await ctx.send("aaix#0001 created this bot.")
-    
+
     @commands.command(name="invite")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def invite(self, ctx, *, member: discord.Member=None):
@@ -31,7 +33,7 @@ class Info(commands.Cog,name="Info"):
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
 
         await ctx.send(embed=embed)
-    
+
     @commands.command(name="support")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def support(self, ctx, *, member: discord.Member=None):
@@ -41,34 +43,36 @@ class Info(commands.Cog,name="Info"):
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
 
         await ctx.send(embed=embed)
-    
+
     @commands.command(name="info")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def info(self,ctx):
         """Shows info about the bot"""
-        owner = self.bot.get_user(171197717559771136)
-        embed = discord.Embed(title=f"blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154/vote) || [Click for support](https://discord.gg/pCVhrMF)",colour=self.colour)
+        owner=self.bot.get_user(171197717559771136)
+        embed=discord.Embed(title=f"blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154/vote) || [Click for support](https://discord.gg/pCVhrMF)",colour=self.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
-        
+
     @commands.command(name="uptime")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def uptime(self,ctx):
         return await ctx.send(embed=discord.Embed(title="Bot uptime:",description=f"Bot has been online for: {blink.prettydelta((datetime.datetime.utcnow() - self.bot.boottime).total_seconds())}",colour=self.bot.colour))
-    
+
     @commands.command(name="hardware",aliases=["system","sys"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def sys_stats(self,ctx):
-        embed = discord.Embed(title="System metrics",description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
+        embed=discord.Embed(title="System metrics",description=f"```CPU Usage: {psutil.cpu_percent()}%\nMemory Usage: {psutil.virtual_memory().used >> 20}/{psutil.virtual_memory().total >> 20}MB\nFree disk space: {psutil.disk_usage('/').free >> 30}GB\n{psutil.cpu_count()} CPUs running {platform.platform()}```",colour=self.bot.colour)
         return await ctx.send(embed=embed)
 
     @commands.command(name="ping")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def ping(self,ctx):
-        before = time.monotonic()
-        message = await ctx.send("pong")
-        ping = (time.monotonic() - before) * 1000
+        before=time.monotonic()
+        message=await ctx.send("pong")
+        ping=(time.monotonic() - before) * 1000
         await message.edit(embed=discord.Embed(title=f"\U0001f3d3 Pong",description=f"Ping: {int(ping)}ms\nLatency: {round((self.bot.latency * 1000),4)}ms",colour=self.bot.colour),content=None)
+
+
 def setup(bot):
     bot.add_cog(Info(bot))

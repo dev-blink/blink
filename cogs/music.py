@@ -1,7 +1,6 @@
 import asyncio
 import async_timeout
 import copy
-import datetime
 import discord
 import math
 import random
@@ -12,19 +11,18 @@ from discord.ext import commands, menus
 import blink
 
 # URL matching REGEX...
-URL_REG = re.compile(r'https?://(?:www\.)?.+')
-
+URL_REG=re.compile(r'https?://(?:www\.)?.+')
 
 
 class Track(wavelink.Track):
     """Wavelink Track object with a requester attribute."""
 
-    __slots__ = ('requester', )
+    __slots__=('requester', )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
 
-        self.requester = kwargs.get('requester')
+        self.requester=kwargs.get('requester')
 
 
 class Player(wavelink.Player):
@@ -33,22 +31,22 @@ class Player(wavelink.Player):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.context: commands.Context = kwargs.get('context', None)
+        self.context: commands.Context=kwargs.get('context', None)
         if self.context:
-            self.dj: discord.Member = self.context.author
+            self.dj: discord.Member=self.context.author
 
-        self.queue = asyncio.Queue()
-        self.controller = None
+        self.queue=asyncio.Queue()
+        self.controller=None
 
-        self.waiting = False
-        self.updating = False
+        self.waiting=False
+        self.updating=False
 
-        self.pause_votes = set()
-        self.resume_votes = set()
-        self.skip_votes = set()
-        self.shuffle_votes = set()
-        self.stop_votes = set()
-        self.volume = 70
+        self.pause_votes=set()
+        self.resume_votes=set()
+        self.skip_votes=set()
+        self.shuffle_votes=set()
+        self.stop_votes=set()
+        self.volume=70
 
     async def do_next(self) -> None:
         if self.is_playing or self.waiting:
@@ -62,15 +60,15 @@ class Player(wavelink.Player):
         self.stop_votes.clear()
 
         try:
-            self.waiting = True
+            self.waiting=True
             with async_timeout.timeout(300):
-                track = await self.queue.get()
+                track=await self.queue.get()
         except asyncio.TimeoutError:
             # No music has been played for 5 minutes, cleanup and disconnect...
             return await self.teardown()
 
         await self.play(track)
-        self.waiting = False
+        self.waiting=False
 
         # Invoke our players controller...
         await self.invoke_controller()
@@ -80,39 +78,39 @@ class Player(wavelink.Player):
         if self.updating:
             return
 
-        self.updating = True
+        self.updating=True
 
         if not self.controller:
-            self.controller = InteractiveController(embed=self.build_embed(), player=self)
+            self.controller=InteractiveController(embed=self.build_embed(), player=self)
             await self.controller.start(self.context)
 
         elif not await self.is_position_fresh():
             try:
                 await self.controller.message.delete()
-            except:
+            except Exception:
                 pass
 
             self.controller.stop()
 
-            self.controller = InteractiveController(embed=self.build_embed(), player=self)
+            self.controller=InteractiveController(embed=self.build_embed(), player=self)
             await self.controller.start(self.context)
 
         else:
-            embed = self.build_embed()
+            embed=self.build_embed()
             await self.controller.message.edit(content=None, embed=embed)
 
-        self.updating = False
+        self.updating=False
 
     def build_embed(self) -> typing.Optional[discord.Embed]:
         """Method which builds our players controller embed."""
-        track = self.current
+        track=self.current
         if not track:
             return discord.Embed(title="Nothing playing :(",colour=self.bot.colour)
 
-        channel = self.bot.get_channel(int(self.channel_id))
-        qsize = self.queue.qsize()
+        channel=self.bot.get_channel(int(self.channel_id))
+        qsize=self.queue.qsize()
 
-        embed = discord.Embed(colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
+        embed=discord.Embed(colour=self.bot.colour,description=f'[{track.title}]({track.uri})\n\n')
         embed.set_author(name=f"Music Controller | {channel.name}",icon_url=self.dj.avatar_url_as(static_format="png"))
         embed.add_field(name='**Duration**', value=str(blink.prettydelta(track.length // 1000)))
         embed.add_field(name='**Queue Length**', value=str(qsize))
@@ -135,7 +133,7 @@ class Player(wavelink.Player):
         """Clear internal states, remove player controller and disconnect."""
         try:
             await self.controller.message.delete()
-        except:
+        except Exception:
             pass
 
         self.controller.stop()
@@ -152,13 +150,13 @@ class InteractiveController(menus.Menu):
     def __init__(self, *, embed: discord.Embed, player: Player):
         super().__init__(timeout=None)
 
-        self.embed = embed
-        self.player = player
+        self.embed=embed
+        self.player=player
 
     def update_context(self, payload: discord.RawReactionActionEvent):
         """Update our context with the user who reacted."""
-        ctx = copy.copy(self.ctx)
-        ctx.author = payload.member
+        ctx=copy.copy(self.ctx)
+        ctx.author=payload.member
 
         return ctx
 
@@ -183,60 +181,60 @@ class InteractiveController(menus.Menu):
     @menus.button(emoji='\u25B6')
     async def resume_command(self, payload: discord.RawReactionActionEvent):
         """Resume button."""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('resume')
-        ctx.command = command
+        command=self.bot.get_command('resume')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
     @menus.button(emoji='\u23F8')
     async def pause_command(self, payload: discord.RawReactionActionEvent):
         """Pause button"""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('pause')
-        ctx.command = command
+        command=self.bot.get_command('pause')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
     @menus.button(emoji='\u23F9')
     async def stop_command(self, payload: discord.RawReactionActionEvent):
         """Stop button."""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('stop')
-        ctx.command = command
+        command=self.bot.get_command('stop')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
     @menus.button(emoji='\u23ED')
     async def skip_command(self, payload: discord.RawReactionActionEvent):
         """Skip button."""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('skip')
-        ctx.command = command
+        command=self.bot.get_command('skip')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
     @menus.button(emoji='\U0001F500')
     async def shuffle_command(self, payload: discord.RawReactionActionEvent):
         """Shuffle button."""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('shuffle')
-        ctx.command = command
+        command=self.bot.get_command('shuffle')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
     @menus.button(emoji='\U0001F1F6')
     async def queue_command(self, payload: discord.RawReactionActionEvent):
         """Player queue button."""
-        ctx = self.update_context(payload)
+        ctx=self.update_context(payload)
 
-        command = self.bot.get_command('queue')
-        ctx.command = command
+        command=self.bot.get_command('queue')
+        ctx.command=command
 
         await self.bot.invoke(ctx)
 
@@ -246,11 +244,11 @@ class PaginatorSource(menus.ListPageSource):
 
     def __init__(self, entries, *, per_page=8):
         super().__init__(entries, per_page=per_page)
-        self.colour = 16099001
+        self.colour=16099001
 
     async def format_page(self, menu: menus.Menu, page):
-        embed = discord.Embed(title='Coming Up...', colour=self.colour)
-        embed.description = '\n'.join(f'`{index}. {title}`' for index, title in enumerate(page, 1))
+        embed=discord.Embed(title='Coming Up...', colour=self.colour)
+        embed.description='\n'.join(f'`{index}. {title}`' for index, title in enumerate(page, 1))
 
         return embed
 
@@ -263,10 +261,10 @@ class Music(commands.Cog):
     """Music Cog."""
 
     def __init__(self, bot: commands.Bot):
-        self.bot = bot
+        self.bot=bot
 
         if not hasattr(bot, 'wavelink'):
-            bot.wavelink = wavelink.Client(bot)
+            bot.wavelink=wavelink.Client(bot)
 
         bot.loop.create_task(self.start_nodes())
 
@@ -275,29 +273,17 @@ class Music(commands.Cog):
         await self.bot.wait_until_ready()
 
         if self.bot.wavelink.nodes:
-            previous = self.bot.wavelink.nodes.copy()
+            previous=self.bot.wavelink.nodes.copy()
 
             for node in previous.values():
                 await node.destroy()
         if self.bot.user.name == "blink beta":
-            nodes = {'MAIN': {'host': '192.168.1.154',
-                          'port': 2333,
-                          'rest_uri': 'http://192.168.1.154:2333',
-                          'password': 'password',
-                          'identifier': 'MAIN',
-                          'region': 'us_east'
-                          }}
+            nodes={'MAIN': {'host': '192.168.1.154','port': 2333,'rest_uri': 'http://192.168.1.154:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
         else:
-            nodes = {'MAIN': {'host': 'localhost',
-                          'port': 2333,
-                          'rest_uri': 'http://localhost:2333',
-                          'password': 'password',
-                          'identifier': 'MAIN',
-                          'region': 'us_east'
-                          }}
+            nodes={'MAIN': {'host': 'localhost','port': 2333,'rest_uri': 'http://localhost:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
 
         for n in nodes.values():
-            node = await self.bot.wavelink.initiate_node(**n)
+            node=await self.bot.wavelink.initiate_node(**n)
             node.set_hook(self.node_event_hook)
 
     async def node_event_hook(self, event: wavelink.WavelinkEvent) -> None:
@@ -310,25 +296,24 @@ class Music(commands.Cog):
         if member.bot:
             return
 
-        player: Player = self.bot.wavelink.get_player(member.guild.id, cls=Player)
+        player: Player=self.bot.wavelink.get_player(member.guild.id, cls=Player)
 
         if not player.channel_id or not player.context:
             player.node.players.pop(member.guild.id)
             return
 
-        channel = self.bot.get_channel(int(player.channel_id))
+        channel=self.bot.get_channel(int(player.channel_id))
 
         if member == player.dj and after.channel is None:
             for m in channel.members:
                 if m.bot:
                     continue
                 else:
-                    player.dj = m
+                    player.dj=m
                     return
 
         elif after.channel == channel and player.dj not in channel.members:
-            player.dj = member
-        
+            player.dj=member
 
     async def cog_check(self, ctx: commands.Context):
         """Cog wide check, which disallows commands in DMs."""
@@ -342,7 +327,7 @@ class Music(commands.Cog):
         """Coroutine called before command invocation.
         We mainly just want to check whether the user is in the players controller channel.
         """
-        player: Player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(ctx.guild.id, cls=Player, context=ctx)
 
         if player.context:
             if player.context.channel != ctx.channel:
@@ -357,7 +342,7 @@ class Music(commands.Cog):
         if not player.channel_id:
             return
 
-        channel = self.bot.get_channel(int(player.channel_id))
+        channel=self.bot.get_channel(int(player.channel_id))
         if not channel:
             return
 
@@ -368,32 +353,32 @@ class Music(commands.Cog):
 
     def required(self, ctx: commands.Context):
         """Method which returns required votes based on amount of members in a channel."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
-        channel = self.bot.get_channel(int(player.channel_id))
-        required = math.ceil((len(channel.members) - 1) / 2.5)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        channel=self.bot.get_channel(int(player.channel_id))
+        required=math.ceil((len(channel.members) - 1) / 2.5)
 
         if ctx.command.name == 'stop':
             if len(channel.members) - 1 == 2:
-                required = 2
+                required=2
 
         return required
 
     def is_privileged(self, ctx: commands.Context):
         """Check whether the user is an Admin or DJ."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         return player.dj == ctx.author or ctx.author.guild_permissions.kick_members
 
     @commands.command(name="connect",aliases=["join"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def connect(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
+    async def connect(self, ctx: commands.Context, *, channel: discord.VoiceChannel=None):
         """Connect to a voice channel."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if player.is_connected:
             return
 
-        channel = getattr(ctx.author.voice, 'channel', channel)
+        channel=getattr(ctx.author.voice, 'channel', channel)
         if channel is None:
             raise blink.NoChannelProvided
 
@@ -403,29 +388,29 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def play(self, ctx: commands.Context, *, query: str):
         """Play or queue a song with the given query."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             await ctx.invoke(self.connect)
 
-        query = query.strip('<>')
+        query=query.strip('<>')
         if not URL_REG.match(query):
-            query = f'ytsearch:{query}'
+            query=f'ytsearch:{query}'
 
-        tracks = await self.bot.wavelink.get_tracks(query)
+        tracks=await self.bot.wavelink.get_tracks(query)
         if not tracks:
             return await ctx.send('No songs were found with that query. Please try again.', delete_after=15)
 
         if isinstance(tracks, wavelink.TrackPlaylist):
             for track in tracks.tracks:
-                track = Track(track.id, track.info, requester=ctx.author)
+                track=Track(track.id, track.info, requester=ctx.author)
                 await player.queue.put(track)
 
             await ctx.send(f'```ini\nAdded the playlist {tracks.data["playlistInfo"]["name"]}'
                            f' with {len(tracks.tracks)} songs to the queue.\n```', delete_after=15)
         else:
-            track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
-            embed = discord.Embed(title=track.title,url=track.uri,colour=self.bot.colour)
+            track=Track(tracks[0].id, tracks[0].info, requester=ctx.author)
+            embed=discord.Embed(title=track.title,url=track.uri,colour=self.bot.colour)
             embed.add_field(name="**Duration**",value=blink.prettydelta(track.duration // 1000))
             embed.add_field(name="**Queue position**",value=f"{player.queue.qsize() + 1}")
             embed.add_field(name="**Added by**",value=ctx.author.mention)
@@ -440,7 +425,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def pause(self, ctx: commands.Context):
         """Pause the currently playing song."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if player.is_paused or not player.is_connected:
             return
@@ -451,7 +436,7 @@ class Music(commands.Cog):
 
             return await player.set_pause(True)
 
-        required = self.required(ctx)
+        required=self.required(ctx)
         player.pause_votes.add(ctx.author)
 
         if len(player.pause_votes) >= required:
@@ -465,7 +450,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def resume(self, ctx: commands.Context):
         """Resume a currently paused player."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_paused or not player.is_connected:
             return
@@ -476,7 +461,7 @@ class Music(commands.Cog):
 
             return await player.set_pause(False)
 
-        required = self.required(ctx)
+        required=self.required(ctx)
         player.resume_votes.add(ctx.author)
 
         if len(player.resume_votes) >= required:
@@ -490,7 +475,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def skip(self, ctx: commands.Context):
         """Skip the currently playing song."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return await ctx.send("Skip what? (I am not connected)")
@@ -507,7 +492,7 @@ class Music(commands.Cog):
 
             return await player.stop()
 
-        required = self.required(ctx)
+        required=self.required(ctx)
         player.skip_votes.add(ctx.author)
 
         if len(player.skip_votes) >= required:
@@ -521,7 +506,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def stop(self, ctx: commands.Context):
         """Stop the player and clear all internal states."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return await ctx.send("Stop what? (I am not connected)")
@@ -530,7 +515,7 @@ class Music(commands.Cog):
             await ctx.send('An admin or DJ has stopped the player.', delete_after=10)
             return await player.teardown()
 
-        required = self.required(ctx)
+        required=self.required(ctx)
         player.stop_votes.add(ctx.author)
 
         if len(player.stop_votes) >= required:
@@ -543,7 +528,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def volume(self, ctx: commands.Context, *, vol: int):
         """Change the players volume, between 1 and 100."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return
@@ -561,7 +546,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def shuffle(self, ctx: commands.Context):
         """Shuffle the players queue."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return
@@ -574,7 +559,7 @@ class Music(commands.Cog):
             player.shuffle_votes.clear()
             return random.shuffle(player.queue._queue)
 
-        required = self.required(ctx)
+        required=self.required(ctx)
         player.shuffle_votes.add(ctx.author)
 
         if len(player.shuffle_votes) >= required:
@@ -588,7 +573,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def queue(self, ctx: commands.Context):
         """Display the players queued songs."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return
@@ -596,9 +581,9 @@ class Music(commands.Cog):
         if player.queue.qsize() == 0:
             return await ctx.send('There are no more songs in the queue.', delete_after=15)
 
-        entries = [track.title for track in player.queue._queue]
-        pages = PaginatorSource(entries=entries)
-        paginator = menus.MenuPages(source=pages, timeout=None, delete_message_after=True)
+        entries=[track.title for track in player.queue._queue]
+        pages=PaginatorSource(entries=entries)
+        paginator=menus.MenuPages(source=pages, timeout=None, delete_message_after=True)
 
         await paginator.start(ctx)
 
@@ -606,7 +591,7 @@ class Music(commands.Cog):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def nowplaying(self, ctx: commands.Context):
         """Update the player controller."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return await ctx.send("Nothing is playing.")
@@ -615,9 +600,9 @@ class Music(commands.Cog):
 
     @commands.command(name="givedj",aliases=['swap',"dj"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def swap_dj(self, ctx: commands.Context, *, member: discord.Member = None):
+    async def swap_dj(self, ctx: commands.Context, *, member: discord.Member=None):
         """Swap the current DJ to another member in the voice channel."""
-        player: Player = self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
+        player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
             return
@@ -625,7 +610,7 @@ class Music(commands.Cog):
         if not self.is_privileged(ctx):
             return await ctx.send('Only admins and the DJ may use this command.', delete_after=15)
 
-        members = self.bot.get_channel(int(player.channel_id)).members
+        members=self.bot.get_channel(int(player.channel_id)).members
 
         if member and member not in members:
             return await ctx.send(f'{member} is not currently in voice, so can not be a DJ.', delete_after=15)
@@ -637,14 +622,14 @@ class Music(commands.Cog):
             return await ctx.send('No more members to swap to.', delete_after=15)
 
         if member:
-            player.dj = member
+            player.dj=member
             return await ctx.send(f'{member.mention} is now the DJ.')
 
         for m in members:
             if m == player.dj or m.bot:
                 continue
             else:
-                player.dj = m
+                player.dj=m
                 return await ctx.send(f'{member.mention} is now the DJ.')
 
 

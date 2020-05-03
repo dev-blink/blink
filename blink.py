@@ -2,35 +2,37 @@ from discord.utils import find
 from random import Random as RAND
 from discord.ext import commands
 import math
+
+
 async def searchrole(roles:list,term:str):
     """Custom role search for discord.py"""
-    role = find(lambda r: r.name.lower() == term.lower(), roles)
+    role=find(lambda r: r.name.lower() == term.lower(), roles)
     if not role:
-        role = find(lambda r: r.name.lower().startswith(term.lower()), roles)
+        role=find(lambda r: r.name.lower().startswith(term.lower()), roles)
     if not role:
-        role = find(lambda r: term.lower() in r.name.lower(), roles)
+        role=find(lambda r: term.lower() in r.name.lower(), roles)
     return role
 
 
 def ordinal(n:int):
     """Turns an int into its ordinal (1 -> 1st)"""
-    x = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])
-    return x(n)
+    n="%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])  # noqa: E226,E228
+    return n
 
 
 class Config():
     @classmethod
     def statsserver(self):
         return int(702200971781996606)
-    
+
     @classmethod
     def newguilds(self):
         return int(702201857606549646)
-    
+
     @classmethod
     def errors(self):
         return int(702201821615358004)
-    
+
     @classmethod
     def startup(self,name:str):
         if "beta" in name:
@@ -43,12 +45,11 @@ class Config():
         return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjczODkxNzIzNjk5ODE1NCIsImJvdCI6dHJ1ZSwiaWF0IjoxNTg3ODIzNjQ4fQ.qVqkmGa5inwLuosfNydxreptiF_UuIslfXTOxTkoFbI"
 
 
-
 def prettydelta(seconds):
-    seconds = int(seconds)
-    days, seconds = divmod(seconds, 86400)
-    hours, seconds = divmod(seconds, 3600)
-    minutes, seconds = divmod(seconds, 60)
+    seconds=int(seconds)
+    days, seconds=divmod(seconds, 86400)
+    hours, seconds=divmod(seconds, 3600)
+    minutes, seconds=divmod(seconds, 60)
     if days > 0:
         return '%dd %dh%dm%ds' % (days, hours, minutes, seconds)
     elif hours > 0:
@@ -58,6 +59,7 @@ def prettydelta(seconds):
     else:
         return '%ds' % (seconds,)
 
+
 def prand(spice:float,uid:int,start:int,stop:int,inverse:bool=False):
     """Baised random"""
     if uid in [171197717559771136,692738917236998154]:
@@ -66,12 +68,12 @@ def prand(spice:float,uid:int,start:int,stop:int,inverse:bool=False):
         else:
             return stop
     else:
-        b = uid * spice
-        rng = RAND(x=(b))
+        b=uid * spice
+        rng=RAND(x=(b))
         return rng.randint(start,stop)
-    
 
-#MUSIC ERRORS
+
+# MUSIC ERRORS
 class NoChannelProvided(commands.CommandError):
     """Error raised when no suitable voice channel was supplied."""
     pass
