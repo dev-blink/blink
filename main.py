@@ -4,7 +4,6 @@ import blink
 import datetime
 import asyncpg
 import logging
-import asyncio
 
 
 logger=logging.getLogger('discord')
@@ -58,7 +57,6 @@ def load_extensions():
 
 @bot.event
 async def on_ready():
-    asyncio.sleep(2)
     global INITIALIZED
     if not INITIALIZED:
         await init()
