@@ -13,7 +13,7 @@ class Stats(commands.Cog,name="Stats"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def stats(self,ctx):
         """Shows stats about the bot"""
-        embed=discord.Embed(title="Bot statistics!",colour=self.bot.colour,description=f"```Servers: {len(self.bot.guilds)}\nMembers: {len(list(self.bot.get_all_members())) - 1}```\n[Vote for us here!](https://top.gg/bot/692738917236998154)")
+        embed=discord.Embed(title="Bot statistics!",colour=self.bot.colour,description=f"```Servers: {len(self.bot.guilds)}\nUnique users: {len(self.bot.users) - 1}```\n[Vote for us here!](https://top.gg/bot/692738917236998154)")
         return await ctx.send(embed=embed)
 
     @commands.Cog.listener("on_guild_join")
