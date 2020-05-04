@@ -29,7 +29,7 @@ def get_prefix(bot, message):
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
-loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music","cogs.msglb"]
+loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music","cogs.msglb","cogs.logging"]
 loading_extensions.append("jishaku")
 
 INITIALIZED=False
@@ -70,7 +70,10 @@ async def init():
     print("DATABASE INITIALIZED")
     print(f'\nLogged in as: {bot.user.name} - {bot.user.id}\nDiscord.py Version: {discord.__version__}')
     bot.statsserver=bot.get_guild(blink.Config.statsserver())
-    game=discord.Streaming(name='; (b;)', url='https://www.twitch.tv/#')
+    if not bot.user.name == "blink beta":
+        game=discord.Streaming(name='; (b;)', url='https://www.twitch.tv/#')
+    else:
+        game=discord.Game(name="beta bot")
     await bot.change_presence(status=discord.Status.online,activity=game)
     bot.boottime=STARTUPTIME
     bot.unload_extension("cogs.PRELOAD")

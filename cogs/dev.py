@@ -73,7 +73,7 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def query_cog(self, ctx):
         """Displays loaded cogs"""
-        embed=discord.Embed(title="Loaded Cogs", description='\n,'.join(self.bot.cogs),colour=0xf5a6b9)
+        embed=discord.Embed(title="Loaded Cogs", description='\n'.join(self.bot.cogs),colour=0xf5a6b9)
         await ctx.send(embed=embed)
 
     @commands.command(name='close-bot',aliases=["killbot","closebot"], hidden=True)
@@ -146,6 +146,18 @@ class Owner(commands.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True)
     async def bootinfo(self,ctx):
         return await ctx.send(self.bot.bootlog)
+
+    @commands.command(name="sql")
+    @commands.is_owner()
+    async def sql(self,ctx,*,query):
+        result = await self.bot.DB.execute(query)
+        return await ctx.send(result)
+
+    @commands.command(name="fetch")
+    @commands.is_owner()
+    async def fetch(self,ctx,*,query):
+        result = await self.bot.DB.fetch(query)
+        return await ctx.send(result or "nothing")
 
     @commands.command(name="memcheck",hidden=True)
     @commands.is_owner()
