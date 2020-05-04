@@ -150,7 +150,10 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         start = t.monotonic()
         for user in self.bot.users:
             tt = datetime.datetime.utcnow().timestamp()
-            await self._newuser(user.id,str(user),user.avatar_url_as(format="png",size=4096),tt)
+            try:
+                await self._newuser(user.id,str(user),user.avatar_url_as(format="png",size=4096),tt)
+            except Exception as e:
+                print(f"Ignoring exception in flushdb {e}")
         time = round(start - t.monotonic(),2)
         self.active=True
         return await ctx.send(f"COMPLETED DB FLUSH {time} seconds")
