@@ -32,6 +32,9 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.bot.add_cog(self)
         self.session = aiohttp.ClientSession()
 
+    def __unload(self):
+        asyncio.create_task(self.session.close())
+
     def avs(self):
         return random.choice(self.avatar_channels)
 
@@ -51,16 +54,22 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     async def _update_un(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
-        previousNames=query[0]["name"]
-        previousNames.append(self._format(tt,str(after)))
+        try:
+            previousNames=query[0]["name"]
+        except IndexError:
+            previousNames = []
+        previousNames.append(self._format(tt,after))
         await self.bot.DB.execute(f"UPDATE userlog SET name = $1 WHERE id = $2",previousNames,id)
 
     async def _update_av(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
         av = await self._avurl(after)
-        previousAvatars=query[0]["avatar"]
+        try:
+            previousAvatars=query[0]["avatar"]
+        except IndexError:
+            previousAvatars = []
         previousAvatars.append(self._format(tt,av))
-        await self.bot.DB.execute(f"UPDATE userlog SET name = $1 WHERE id = $2",previousAvatars,id)
+        await self.bot.DB.execute(f"UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
     async def _avurl(self,url):
         r = await self.session.get(str(url))
@@ -76,13 +85,12 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         if before.bot:
             return
-        print(f"EVENT REGISTERED: {after}")
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
         beforeav = str(before.avatar_url_as(format="png", size=4096))
         afterav = str(after.avatar_url_as(format="png", size=4096))
         result = await self.bot.DB.fetchrow(f"SELECT name, avatar FROM userlog WHERE id = $1",uid)
-        if str(result) == "SELECT 0":
+        if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
 
         if str(before) != str(after):
