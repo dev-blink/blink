@@ -147,18 +147,6 @@ class Owner(commands.Cog, name="Developer"):
     async def bootinfo(self,ctx):
         return await ctx.send(self.bot.bootlog)
 
-    @commands.command(name="sql")
-    @commands.is_owner()
-    async def sql(self,ctx,*,query):
-        result = await self.bot.DB.execute(query)
-        return await ctx.send(result)
-
-    @commands.command(name="fetch")
-    @commands.is_owner()
-    async def fetch(self,ctx,*,query):
-        result = await self.bot.DB.fetch(query)
-        return await ctx.send(result or "nothing")
-
     @commands.command(name="memcheck",hidden=True)
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True)
