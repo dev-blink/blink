@@ -73,6 +73,9 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')
         elif isinstance(error,commands.NSFWChannelRequired):
             return await ctx.send("I am unable to display NSFW images in this channel")
+        
+        elif isinstance(error,commands.MaxConcurrencyReached):
+            return await ctx.send(error)
 
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
