@@ -32,6 +32,26 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.session = aiohttp.ClientSession()
 
 # AVATAR DB TRANSACTIONS
+    @commands.Cog.listener("on_user_update")
+    async def update(self,before,after):
+        if not self.active:
+            return
+        if before.bot:
+            return
+        tt = datetime.datetime.utcnow().timestamp()
+        uid = before.id
+        beforeav = str(before.avatar_url_as(format="png", size=4096))
+        afterav = str(after.avatar_url_as(format="png", size=4096))
+        result = await self.bot.DB.fetchrow(f"SELECT name, avatar FROM userlog WHERE id = $1",uid)
+        if str(result) == "SELECT 0" or result is None:
+            await self._newuser(uid,str(before),beforeav,tt)
+
+        if str(before) != str(after):
+            await self._update_un(uid,str(after),tt)
+
+        if str(before.avatar_url) != str(after.avatar_url):
+            await self._update_av(uid,afterav,tt)
+
     def __unload(self):
         asyncio.create_task(self.session.close())
 
@@ -90,30 +110,12 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         else:
             await self.bot.DB.execute(f"UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + 1,message.author.id)
         return
+
 # USERNAME AND AVATAR
-    @commands.Cog.listener("on_user_update")
-    async def update(self,before,after):
-        if not self.active:
-            return
-        if before.bot:
-            return
-        tt = datetime.datetime.utcnow().timestamp()
-        uid = before.id
-        beforeav = str(before.avatar_url_as(format="png", size=4096))
-        afterav = str(after.avatar_url_as(format="png", size=4096))
-        result = await self.bot.DB.fetchrow(f"SELECT name, avatar FROM userlog WHERE id = $1",uid)
-        if str(result) == "SELECT 0" or result is None:
-            await self._newuser(uid,str(before),beforeav,tt)
-
-        if str(before) != str(after):
-            await self._update_un(uid,str(after),tt)
-
-        if str(before.avatar_url) != str(after.avatar_url):
-            await self._update_av(uid,afterav,tt)
-
     @commands.command(name="names")
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def namehistory(self,ctx,user:discord.Member=None):
+        """Show username history"""
         if not user:
             user = ctx.author
         uid = user.id
@@ -133,6 +135,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     @commands.command(name="avatars")
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def avatarhistory(self,ctx,user:discord.Member=None):
+        """Show avatar history"""
         if not user:
             user = ctx.author
         uid = user.id
@@ -153,9 +156,11 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return await ctx.send(embed=embeds[0])
         pages = menus.MenuPages(source=AvPages(range(1,len(embeds)), embeds), clear_reactions_after=True)
         await pages.start(ctx)
+
 # GLOBAL MESSAGES
     @commands.command(name="messages",aliases=["msgs"])
     async def view_messages(self,ctx,member:discord.Member=None):
+        """Show tracked messages sent globally"""
         if not member:
             member=ctx.author
         count=await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id=$1",member.id)
