@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands,menus
 import asyncio
 import datetime
-import time as t
 from io import BytesIO
 import random
 import blink
@@ -32,6 +31,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.bot.add_cog(self)
         self.session = aiohttp.ClientSession()
 
+# AVATAR DB TRANSACTIONS
     def __unload(self):
         asyncio.create_task(self.session.close())
 
@@ -79,6 +79,18 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         url = m.attachments[0].url
         return url
 
+# GLOBAL MESSAGES DB TRANSACTIONS
+    @commands.Cog.listener("on_message")
+    async def update_db(self,message):
+        if message.author.bot or not message.guild:
+            return
+        result=await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id=$1",message.author.id)
+        if not result:
+            await self.bot.DB.execute(f"INSERT INTO globalmsg VALUES ($1,$2)",message.author.id,1)
+        else:
+            await self.bot.DB.execute(f"UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + 1,message.author.id)
+        return
+# USERNAME AND AVATAR
     @commands.Cog.listener("on_user_update")
     async def update(self,before,after):
         if not self.active:
@@ -100,7 +112,6 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             await self._update_av(uid,afterav,tt)
 
     @commands.command(name="names")
-    @commands.is_owner()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def namehistory(self,ctx,user:discord.Member=None):
         if not user:
@@ -116,10 +127,10 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             dt = unformatted[0]
             name = unformatted[1]
             names.append(f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour}:{dt.minute} -> {name}")
-        await ctx.send("\n".join(names))
+        e = "\n".join(names)
+        await ctx.send(f'```{e}```')
 
     @commands.command(name="avatars")
-    @commands.is_owner()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def avatarhistory(self,ctx,user:discord.Member=None):
         if not user:
@@ -142,22 +153,17 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return await ctx.send(embed=embeds[0])
         pages = menus.MenuPages(source=AvPages(range(1,len(embeds)), embeds), clear_reactions_after=True)
         await pages.start(ctx)
-
-    @commands.command(name="flushdb")
-    @commands.is_owner()
-    @commands.max_concurrency(1,per=commands.BucketType.default)
-    async def update_db(self,ctx):
-        self.active=False
-        start = t.monotonic()
-        for user in self.bot.users:
-            tt = datetime.datetime.utcnow().timestamp()
-            try:
-                await self._newuser(user.id,str(user),user.avatar_url_as(format="png",size=4096),tt)
-            except Exception as e:
-                print(f"Ignoring exception in flushdb {e}")
-        time = round(start - t.monotonic(),2)
-        self.active=True
-        return await ctx.send(f"COMPLETED DB FLUSH {time} seconds")
+# GLOBAL MESSAGES
+    @commands.command(name="messages",aliases=["msgs"])
+    async def view_messages(self,ctx,member:discord.Member=None):
+        if not member:
+            member=ctx.author
+        count=await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id=$1",member.id)
+        if not count:
+            return await ctx.send("Nothing in our database.")
+        embed=discord.Embed(description=f'{count["messages"]} messages sent.',colour=self.bot.colour)
+        embed.set_author(name=f"{member}",icon_url=member.avatar_url_as(static_format="png"))
+        return await ctx.send(embed=embed)
 
 
 def setup(bot):
