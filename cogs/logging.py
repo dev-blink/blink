@@ -145,6 +145,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     @commands.command(name="flushdb")
     @commands.is_owner()
+    @commands.max_concurrency(0,per=commands.BucketType.default)
     async def update_db(self,ctx):
         self.active=False
         start = t.monotonic()
