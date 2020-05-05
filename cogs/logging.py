@@ -152,6 +152,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
             embeds.append(embed)
+        embeds.append(discord.embed(title="Current avatar",colour=self.bot.colour).set_image(ctx.author.avatar_url_as(static_format="png",size=4096)))
         embeds.reverse()
         if len(embeds) == 1:
             return await ctx.send(embed=embeds[0])
