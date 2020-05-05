@@ -134,6 +134,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     @commands.command(name="avatars",aliases=["avs"])
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    @commands.cooldown(1,10,commands.BucketType.user)
     async def avatarhistory(self,ctx,user:discord.Member=None):
         """Show avatar history"""
         if not user:
@@ -152,7 +153,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
             embeds.append(embed)
-        embeds.append(discord.embed(title="Current avatar",colour=self.bot.colour).set_image(ctx.author.avatar_url_as(static_format="png",size=4096)))
+        embeds.append(discord.Embed(title="Current avatar",colour=self.bot.colour).set_image(ctx.author.avatar_url_as(static_format="png",size=4096)))
         embeds.reverse()
         if len(embeds) == 1:
             return await ctx.send(embed=embeds[0])
