@@ -112,7 +112,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         return
 
 # USERNAME AND AVATAR
-    @commands.command(name="names")
+    @commands.command(name="names",aliases=["usernames","un"])
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def namehistory(self,ctx,user:discord.Member=None):
         """Show username history"""
@@ -132,7 +132,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         e = "\n".join(names)
         await ctx.send(f'```{e}```')
 
-    @commands.command(name="avatars")
+    @commands.command(name="avatars",aliases=["avs"])
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def avatarhistory(self,ctx,user:discord.Member=None):
         """Show avatar history"""
@@ -152,6 +152,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
             embeds.append(embed)
+        embeds.reverse()
         if len(embeds) == 1:
             return await ctx.send(embed=embeds[0])
         pages = menus.MenuPages(source=AvPages(range(1,len(embeds)), embeds), clear_reactions_after=True)
