@@ -18,6 +18,12 @@ class NSFW(commands.Cog,name="NSFW"):
     async def _do_reddit(self,term):
         r=await self.session.get(f"https://reddit.com/r/{term}.json")
         r=await r.json()
+        try:
+            r["error"]
+        except KeyError:
+            pass
+        else:
+            return discord.Embed(title=f"{r['error']} error...",colour=discord.Colour.red())
         r=box.Box(r)
         data=random.choice(r.data.children).data
         embed=discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
