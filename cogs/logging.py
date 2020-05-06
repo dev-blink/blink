@@ -31,6 +31,9 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.session = aiohttp.ClientSession()
         self.bot.add_cog(self)
 
+    def __unload(self):
+        asyncio.create_task(self.session.close())
+
 # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
     async def update(self,before,after):
@@ -51,9 +54,6 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
         if str(before.avatar_url) != str(after.avatar_url):
             await self._update_av(uid,afterav,tt)
-
-    def __unload(self):
-        asyncio.create_task(self.session.close())
 
     def avs(self):
         return random.choice(self.avatar_channels)
