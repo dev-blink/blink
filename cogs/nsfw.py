@@ -16,9 +16,11 @@ class NSFW(commands.Cog,name="NSFW"):
         asyncio.create_task(self.session.close())
 
     async def _do_reddit(self,term):
-        r=box.Box(await (await self.session.get("https://reddit.com/r/{term}.json")).json())
+        r=await self.session.get(f"https://reddit.com/r/{term}.json")
+        r=await r.json()
+        r=box.Box(r)
         data=random.choice(r.data.children).data
-        embed=discord.Embed(colour=self.bot.colour)
+        embed=discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
         embed.set_image(url=data.url)
         return embed
 
@@ -42,7 +44,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_hentai(self,ctx):
         """Random hentai (reddit)"""
-        return await ctx.send(embed=self._do_reddit("hentai"))
+        return await ctx.send(embed=await self._do_reddit("hentai"))
 
     @nsfw.command(name="porn")
     @commands.is_nsfw()
@@ -50,7 +52,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_porn(self,ctx):
         """Random porn (reddit)"""
-        return await ctx.send(embed=self._do_reddit("porn"))
+        return await ctx.send(embed=await self._do_reddit("porn"))
 
     @nsfw.command(name="ass")
     @commands.is_nsfw()
@@ -58,7 +60,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_ass(self,ctx):
         """Random ass (reddit)"""
-        return await ctx.send(embed=self._do_reddit("ass"))
+        return await ctx.send(embed=await self._do_reddit("ass"))
 
     @nsfw.command(name="bondage")
     @commands.is_nsfw()
@@ -66,7 +68,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_bondage(self,ctx):
         """Random bondage (reddit)"""
-        return await ctx.send(embed=self._do_reddit("bondage"))
+        return await ctx.send(embed=await self._do_reddit("bondage"))
 
     @nsfw.command(name="thicc")
     @commands.is_nsfw()
@@ -74,7 +76,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_thicc(self,ctx):
         """Random thicc (reddit)"""
-        return await ctx.send(embed=self._do_reddit("thicc"))
+        return await ctx.send(embed=await self._do_reddit("thicc"))
 
     @nsfw.command(name="petite")
     @commands.is_nsfw()
@@ -82,7 +84,7 @@ class NSFW(commands.Cog,name="NSFW"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_petitie(self,ctx):
         """Random petitie (reddit)"""
-        return await ctx.send(embed=self._do_reddit("petite"))
+        return await ctx.send(embed=await self._do_reddit("petite"))
 
 
 def setup(bot):
