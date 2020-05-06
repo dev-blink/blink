@@ -29,6 +29,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=discord.Embed(title="NSFW Commands",colour=self.bot.colour,description="\n".join(list((f"**{c.name}** {c.help}" for c in ctx.command.commands)))))
 
     @nsfw.command(name="belle",aliases=["belledeplhine","delphine"])
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def belle_delphine(self,ctx):
@@ -36,6 +37,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=discord.Embed(colour=self.bot.colour).set_image(url=f"https://hentai.izthe.best/v1/random?{random.random()}"))
 
     @nsfw.command(name="hentai")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_hentai(self,ctx):
@@ -43,6 +45,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=self._do_reddit("hentai"))
 
     @nsfw.command(name="porn")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_porn(self,ctx):
@@ -50,6 +53,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=self._do_reddit("porn"))
 
     @nsfw.command(name="ass")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_ass(self,ctx):
@@ -57,6 +61,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=self._do_reddit("ass"))
 
     @nsfw.command(name="bondage")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_bondage(self,ctx):
@@ -64,6 +69,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=self._do_reddit("bondage"))
 
     @nsfw.command(name="thicc")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_thicc(self,ctx):
@@ -71,6 +77,7 @@ class NSFW(commands.Cog,name="NSFW"):
         return await ctx.send(embed=self._do_reddit("thicc"))
 
     @nsfw.command(name="petite")
+    @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_petitie(self,ctx):
