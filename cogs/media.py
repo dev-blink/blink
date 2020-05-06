@@ -3,6 +3,7 @@ from discord.ext import commands
 import aiohttp
 import box
 import random
+import asyncio
 
 
 class Media(commands.Cog,name="Media"):
@@ -10,6 +11,9 @@ class Media(commands.Cog,name="Media"):
         self.bot=bot
         self.colour=self.bot.colour
         self.session=aiohttp.ClientSession()
+
+    def __unload(self):
+        asyncio.create_task(self.session.close())
 
     @commands.command(name="enlarge")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -20,6 +24,18 @@ class Media(commands.Cog,name="Media"):
         embed=discord.Embed(description=f"**{emoji.name}**",colour=self.colour)
         embed.set_image(url=f"{emoji.url}?size=1024")
         return await ctx.send(embed=embed)
+
+    @commands.command(name="screenshot",aliases=["ss"])
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def ss(self, ctx, *, url: str):
+        async with ctx.typing():
+            try:
+                screener = "http://magmachain.herokuapp.com/api/v1"
+                async with self.session.post(screener, headers=dict(website=url)) as r:
+                    website = (await r.json())["snapshot"]
+                    await ctx.send(embed=discord.Embed(color=self.bot.colour).set_image(url=website))
+            except Exception:
+                return await ctx.send("An error occured. most likely due to the unstable nature of the api.")
 
     @commands.command(name="meme",aliases=["memes"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
