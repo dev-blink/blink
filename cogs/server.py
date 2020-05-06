@@ -138,7 +138,6 @@ class Server(commands.Cog,name="Server"):
         {disboard if disboard else ""} {topgg if topgg else ""}
         """,inline=False)
         embed.set_footer(text=f"{self.bot.user.name}'s {'' if botmemberankpos == '1st' else botmemberankpos} largest server")
-
         return await m.edit(embed=embed)
 
 
