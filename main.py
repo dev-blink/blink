@@ -23,16 +23,16 @@ def get_prefix(bot, message):
         return '?'
 
     if bot.user.name == "blink beta":
-        return 'beta;'
+        prefixes= ['beta;']
 
-    if message.guild.id in [336642139381301249,264445053596991498,265828729970753537]:
+    if message.guild.id in [336642139381301249,264445053596991498,265828729970753537] and not bot.user.name == "blink beta":
         prefixes=["b;","B;"]
 
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
 print("Initializing AutoShardedBot and global vars.")
-loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.music"]
+loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
 SHARD_COUNT = 1
 INIT_SHARDS = []
