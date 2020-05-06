@@ -4,6 +4,8 @@ import blink
 import datetime
 import asyncpg
 import logging
+import asyncio
+import aiohttp
 
 
 logger=logging.getLogger('discord')
@@ -29,13 +31,14 @@ def get_prefix(bot, message):
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
-loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.music","cogs.logging"]
-loading_extensions.append("jishaku")
-
-INITIALIZED=False
 print("Initializing AutoShardedBot and global vars.")
-activity=discord.Game(name="Bot is starting, please wait.")
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink! | General use bot built on discord.py",activity=activity,status=discord.Status.dnd,help_command=None)
+loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.music"]
+loading_extensions.append("jishaku")
+SHARD_COUNT = 1
+INIT_SHARDS = []
+INITIALIZED=False
+
+bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink! | General use bot built on discord.py",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT)
 bot.load_extension("cogs.PRELOAD")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
@@ -63,11 +66,25 @@ async def on_ready():
         INITIALIZED=True
 
 
+@bot.event
+async def on_shard_ready(id):
+    global INIT_SHARDS
+    if id in INIT_SHARDS:
+        return
+    print(f"SHARD READY {id}")
+    INIT_SHARDS.append(id)
+
+
 async def init():
+    while len(INIT_SHARDS) != SHARD_COUNT:
+        await asyncio.sleep(0.1)
     print("\nINIT DATABASE\n")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     print("DATABASE INITIALIZED")
+    print("\nINIT HTTP SESSION")
+    bot.session = aiohttp.ClientSession()
+    print("HTTP INITIALIZED\n")
     print(f'\nLogged in as: {bot.user.name} - {bot.user.id}\nDiscord.py Version: {discord.__version__}')
     bot.statsserver=bot.get_guild(blink.Config.statsserver())
     if not bot.user.name == "blink beta":
@@ -84,16 +101,14 @@ async def init():
     members=len(list(bot.get_all_members()))
     print(f"STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)")
     startupid=blink.Config.startup(bot.user.name)
-    if startupid:
-        if not loadexceptions == "":
-            x=f"\n***ERRORS OCCURED ON STARTUP:***\n{loadexceptions}"
-        else:
-            x=""
-        boot=f"{'-' * 79}\n**BOT STARTUP:** {bot.user} started at {datetime.datetime.utcnow().isoformat()}\n```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)\nGUILDS:{len(bot.guilds)}\nSHARDS:{bot.shard_count}```\n`d.py version: {discord.__version__}`{x}"
-        await bot.get_channel(startupid).send(boot)
-        bot.bootlog=boot
+    if not loadexceptions == "":
+        x=f"\n***ERRORS OCCURED ON STARTUP:***\n{loadexceptions}"
     else:
-        bot.bootlog="Unavailable on beta"
+        x=""
+    boot=f"{'-' * 79}\n**BOT STARTUP:** {bot.user} started at {datetime.datetime.utcnow().isoformat()}\n```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)\nGUILDS:{len(bot.guilds)}\nSHARDS:{bot.shard_count}```\n`d.py version: {discord.__version__}`{x}"
+    if startupid:
+        await bot.get_channel(startupid).send(boot)
+    bot.bootlog=boot
 
 
 bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)
