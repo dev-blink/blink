@@ -24,27 +24,29 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
 
     @commands.command(name="pid",aliases=["parseid"])
     @commands.bot_has_permissions(embed_links=True,send_messages=True)
-    async def parse_id(self,ctx,obj):
+    async def parse_id(self,ctx,id):
         """Parses a discord ID."""
-        if not obj:
+        return await ctx.send("Command disabled due to bug...")
+        print(id)
+        print(type(id))
+        if not id:
             id=ctx.author.id
-        else:
-            id=obj
-            rm=["<",">","@","&","#","!"]
-            for x in rm:
-                id=id.replace(x,"")
+        rm=["<",">","@","&","#","!"]
+        for x in rm:
+            id=id.replace(x,"")
+        print(id)
         try:
             id=int(id)
         except Exception:
             return await ctx.send("Not a valid ID.")
         binaryid=bin(int(id))[2:]
-        time=binaryid[:42]
-        worker=binaryid[42:47]
-        process=binaryid[47:52]
-        count=binaryid[52:]
-        parsedid=f"{time}-{worker}-{process}-{count}"
+        time=id >> 22
+        worker=id << 22 >> 39
+        process=id << 27 >> 39
+        count=id << 54 >> 64
+        parsedid=f"{bin(time)}-{bin(worker)}-{bin(process)}-{bin(count)}"
         embed=discord.Embed(title=id,description=parsedid,colour=self.colour)
-        msg=f"```INTERNAL WORKER: {int(worker,2)}\nINTERNAL PROCESS ID: {int(process,2)}\nGENERATOR ITERATIVE: {int(count,2)}```"
+        msg=f"```INTERNAL WORKER: {worker}\nINTERNAL PROCESS ID: {process}\nGENERATOR ITERATIVE: {count}```"
         embed.add_field(name="Parsed ID",value=msg)
         embed.set_footer(text=f"CREATION DATE: {datetime.datetime.utcfromtimestamp(((id >> 22) + 1420070400000) / 1000).isoformat()}")
         return await ctx.send(embed=embed)
@@ -89,6 +91,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
                 return
             largest_guild=sorted(clientinstance.guilds,key=lambda x: x.member_count,reverse=True)[0]
             embed=discord.Embed(title=f"{clientinstance.user.name}#{clientinstance.user.discriminator} bot info",description=f"```Servers: {len(clientinstance.guilds)}\nMembers: {len(list(clientinstance.get_all_members())) - 1}\nLargest server: {largest_guild.name} ({largest_guild.member_count} members)```",colour=self.bot.colour)
+            embed.set_author(name=f"OWNER IDS {' '.join(clientinstance.owner_ids)}")
             if len(clientinstance.guilds) in range(2,11):
                 fguilds=[]
                 for guild in clientinstance.guilds:
@@ -97,7 +100,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
                 embed.add_field(name="Guilds:",value=f"```{formated}```")
             await clientinstance.logout()
             await clientinstance.close()
-        await ctx.message.add_reaction("<a:loading:701617517663354910>")
+        await ctx.message.add_reaction("<a:b-loading:701617517663354910>")
         try:
             await clientinstance.start(token,bot=True)
         except Exception:
