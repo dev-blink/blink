@@ -170,9 +170,9 @@ class Members(commands.Cog,name="Member"):
             return await ctx.send("No spotify detected.")
 
         if isinstance(spotify, discord.Spotify):
-            spotifyembed=discord.Embed(title=f"{user.name} is listening to: {spotify.title}",colour=spotify.colour)
+            spotifyembed=discord.Embed(title=f"{spotify.title}",colour=spotify.colour)
 
-            spotifyembed.add_field(name="Album:",value=spotify.album)
+            spotifyembed.add_field(name="Album:",value=spotify.album,inline=False)
 
             spotifyembed.set_thumbnail(url=spotify.album_cover_url)
 
@@ -181,10 +181,10 @@ class Members(commands.Cog,name="Member"):
                 pluralartist="Artists:"
             else:
                 pluralartist="By:"
-            spotifyembed.add_field(name=pluralartist,value=artists, inline=True)
+            spotifyembed.add_field(name=pluralartist,value=artists, inline=False)
 
             songtime=await convert(spotify.duration.seconds)
-            spotifyembed.add_field(name="Duration:",value=songtime)
+            spotifyembed.add_field(name="Duration:",value=songtime,inline=False)
             return await ctx.send(embed=spotifyembed)
 
 
