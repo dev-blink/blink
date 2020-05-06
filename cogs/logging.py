@@ -28,8 +28,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             self.avatar_channels.append(bot.get_channel(id))
 
     async def init(self): # Async init things
-        self.bot.add_cog(self)
         self.session = aiohttp.ClientSession()
+        self.bot.add_cog(self)
 
 # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
