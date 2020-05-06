@@ -235,8 +235,14 @@ class Moderation(commands.Cog, name="Moderation"):
             await ctx.message.delete()
             return await ctx.send(f"Cleaned {count} messages from user: {user.mention}",delete_after=4)
         else:
-            await ctx.channel.purge(limit=count, check=checkbot)
-            await ctx.message.delete()
+            try:
+                await ctx.channel.purge(limit=count, check=checkbot)
+            except discord.HTTPException:
+                await ctx.send("An error occured while attempting to purge\n(Probably attempting to purge more than 14 days ago)")
+            try:
+                await ctx.message.delete()
+            except discord.HTTPException:
+                pass
             return await ctx.send(f"Cleaned {count} messages from bots",delete_after=4)
 
 
