@@ -41,7 +41,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx, user: discord.Member=None, *reason):
+    async def ban(self, ctx, user: discord.Member=None,*,reason:str):
         """Bans a user."""
         reason=" ".join(reason)
         if reason == "":
@@ -88,11 +88,8 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def softban(self, ctx, user: discord.Member=None, *reason):
+    async def softban(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Bans and unbans a member to delete their messages."""
-        reason=" ".join(reason)
-        if reason == " ":
-            reason=None
         if not user:
             return await ctx.send("You must specify a user.")
         if not ctx.guild.owner == ctx.author:
@@ -114,11 +111,8 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    async def mute(self, ctx, user: discord.Member=None, *reason):
+    async def mute(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Mutes a user."""
-        reason=" ".join(reason)
-        if reason == " ":
-            reason=None
         if not user:
             return await ctx.send("You must specify a user.")
         if not ctx.guild.owner == ctx.author:
@@ -131,7 +125,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx, user: discord.Member=None, *reason):
+    async def kick(self, ctx, user: discord.Member=None,*,reason:str):
         """Kicks a user."""
         reason=" ".join(reason)
         if reason == "":
