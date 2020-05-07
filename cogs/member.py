@@ -147,7 +147,7 @@ class Members(commands.Cog,name="Member"):
             return await ctx.send(embed=embed)
         await ctx.send("A status was unable to be determined.")
 
-    @commands.command(name="listening",aliases=["playing","spotify"])
+    @commands.command(name="listening",aliases=["playing","spotify","spot"])
     @commands.guild_only()
     @commands.cooldown(1,10, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
