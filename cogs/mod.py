@@ -41,11 +41,8 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx, user: discord.Member=None,*,reason:str):
+    async def ban(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Bans a user."""
-        reason=" ".join(reason)
-        if reason == "":
-            reason=None
         if not user:
             return await ctx.send("You must specify a user.")
         if not ctx.guild.owner == ctx.author:
@@ -125,11 +122,8 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx, user: discord.Member=None,*,reason:str):
+    async def kick(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Kicks a user."""
-        reason=" ".join(reason)
-        if reason == "":
-            reason=None
         if not user:
             return await ctx.send("You must specify a user")
         if not ctx.guild.owner == ctx.author:
