@@ -1,66 +1,62 @@
-import discord
-from discord.ext import menus
-from discord.ext import commands
-import blink
-class HelpCommand(commands.Cog,name="Help"):
-    def __init__(self,bot):
-        bot.remove_command("help")
-        self.bot = bot
-        
-
-    
-    @commands.command(name="help",aliases=["h"])
-    async def help(self,ctx):
-        """Shows this help command"""
-        try:
-            message = await ctx.author.send(".")
-            await message.delete()
-            await ctx.message.add_reaction("\U0001f48c")
-        except:
-            return await ctx.send("I am unable to DM you.")
-        modules = []
-        for cog in self.bot.cogs:
-            embed=discord.Embed(title=cog+' commands.',description=self.bot.cogs[cog].__doc__,colour=0xf5a6b9)
-            notempty = False
-            for c in self.bot.get_cog(cog).get_commands():
-                if not c.hidden or ctx.author.id in self.bot.owner_ids :
-                    notempty = True
-                    embed.add_field(name=c.name,value=c.help,inline=False)
-            if notempty:
-                modules.append(embed)
-        
-        class HelpMenu(menus.Menu, modules=modules):
-            def __init__(self):
-                super().__init__(timeout=30)
-            async def send_initial_message(self, ctx, channel):
-                self.modulenumber = 0
-                return await ctx.author.send(embed=modules[self.modulenumber])
-
-            @menus.button('\U00002b05')
-            async def previous(self, payload):
-                if self.modulenumber == 0:
-                    self.modulenumber = len(modules) - 1
-                else:
-                    self.modulenumber -= 1
-                await self.message.edit(embed=modules[self.modulenumber])
-
-            @menus.button('\U000027a1')
-            async def next(self, payload):
-                if self.modulenumber == len(modules) - 1:
-                    self.modulenumber = 0
-                else:
-                    self.modulenumber += 1
-                await self.message.edit(embed=modules[self.modulenumber])
-
-            @menus.button('\U000023f9')
-            async def cancel(self, payload):
-                await self.message.edit(content="Message cancelled.")
-                self.stop()
-            
+import discord # noqa F401
+from discord.ext import commands,menus # noqa F401
 
 
-        menu = HelpMenu()
-        await menu.start(ctx)
+class BotHelp(commands.HelpCommand):
+    colour = 16099001
+
+    def get_ending_note(self):
+        return f'Use {self.clean_prefix}{self.invoked_with} <command> for more info on a command.'
+
+    def get_command_signature(self,command):
+        return f"**{command.qualified_name} {command.signature}**"
+
+    async def send_bot_help(self, mapping):
+        embed = discord.Embed(title='Commands', colour=self.colour)
+        desc = []
+        for cog, cmds in mapping.items():
+            name = 'Other' if cog is None else cog.qualified_name
+            filtered = await self.filter_commands(cmds, sort=True)
+            if filtered:
+                value = ' | '.join(c.name for c in cmds)
+                value = f'**{name}** {value}'
+                desc.append(value)
+        embed.description = "\n\n".join(desc)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+    async def send_cog_help(self, cog):
+        embed = discord.Embed(title=f'{cog.qualified_name} Commands', colour=self.colour)
+        if cog.description:
+            embed.description = cog.description
+
+        filtered = await self.filter_commands(cog.get_commands(), sort=True)
+        for command in filtered:
+            embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+    async def send_group_help(self, group):
+        embed = discord.Embed(title=group.qualified_name, colour=self.colour)
+        if group.help:
+            embed.description = group.help
+
+        if isinstance(group, commands.Group):
+            filtered = await self.filter_commands(group.commands, sort=True)
+            for command in filtered:
+                embed.add_field(name=self.get_command_signature(command), value=command.short_doc or '...', inline=False)
+
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
+    async def send_command_help(self,command):
+        embed = discord.Embed(title=f"**{command.name}**",colour=self.colour)
+        embed.description = f"{self.get_command_signature(command)} {command.short_doc or '...'}"
+        embed.set_footer(text=self.get_ending_note())
+        await self.get_destination().send(embed=embed)
+
 
 def setup(bot):
-    bot.add_cog(HelpCommand(bot))
+    bot.help_command=BotHelp()
