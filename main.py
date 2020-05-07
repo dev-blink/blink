@@ -33,7 +33,7 @@ def get_prefix(bot, message):
 
 
 print("Initializing AutoShardedBot and global vars.")
-loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.help","cogs.music"]
+loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
 SHARD_COUNT = 1
 INIT_SHARDS = []
