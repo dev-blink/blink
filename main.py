@@ -6,6 +6,7 @@ import asyncpg
 import logging
 import asyncio
 import aiohttp
+import os
 
 
 logger=logging.getLogger('discord')
@@ -32,13 +33,17 @@ def get_prefix(bot, message):
 
 
 print("Initializing AutoShardedBot and global vars.")
-loading_extensions=["cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.help","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
+loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.help","cogs.music"]
 loading_extensions.append("jishaku")
 SHARD_COUNT = 1
 INIT_SHARDS = []
 INITIALIZED=False
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
+os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
+os.environ["JISHAKU_HIDE"] = "True"
+os.environ["JISHAKU_RETAIN"] = "True"
 
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink! | General use bot built on discord.py",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT)
+bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,case_insensitive=True)
 bot.load_extension("cogs.PRELOAD")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
