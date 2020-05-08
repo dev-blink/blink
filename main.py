@@ -68,7 +68,7 @@ def load_extensions():
 async def on_ready():
     if bot.INITIALIZED:
         return
-    await init()
+    asyncio.create_task(__init())
     bot.INITIALIZED=True
 
 
@@ -81,7 +81,7 @@ async def on_shard_ready(id):
     INIT_SHARDS.append(id)
 
 
-async def init():
+async def __init():
     while len(INIT_SHARDS) != SHARD_COUNT:
         await asyncio.sleep(0.1)
     print("\nINIT DATABASE\n")
