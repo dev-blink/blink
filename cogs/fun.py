@@ -30,8 +30,8 @@ class Fun(commands.Cog,name="Fun"):
         if not snipes:
             return await ctx.send("No snipes found")
         embed= discord.Embed(title="Deleted messages",colour=self.bot.colour)
-        for snipe in snipes:
-            embed.add_field(name=f"{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago",value=snipe[0],inline=False)
+        for snipe in list(snipes).reverse():
+            embed.add_field(name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="random")
