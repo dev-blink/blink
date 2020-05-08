@@ -44,6 +44,7 @@ os.environ["JISHAKU_RETAIN"] = "True"
 
 bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,case_insensitive=True)
 bot.load_extension("cogs.PRELOAD")
+print("LOADED PRELOAD ERROR HANDLER")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
 loadexceptions=""
