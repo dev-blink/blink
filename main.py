@@ -83,7 +83,7 @@ async def on_shard_ready(id):
 
 
 async def __init():
-    while len(INIT_SHARDS) != SHARD_COUNT:
+    while len(INIT_SHARDS) != len(SHARD_IDS):
         await asyncio.sleep(0.1)
     print("\nINIT DATABASE\n")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
