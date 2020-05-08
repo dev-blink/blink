@@ -36,13 +36,14 @@ print("Initializing AutoShardedBot and global vars.")
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
 SHARD_COUNT = 2
+SHARD_IDS = [0]
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,case_insensitive=True)
+bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
 bot.load_extension("cogs.PRELOAD")
 print("LOADED PRELOAD ERROR HANDLER")
 bot.startingcogs=loading_extensions
