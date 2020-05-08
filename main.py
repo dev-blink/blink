@@ -10,7 +10,7 @@ import os
 
 
 logger=logging.getLogger('discord')
-logger.setLevel(20)
+logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
