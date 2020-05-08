@@ -35,9 +35,8 @@ def get_prefix(bot, message):
 print("Initializing AutoShardedBot and global vars.")
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
-SHARD_COUNT = 1
+SHARD_COUNT = 2
 INIT_SHARDS = []
-INITIALIZED=False
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
 os.environ["JISHAKU_HIDE"] = "True"
@@ -48,6 +47,7 @@ bot.load_extension("cogs.PRELOAD")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
 loadexceptions=""
+bot.INITIALIZED=False
 
 
 def load_extensions():
@@ -65,10 +65,10 @@ def load_extensions():
 
 @bot.event
 async def on_ready():
-    global INITIALIZED
-    if not INITIALIZED:
-        await init()
-        INITIALIZED=True
+    if bot.INITIALIZED:
+        return
+    await init()
+    bot.INITIALIZED=True
 
 
 @bot.event
