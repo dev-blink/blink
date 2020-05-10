@@ -53,7 +53,7 @@ class Fun(commands.Cog,name="Fun"):
         snipes = self.esnipes.get(ctx.guild.id)
         if snipes is None:
             return await ctx.send("No snipes found")
-        embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
+        embed=discord.Embed(title="Edited messages",colour=self.bot.colour)
         snipes.reverse()
         for snipe in snipes:
             embed.add_field(name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
