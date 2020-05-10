@@ -35,8 +35,8 @@ def get_prefix(bot, message):
 print("Initializing AutoShardedBot and global vars.")
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
-SHARD_COUNT = 2
-SHARD_IDS = [0,1]
+SHARD_COUNT = 1
+SHARD_IDS = [0] # ,1]
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"

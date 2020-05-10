@@ -89,8 +89,11 @@ class Player(wavelink.Player):
                 await self.controller.message.delete()
             except Exception:
                 pass
+            try:
 
-            self.controller.stop()
+                self.controller.stop()
+            except Exception:
+                pass
 
             self.controller=InteractiveController(embed=self.build_embed(), player=self)
             await self.controller.start(self.context)
@@ -135,8 +138,10 @@ class Player(wavelink.Player):
             await self.controller.message.delete()
         except Exception:
             pass
-
-        self.controller.stop()
+        try:
+            self.controller.stop()
+        except Exception:
+            pass
 
         try:
             await self.destroy()
