@@ -38,12 +38,12 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.Cog.listener("on_message_edit")
     async def append_edit_snipes(self,before,after):
-        if len(before.content) > 1024 or before.author.bot or not before.content:
+        if (len(before.content) + len(after.content)) > 1024 or before.author.bot or not before.content:
             return
         snipes = self.esnipes.get(before.guild.id)
         if not snipes:
             snipes = deque([],5)
-        snipes.appendleft((before.content,str(before.author),datetime.datetime.utcnow()))
+        snipes.appendleft((f"{before.content} **🠢** {after.content}",str(before.author),datetime.datetime.utcnow()))
         self.esnipes[before.guild.id] = snipes
 
     @commands.command(name="esnipe",aliases=["editsnipe"])
