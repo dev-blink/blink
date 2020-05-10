@@ -11,6 +11,7 @@ class Fun(commands.Cog,name="Fun"):
     def __init__(self,bot):
         self.bot=bot
         self.snipes = {}
+        self.esnipes= {}
 
     @commands.Cog.listener("on_message_delete")
     async def append_snipes(self,message):
@@ -27,6 +28,29 @@ class Fun(commands.Cog,name="Fun"):
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def snipe(self,ctx):
         snipes = self.snipes.get(ctx.guild.id)
+        if snipes is None:
+            return await ctx.send("No snipes found")
+        embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
+        snipes.reverse()
+        for snipe in snipes:
+            embed.add_field(name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
+        return await ctx.send(embed=embed)
+
+    @commands.Cog.listener("on_message_edit")
+    async def append_edit_snipes(self,before,after):
+        if len(before.content) > 1024 or before.author.bot or not before.content:
+            return
+        snipes = self.esnipes.get(before.guild.id)
+        if not snipes:
+            snipes = deque([],5)
+        snipes.appendleft((before.content,str(before.author),datetime.datetime.utcnow()))
+        self.esnipes[before.guild.id] = snipes
+
+    @commands.command(name="esnipe",aliases=["editsnipe"])
+    @commands.guild_only()
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    async def edit_snipe(self,ctx):
+        snipes = self.esnipes.get(ctx.guild.id)
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
