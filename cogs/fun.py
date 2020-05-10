@@ -56,7 +56,7 @@ class Fun(commands.Cog,name="Fun"):
         embed=discord.Embed(title="Edited messages",colour=self.bot.colour)
         snipes.reverse()
         for snipe in snipes:
-            embed.add_field(name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
+            embed.add_field(name=f"**{snipe[1]} edited {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="random")
