@@ -26,9 +26,17 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return
 
         elif isinstance(error,commands.MissingRequiredArgument):
+            try:
+                await ctx.message.add_reaction("\U00002754")
+            except discord.Forbidden:
+                pass
             return await ctx.send_help(ctx.command)
 
         elif isinstance(error,commands.TooManyArguments):
+            try:
+                await ctx.message.add_reaction("\U00002754")
+            except discord.Forbidden:
+                pass
             return await ctx.send_help(ctx.command)
 
         elif isinstance(error,menus.CannotAddReactions):
