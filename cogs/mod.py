@@ -219,17 +219,20 @@ class Moderation(commands.Cog, name="Moderation"):
             else:
                 count=50
         if not cleanbot:
-            await ctx.channel.purge(limit=count, check=checkuser)
-            await ctx.message.delete()
+            try:
+                await ctx.channel.purge(limit=count, check=checkuser)
+                await ctx.message.delete()
+            except Exception:
+                await ctx.send("An error occured while attempting to purge\n(Probably attempting to purge more than 14 days ago)")
             return await ctx.send(f"Cleaned {count} messages from user: {user.mention}",delete_after=4)
         else:
             try:
                 await ctx.channel.purge(limit=count, check=checkbot)
-            except discord.HTTPException:
+            except Exception:
                 await ctx.send("An error occured while attempting to purge\n(Probably attempting to purge more than 14 days ago)")
             try:
                 await ctx.message.delete()
-            except discord.HTTPException:
+            except Exception:
                 pass
             return await ctx.send(f"Cleaned {count} messages from bots",delete_after=4)
 
