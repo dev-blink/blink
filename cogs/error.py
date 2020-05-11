@@ -26,10 +26,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return
 
         elif isinstance(error,commands.MissingRequiredArgument):
-            return await ctx.send(error)
+            return await ctx.send_help(ctx.command)
 
         elif isinstance(error,commands.TooManyArguments):
-            return await ctx.send("Too many arguments passed...")
+            return await ctx.send_help(ctx.command)
 
         elif isinstance(error,menus.CannotAddReactions):
             return await ctx.send("I am unable to initialize the reaction menu. Please give me permissions to add reactions.")
