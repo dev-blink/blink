@@ -31,7 +31,7 @@ class Fun(commands.Cog,name="Fun"):
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
-        for snipe in snipes[::-1]:
+        for snipe in list(reversed(snipes)):
             embed.add_field(name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
         return await ctx.send(embed=embed)
 
@@ -53,7 +53,7 @@ class Fun(commands.Cog,name="Fun"):
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Edited messages",colour=self.bot.colour)
-        for snipe in snipes[::-1]:
+        for snipe in list(reversed(snipes)):
             embed.add_field(name=f"**{snipe[1]} edited {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**",value=snipe[0],inline=False)
         return await ctx.send(embed=embed)
 
@@ -159,7 +159,7 @@ class Fun(commands.Cog,name="Fun"):
             em.set_image(url="https://i.imgur.com/N9Ilqtc.png")
         return await ctx.send(embed=em)
 
-    @commands.command()
+    @commands.command(name="mock")
     async def mock(self, ctx,*, text:str=None):
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
 
