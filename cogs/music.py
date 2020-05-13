@@ -510,7 +510,7 @@ class Music(commands.Cog):
     @commands.command(name="stop")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def stop(self, ctx: commands.Context):
-        """Stop the player and clear all internal states."""
+        """Stop the player."""
         player: Player=self.bot.wavelink.get_player(guild_id=ctx.guild.id, cls=Player, context=ctx)
 
         if not player.is_connected:
