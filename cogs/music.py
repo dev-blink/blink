@@ -490,12 +490,12 @@ class Music(commands.Cog):
             player.skip_votes.clear()
 
             return await player.stop()
+        if player.current:
+            if ctx.author == player.current.requester:
+                await ctx.send('The song requester has skipped the song.', delete_after=10)
+                player.skip_votes.clear()
 
-        if ctx.author == player.current.requester:
-            await ctx.send('The song requester has skipped the song.', delete_after=10)
-            player.skip_votes.clear()
-
-            return await player.stop()
+                return await player.stop()
 
         required=self.required(ctx)
         player.skip_votes.add(ctx.author)
