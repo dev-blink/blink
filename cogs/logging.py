@@ -133,7 +133,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         await ctx.send(f'```{e}```')
 
     @commands.command(name="avatars",aliases=["avs"])
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,add_reactions=True)
     @commands.cooldown(1,10,commands.BucketType.user)
     async def avatarhistory(self,ctx,user:discord.Member=None):
         """Show avatar history"""
