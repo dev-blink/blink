@@ -283,9 +283,9 @@ class Music(commands.Cog):
             for node in previous.values():
                 await node.destroy()
         if self.bot.user.name == "blink beta":
-            nodes={'MAIN': {'host': '192.168.1.154','port': 2333,'rest_uri': 'http://10.128.0.9:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
+            nodes={'MAIN': {'host': '192.168.1.154','port': 2333,'rest_uri': 'http://192.168.1.154:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
         else:
-            nodes={'MAIN': {'host': 'localhost','port': 2333,'rest_uri': 'http://localhost:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
+            nodes={'MAIN': {'host': 'localhost','port': 2333,'rest_uri': 'http://10.128.0.9:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
 
         for n in nodes.values():
             node=await self.bot.wavelink.initiate_node(**n)
