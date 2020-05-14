@@ -285,13 +285,13 @@ class Music(commands.Cog):
         if self.bot.user.name == "blink beta":
             nodes={'MAIN': {'host': '192.168.1.154','port': 2333,'rest_uri': 'http://192.168.1.154:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
         else:
-            nodes={'MAIN': {'host': '10.128.0.9','port': 2333,'rest_uri': 'http://10.128.0.9:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
+            nodes={'MAIN': {'host': '10.128.0.10','port': 2333,'rest_uri': 'http://10.128.0.10:2333','password': 'password','identifier': 'MAIN','region': 'us_east'}}
 
         for n in nodes.values():
             node=await self.bot.wavelink.initiate_node(**n)
             node.set_hook(self.node_event_hook)
 
-    async def node_event_hook(self, event: wavelink.WavelinkEvent) -> None:
+    async def node_event_hook(self, event):
         """Node event hook."""
         if isinstance(event, (wavelink.TrackStuck, wavelink.TrackException, wavelink.TrackEnd)):
             await event.player.do_next()
