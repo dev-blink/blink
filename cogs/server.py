@@ -35,7 +35,7 @@ class Server(commands.Cog,name="Server"):
         if not role:
             return await ctx.send("I could not find that role.")
         if len(role.members) > 35 or len(role.members) == 0:
-            return await ctx.send("There are %s members with the role "% len(role.members) + role.name)
+            return await ctx.send("There are %s members with the role "% len(role.members) + role.name.replace("@everyone","@" + '\uFEFF' + "everyone"))
         description=""
         for member in role.members:
             description=description + member.mention
