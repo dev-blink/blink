@@ -281,7 +281,10 @@ class Music(commands.Cog):
             previous=self.bot.wavelink.nodes.copy()
 
             for node in previous.values():
-                await node.destroy()
+                try:
+                    await node.destroy()
+                except Exception:
+                    pass
         nodes={'MAIN': {'host': '162.251.122.232','port': 5259,'rest_uri': 'http://162.251.122.232:5259','password': 'xd16678542','identifier': 'MAIN','region': 'us_east'}}
 
         for n in nodes.values():
