@@ -35,8 +35,8 @@ def get_prefix(bot, message):
 print("Initializing AutoShardedBot and global vars.")
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
-SHARD_COUNT = 2
-SHARD_IDS = [0,1]
+SHARD_COUNT = 1
+SHARD_IDS = [0]
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
@@ -69,6 +69,8 @@ def load_extensions():
 async def on_ready():
     if bot.INITIALIZED:
         return
+    while len(INIT_SHARDS) != len(SHARD_IDS):
+        await asyncio.sleep(0.1)
     asyncio.create_task(__init())
     bot.INITIALIZED=True
 
@@ -83,9 +85,7 @@ async def on_shard_ready(id):
 
 
 async def __init():
-    while len(INIT_SHARDS) != len(SHARD_IDS):
-        await asyncio.sleep(0.1)
-    print("\nINIT DATABASE\n")
+    print("\nINIT DATABASE")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     print("DATABASE INITIALIZED")

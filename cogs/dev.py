@@ -88,7 +88,7 @@ class Owner(commands.Cog, name="Developer"):
         await self.bot.loop.close()
         exit()
 
-    @commands.command(name="say",aliases=["repeat"],hidden=True)
+    @commands.command(name="say",hidden=True)
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True)
     async def repeat(self,ctx,*term):
