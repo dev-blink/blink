@@ -86,7 +86,10 @@ async def __init():
     bot.statsserver=bot.get_guild(blink.Config.statsserver())
     await bot.change_presence(status=discord.Status.online,activity=discord.Streaming(name='; (b;)', url='https://www.twitch.tv/#'))
     bot.boottime=STARTUPTIME
-    bot.unload_extension("cogs.pre-error")
+    try:
+        bot.unload_extension("cogs.pre-error")
+    except commands.ExtensionNotLoaded:
+        pass
     load_extensions()
     boottime=datetime.datetime.utcnow() - STARTUPTIME
     members=len(list(bot.get_all_members()))
