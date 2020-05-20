@@ -34,8 +34,8 @@ def get_prefix(bot, message):
 
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
-SHARD_COUNT = 2
-SHARD_IDS = [0,1]
+SHARD_COUNT = 3
+SHARD_IDS = [0,1,2]
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
@@ -67,7 +67,6 @@ async def on_ready():
     bot.INITIALIZED=True
     while len(INIT_SHARDS) != len(SHARD_IDS):
         await asyncio.sleep(1)
-        print(f"WAITING ON SHARDS {INIT_SHARDS} / {SHARD_IDS}")
     await __init()
 
 
