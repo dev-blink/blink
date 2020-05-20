@@ -71,8 +71,8 @@ async def on_ready():
         return
     while len(INIT_SHARDS) != len(SHARD_IDS):
         await asyncio.sleep(0.1)
-    asyncio.create_task(__init())
     bot.INITIALIZED=True
+    await __init()
 
 
 @bot.event
