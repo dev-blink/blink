@@ -65,7 +65,8 @@ async def on_ready():
     if bot.INITIALIZED:
         return
     while len(INIT_SHARDS) != len(SHARD_IDS):
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
+        print(f"WAITING ON SHARDS {INIT_SHARDS} / {SHARD_IDS}")
     bot.INITIALIZED=True
     await __init()
 
@@ -80,6 +81,9 @@ async def on_shard_ready(id):
 
 
 async def __init():
+    if bot.INITIALIZED:
+        return
+    print("INIT")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
