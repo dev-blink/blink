@@ -128,7 +128,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             unformatted = self._unformat(entry)
             dt = unformatted[0]
             name = unformatted[1]
-            names.append(f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:2}:{dt.minute:2} -> {name}")
+            names.append(f"{dt.day}/{dt.month}/{dt.year} @ {int(dt.hour):2}:{int(dt.minute):2} -> {name}")
         e = "\n".join(names)
         await ctx.send(f'```{e}```')
 
