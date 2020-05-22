@@ -127,7 +127,7 @@ class Moderation(commands.Cog, name="Moderation"):
         if not user:
             return await ctx.send("You must specify a user")
         if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role:
+            if user.top_role >= ctx.author.top_role or user.id == ctx.guild.owner_id:
                 return await ctx.send("You are unable to sanction that user. (Check your roles)")
 
         try:
@@ -139,7 +139,7 @@ class Moderation(commands.Cog, name="Moderation"):
                 await ctx.guild.kick(user, reason=f"By {ctx.author} for None Specified")
                 await ctx.send(f"{user.mention} was kicked for {reason}.")
         except discord.Forbidden:
-            return await ctx.send("I am unable to kick that user, (discord.Forbidden)")
+            return await ctx.send("I tried to kick that user and discord responded with 'Forbidden'")
 
     @commands.command(name="purge",aliases=["prune"])
     @commands.has_permissions(manage_messages=True)
@@ -147,8 +147,10 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def purge(self, ctx, limit: int):
         """Bulk deletes messages."""
-
-        await ctx.channel.purge(limit=limit + 1)  # also deletes your own message
+        try:
+            await ctx.channel.purge(limit=limit + 1)  # also deletes your own message
+        except Exception:
+            return await ctx.send("unable to purge those messages.")
         await ctx.send(f"Bulk deleted `{limit}` messages",delete_after=5)
 
     @commands.command(name="unmute")
@@ -200,7 +202,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def clean(self,ctx, user: discord.Member=None,count:int =None):
-        """Cleans a set amount of messages from a user (defaults to bot users and 50 messages)"""
+        """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
         # CLEAN COMMAND CHECKS
         def checkbot(m):
             return m.author.bot
@@ -222,14 +224,20 @@ class Moderation(commands.Cog, name="Moderation"):
             try:
                 await ctx.channel.purge(limit=count, check=checkuser)
                 await ctx.message.delete()
-            except Exception:
-                await ctx.send("An error occured while attempting to purge\n(Probably attempting to purge more than 14 days ago)")
+            except Exception as e:
+                if str(e) == "400 Bad Request (error code: 50034): You can only bulk delete messages that are under 14 days old":
+                    return await ctx.send("I cannot purge messages older than 14 days")
+                else:
+                    raise
             return await ctx.send(f"Cleaned {count} messages from user: {user.mention}",delete_after=4)
         else:
             try:
                 await ctx.channel.purge(limit=count, check=checkbot)
-            except Exception:
-                await ctx.send("An error occured while attempting to purge\n(Probably attempting to purge more than 14 days ago)")
+            except Exception as e:
+                if str(e) == "400 Bad Request (error code: 50034): You can only bulk delete messages that are under 14 days old":
+                    return await ctx.send("I cannot purge messages older than 14 days")
+                else:
+                    raise
             try:
                 await ctx.message.delete()
             except Exception:
