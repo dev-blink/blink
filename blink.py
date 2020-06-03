@@ -16,8 +16,7 @@ async def searchrole(roles:list,term:str):
 
 def ordinal(n:int):
     """Turns an int into its ordinal (1 -> 1st)"""
-    n="%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])  # noqa: E226,E228
-    return n
+    return f"{n}{'tsnrhtdd'[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]}" # noqa: E226,E228
 
 
 class Config():

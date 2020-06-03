@@ -17,17 +17,17 @@ class Fun(commands.Cog,name="Fun"):
     async def append_snipes(self,message):
         if len(message.content) > 1024 or message.author.bot or not message.content:
             return
-        snipes = self.snipes.get(message.guild.id)
+        snipes = self.snipes.get(message.guild.id[message.channel.id])
         if not snipes:
             snipes = deque([],5)
         snipes.appendleft((message.content,str(message.author),datetime.datetime.utcnow()))
-        self.snipes[message.guild.id] = snipes
+        self.snipes[message.guild.id][message.channel.id] = snipes
 
     @commands.command(name="snipe")
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def snipe(self,ctx):
-        snipes = self.snipes.get(ctx.guild.id)
+        snipes = self.snipes.get(ctx.guild.id[ctx.channel.id])
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
@@ -39,17 +39,17 @@ class Fun(commands.Cog,name="Fun"):
     async def append_edit_snipes(self,before,after):
         if (len(before.content) + len(after.content)) > 1024 or before.author.bot or not before.content:
             return
-        snipes = self.esnipes.get(before.guild.id)
+        snipes = self.esnipes.get(before.guild.id[before.channel.id])
         if not snipes:
             snipes = deque([],5)
         snipes.appendleft((f"{before.content} **🠢** {after.content}",str(before.author),datetime.datetime.utcnow()))
-        self.esnipes[before.guild.id] = snipes
+        self.esnipes[before.guild.id][before.channel.id] = snipes
 
     @commands.command(name="esnipe",aliases=["editsnipe"])
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def edit_snipe(self,ctx):
-        snipes = self.esnipes.get(ctx.guild.id)
+        snipes = self.esnipes.get(ctx.guild.id[ctx.channel.id])
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Edited messages",colour=self.bot.colour)
