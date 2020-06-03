@@ -27,7 +27,11 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def snipe(self,ctx):
-        snipes = self.snipes.get(ctx.guild.id).get(ctx.channel.id)
+        """Snipe recently deleted messages"""
+        g = self.snipes.get(ctx.guild.id)
+        if g is None:
+            return await ctx.send("No snipes found.")
+        snipes = g.get(ctx.channel.id)
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Deleted messages",colour=self.bot.colour)
@@ -49,7 +53,10 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def edit_snipe(self,ctx):
-        snipes = self.esnipes.get(ctx.guild.id).get(ctx.channel.id)
+        g = self.esnipes.get(ctx.guild.id)
+        if g is None:
+            return await ctx.send("No snipes found.")
+        snipes = g.get(ctx.channel.id)
         if snipes is None:
             return await ctx.send("No snipes found")
         embed=discord.Embed(title="Edited messages",colour=self.bot.colour)
