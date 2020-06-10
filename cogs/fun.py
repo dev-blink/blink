@@ -61,6 +61,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def edit_snipe(self,ctx):
+        """Snipe recently edited messages"""
         g = self.esnipes.get(ctx.guild.id)
         if g is None:
             return await ctx.send("No snipes found.")
