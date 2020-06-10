@@ -45,7 +45,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         uid = before.id
         beforeav = str(before.avatar_url_as(format="png", size=4096))
         afterav = str(after.avatar_url_as(format="png", size=4096))
-        result = await self.bot.DB.fetchrow(f"SELECT name, avatar FROM userlog WHERE id = $1",uid)
+        result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1",uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
 
@@ -70,7 +70,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         name = self._format(timestamp,oldname)
         oldav = await self._avurl(oldav)
         avatar = self._format(timestamp,oldav)
-        await self.bot.DB.execute(f"INSERT INTO userlog VALUES ($1,$2,$3)",id,[name],[avatar]) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
+        await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,[name],[avatar]) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
 
     async def _update_un(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
@@ -79,7 +79,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         except IndexError:
             previousNames = []
         previousNames.append(self._format(tt,after))
-        await self.bot.DB.execute(f"UPDATE userlog SET name = $1 WHERE id = $2",previousNames,id)
+        await self.bot.DB.execute("UPDATE userlog SET name = $1 WHERE id = $2",previousNames,id)
 
     async def _update_av(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
@@ -89,12 +89,12 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         except IndexError:
             previousAvatars = []
         previousAvatars.append(self._format(tt,av))
-        await self.bot.DB.execute(f"UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
+        await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
     async def _avurl(self,url):
         r = await self.session.get(str(url))
         img_data = BytesIO(await r.read())
-        f = discord.File(fp=img_data, filename=f"av.png")
+        f = discord.File(fp=img_data, filename="av.png")
         m = await self.avs().send(file=f)
         url = m.attachments[0].url
         return url
@@ -104,11 +104,11 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     async def update_db(self,message):
         if message.author.bot or not message.guild:
             return
-        result=await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id=$1",message.author.id)
+        result=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",message.author.id)
         if not result:
-            await self.bot.DB.execute(f"INSERT INTO globalmsg VALUES ($1,$2)",message.author.id,1)
+            await self.bot.DB.execute("INSERT INTO globalmsg VALUES ($1,$2)",message.author.id,1)
         else:
-            await self.bot.DB.execute(f"UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + 1,message.author.id)
+            await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + 1,message.author.id)
         return
 
 # USERNAME AND AVATAR
@@ -119,7 +119,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not user:
             user = ctx.author
         uid = user.id
-        result = await self.bot.DB.fetchrow(f"SELECT name FROM userlog WHERE id = $1",uid)
+        result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1",uid)
         if not result or result["name"] is None:
             return await ctx.send("No names tracked.")
         result = result["name"]
@@ -140,7 +140,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not user:
             user = ctx.author
         uid = user.id
-        result = await self.bot.DB.fetchrow(f"SELECT avatar FROM userlog WHERE id = $1",uid)
+        result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
         if not result or result["avatar"] is None:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
@@ -165,7 +165,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         """Show tracked messages sent globally"""
         if not member:
             member=ctx.author
-        count=await self.bot.DB.fetchrow(f"SELECT * FROM globalmsg WHERE id=$1",member.id)
+        count=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",member.id)
         if not count:
             return await ctx.send("Nothing in our database.")
         embed=discord.Embed(description=f'{count["messages"]} messages sent.',colour=self.bot.colour)
