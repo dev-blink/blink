@@ -8,7 +8,7 @@ import asyncio
 import aiohttp
 import os
 
-
+beta = True
 logger=logging.getLogger('discord')
 logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -18,13 +18,12 @@ STARTUPTIME=datetime.datetime.utcnow()
 
 
 def get_prefix(bot, message):
+    if beta:
+        return 'beta;'
     prefixes=[';','b;','B;']
 
     if not message.guild:
         return '?'
-
-    if bot.user.name == "blink beta":
-        prefixes= ['beta;']
 
     if message.guild.id in [336642139381301249,264445053596991498,265828729970753537] and not bot.user.name == "blink beta":
         prefixes=["b;","B;"]

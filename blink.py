@@ -65,15 +65,9 @@ def prettydelta(seconds):
 
 def prand(spice:float,uid:int,start:int,stop:int,inverse:bool=False):
     """Baised random"""
-    if uid in [171197717559771136]:
-        if inverse:
-            return start
-        else:
-            return stop
-    else:
-        b=uid * spice
-        rng=RAND(x=(b))
-        return rng.randint(start,stop)
+    b=uid * spice
+    rng=RAND(x=(b))
+    return rng.randint(start,stop)
 
 
 # MUSIC ERRORS
