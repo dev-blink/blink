@@ -9,7 +9,7 @@ import aiohttp
 import os
 
 
-beta=False
+beta=True
 logger=logging.getLogger('discord')
 logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -20,9 +20,6 @@ STARTUPTIME=datetime.datetime.utcnow()
 
 def get_prefix(bot, message):
     prefixes=[';','b;','B;']
-
-    if not message.guild:
-        return '?'
 
     if beta:
         return "beta;"
@@ -80,7 +77,7 @@ async def on_shard_ready(id):
 
 
 async def __init():
-    print("INIT")
+    print("INITIALIZING")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
@@ -98,7 +95,8 @@ async def __init():
         x=""
     boot=f"{'-' * 79}\n**BOT STARTUP:** {bot.user} started at {datetime.datetime.utcnow().isoformat()}\n```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)\nGUILDS:{len(bot.guilds)}\nSHARDS:{bot.shard_count}```\n`d.py version: {discord.__version__}`{x}"
     if startupid:
-        await bot.get_channel(startupid).send(boot)
+        if not beta:
+            await bot.get_channel(startupid).send(boot)
     bot.bootlog=boot
     print("READY")
     update.start()
@@ -106,7 +104,8 @@ async def __init():
 
 @tasks.loop(minutes=5)
 async def update():
-    await bot.change_presence(status=discord.Status.online,activity=discord.Streaming(name=f'; (b;) {len(bot.guilds)} Guilds!', url='https://www.twitch.tv/#'))
+    for id in SHARD_IDS:
+        await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help - {len(bot.guilds)} Guilds [{id}]', url='https://www.twitch.tv/#'))
 
 
 bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)
