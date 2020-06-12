@@ -139,8 +139,7 @@ class Members(commands.Cog,name="Member"):
             embed.add_field(name=base.name, value=base.details, inline=False)
 
         elif isinstance(base, discord.Streaming):
-            embed=discord.Embed(title="Streaming on " + base.platform, url=base.url)
-            embed.add_field(name="Playing:", value=base.game, inline=False)
+            embed=discord.Embed(title="Streaming", url=base.url,description=base.name)
         else:
             embed=False
         if embed:
