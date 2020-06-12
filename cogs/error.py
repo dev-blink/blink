@@ -1,5 +1,4 @@
 import traceback
-import sys
 from discord.ext import commands, menus
 import discord
 import blink
@@ -90,10 +89,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(error)
 
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-        if "beta" not in self.bot.user.name:
-            await self.errorreport.send(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
+        await self.errorreport.send(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
 
 
 def setup(bot):
