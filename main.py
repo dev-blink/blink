@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import blink
 import datetime
 import asyncpg
@@ -9,6 +9,7 @@ import aiohttp
 import os
 
 
+beta=False
 logger=logging.getLogger('discord')
 logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -23,9 +24,8 @@ def get_prefix(bot, message):
     if not message.guild:
         return '?'
 
-    if bot.user.name == "blink beta":
-        prefixes= ['beta;']
-
+    if beta:
+        return "beta;"
     if message.guild.id in [336642139381301249,264445053596991498,265828729970753537] and not bot.user.name == "blink beta":
         prefixes=["b;","B;"]
 
@@ -101,6 +101,12 @@ async def __init():
         await bot.get_channel(startupid).send(boot)
     bot.bootlog=boot
     print("READY")
+    update.start()
+
+
+@tasks.loop(minutes=5)
+async def update():
+    await bot.change_presence(status=discord.Status.online,activity=discord.Streaming(name=f'; (b;) {len(bot.guilds)} Guilds!', url='https://www.twitch.tv/#'))
 
 
 bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)
