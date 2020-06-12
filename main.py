@@ -9,7 +9,7 @@ import aiohttp
 import os
 
 
-beta=True
+beta=False
 logger=logging.getLogger('discord')
 logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
