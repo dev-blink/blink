@@ -23,6 +23,8 @@ def get_prefix(bot, message):
 
     if beta:
         return "beta;"
+    if not message.guild:
+        return prefixes
     if message.guild.id in [336642139381301249,264445053596991498,265828729970753537] and not bot.user.name == "blink beta":
         prefixes=["b;","B;"]
 
