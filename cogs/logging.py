@@ -95,7 +95,13 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         r = await self.session.get(str(url))
         img_data = BytesIO(await r.read())
         f = discord.File(fp=img_data, filename="av.png")
-        m = await self.avs().send(file=f)
+        try:
+            m = await self.avs().send(file=f)
+        except aiohttp.client_exceptions.ClientOSError as e:
+            if e.errno != 104:
+                raise
+            else:
+                pass
         url = m.attachments[0].url
         return url
 
