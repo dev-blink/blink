@@ -41,7 +41,7 @@ os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",activity=discord.Game(name="Bot is starting, please wait."),status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
+bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
 bot.load_extension("cogs.pre-error")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
@@ -107,7 +107,7 @@ async def __init():
 @tasks.loop(minutes=5)
 async def update():
     for id in SHARD_IDS:
-        await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help - {len(bot.guilds)} Guilds [{id}]', url='https://www.twitch.tv/#'))
+        await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
 
 
 bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)
