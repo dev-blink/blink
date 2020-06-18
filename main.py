@@ -11,7 +11,7 @@ import os
 
 SHARD_COUNT = 3
 SHARD_IDS = [0,1,2]
-print(f"Starting with {SHARD_COUNT} shards ({SHARD_IDS[0]}-{SHARD_IDS[-1]})")
+print(f"Starting with {SHARD_COUNT} shards ({SHARD_IDS[0]}-{SHARD_IDS[-1]})\n")
 
 beta=False
 logger=logging.getLogger('discord')
@@ -29,7 +29,7 @@ def get_prefix(bot, message):
         return "beta;"
     if not message.guild:
         return prefixes
-    if message.guild.id in [336642139381301249,264445053596991498,265828729970753537] and not bot.user.name == "blink beta":
+    if message.guild.id in [336642139381301249,264445053596991498,265828729970753537]:
         prefixes=["b;","B;"]
 
     return commands.when_mentioned_or(*prefixes)(bot, message)
@@ -76,12 +76,12 @@ async def on_shard_ready(id):
     global INIT_SHARDS
     if id in INIT_SHARDS:
         return
-    print(f"SHARD READY {id}")
+    print(f"Started shard {id}")
     INIT_SHARDS.append(id)
 
 
 async def __init():
-    print("INITIALIZING")
+    print("\nInitializing")
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
@@ -102,7 +102,7 @@ async def __init():
         if not beta:
             await bot.get_channel(startupid).send(boot)
     bot.bootlog=boot
-    print("READY")
+    print("Bot Ready")
     update.start()
 
 
