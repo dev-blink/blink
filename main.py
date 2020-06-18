@@ -9,6 +9,10 @@ import aiohttp
 import os
 
 
+SHARD_COUNT = 3
+SHARD_IDS = [0,1,2]
+print(f"Starting with {SHARD_COUNT} shards ({SHARD_IDS[0]}-{SHARD_IDS[-1]})")
+
 beta=False
 logger=logging.getLogger('discord')
 logger.setLevel(0)
@@ -33,8 +37,6 @@ def get_prefix(bot, message):
 
 loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
 loading_extensions.append("jishaku")
-SHARD_COUNT = 3
-SHARD_IDS = [0,1,2]
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
