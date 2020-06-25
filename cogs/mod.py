@@ -228,7 +228,12 @@ class Moderation(commands.Cog, name="Moderation"):
                 if str(e) == "400 Bad Request (error code: 50034): You can only bulk delete messages that are under 14 days old":
                     return await ctx.send("I cannot purge messages older than 14 days")
                 else:
-                    raise
+                    try:
+                        raise
+                    except discord.errors.NotFound:
+                        pass
+                    else:
+                        raise
             return await ctx.send(f"Cleaned {count} messages from user: {user.mention}",delete_after=4)
         else:
             try:
