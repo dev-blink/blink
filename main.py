@@ -43,7 +43,7 @@ os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",status=discord.Status.dnd,help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
+bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
 bot.load_extension("cogs.pre-error")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
@@ -104,6 +104,7 @@ async def __init():
     bot.bootlog=boot
     print("Bot Ready")
     update.start()
+    await update()
 
 
 @tasks.loop(minutes=5)
