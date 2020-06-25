@@ -104,7 +104,6 @@ async def __init():
     bot.bootlog=boot
     print("Bot Ready")
     update.start()
-    await update()
 
 
 @tasks.loop(minutes=5)
