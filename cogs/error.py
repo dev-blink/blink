@@ -15,6 +15,13 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        return await self.handle(ctx,error)
+
+    @commands.Cog.listener()
+    async def on_error(self, ctx, error):
+        return await self.handle(ctx,error)
+
+    async def handle(self,ctx,error):
         """The event triggered when an error is raised while invoking a command.
         ctx   : Context
         error : Exception"""
