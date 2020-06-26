@@ -12,7 +12,6 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         self.bot=bot
         self.statsserver=bot.statsserver
         self.errorreport=self.statsserver.get_channel(blink.Config.errors())
-        self.nonode=self.statsserver.get_channel(722131357136060507)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -91,7 +90,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(error)
 
         elif isinstance(error,NoNodes):
-            await self.nonode.send(f"WARNING {error}")
+            await self.bot.warn(error)
             return await ctx.send("Music is temporarily unavailable right now. please try again later.")
 
         elif isinstance(error,blink.SilentWarning):
