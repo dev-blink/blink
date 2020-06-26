@@ -52,6 +52,8 @@ bot.INITIALIZED=False
 
 
 async def warn(message):
+    time: datetime.datetime = datetime.datetime.utcnow()
+    message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [BLINK/WARNING] {message}"
     await bot.get_channel(722131357136060507).send(message)
     raise blink.SilentWarning(message)
 
