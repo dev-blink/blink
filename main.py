@@ -51,6 +51,11 @@ loadexceptions=""
 bot.INITIALIZED=False
 
 
+async def warn(message):
+    await bot.get_channel(722131357136060507).send(message)
+    raise blink.SilentWarning(message)
+
+
 def load_extensions():
     for extension in loading_extensions:
         try:
@@ -82,6 +87,7 @@ async def on_shard_ready(id):
 
 async def __init():
     print("\nInitializing")
+    bot.warn = warn
     cn={"user":"blink","password":"local","database":"main","host":"localhost"}
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
