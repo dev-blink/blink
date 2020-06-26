@@ -76,3 +76,8 @@ class NoChannelProvided(commands.CommandError):
 class IncorrectChannelError(commands.CommandError):
     """Error raised when commands are issued outside of the players session channel."""
     pass
+
+
+class SilentWarning(Exception):
+    """Error for backing out of tasks with a warning"""
+    pass

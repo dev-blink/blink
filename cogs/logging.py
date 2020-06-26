@@ -91,7 +91,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         previousAvatars.append(self._format(tt,av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
-    async def _avurl(self,url):
+    async def _avurl(self,url,isretry=False):
         r = await self.session.get(str(url))
         img_data = BytesIO(await r.read())
         f = discord.File(fp=img_data, filename="av.png")
@@ -101,7 +101,10 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             if e.errno != 104:
                 raise
             else:
-                pass
+                if not isretry:
+                    return await self._avurl(url,True)
+                else:
+                    await self.bot.warn(f"Failed to upload url twice {url}")
         url = m.attachments[0].url
         return url
 

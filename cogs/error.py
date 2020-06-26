@@ -94,6 +94,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             await self.nonode.send(f"WARNING {error}")
             return await ctx.send("Music is temporarily unavailable right now. please try again later.")
 
+        elif isinstance(error,blink.SilentWarning):
+            print(error)
+            return
+
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         await self.errorreport.send(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
 
