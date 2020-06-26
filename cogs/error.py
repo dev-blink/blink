@@ -26,7 +26,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         ctx   : Context
         error : Exception"""
 
-        ignored=(commands.CommandNotFound)
+        ignored=(commands.CommandNotFound,blink.SilentWarning,blink.IncorrectChannelError)
         error=getattr(error, 'original', error)
 
         if isinstance(error, ignored):
@@ -82,8 +82,6 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
                 return await ctx.message.add_reaction("\U000023f2")
             except discord.Forbidden:
                 pass
-        elif isinstance(error, blink.IncorrectChannelError):
-            return
 
         elif isinstance(error, blink.NoChannelProvided):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')
@@ -99,10 +97,6 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         elif isinstance(error,NoNodes):
             await self.bot.warn(error)
             return await ctx.send("Music is temporarily unavailable right now. please try again later.")
-
-        elif isinstance(error,blink.SilentWarning):
-            print(error)
-            return
 
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         await self.errorreport.send(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
