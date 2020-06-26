@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import blink
 import datetime
 import asyncpg
@@ -43,7 +43,7 @@ os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
-bot=commands.AutoShardedBot(command_prefix=get_prefix, description="Blink!",help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True)
+bot=commands.AutoShardedBot(command_prefix=get_prefix,help_command=None,shard_count=SHARD_COUNT,shard_ids=SHARD_IDS,case_insensitive=True,status=discord.Status.online,activity=discord.Streaming(name='b;help', url='https://www.twitch.tv/#'))
 bot.load_extension("cogs.pre-error")
 bot.startingcogs=loading_extensions
 bot.colour=0xf5a6b9
@@ -86,29 +86,25 @@ async def __init():
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
     bot.statsserver=bot.get_guild(blink.Config.statsserver())
-    await bot.change_presence(status=discord.Status.online,activity=discord.Streaming(name='; (b;)', url='https://www.twitch.tv/#'))
     bot.boottime=STARTUPTIME
     bot.unload_extension("cogs.pre-error")
     load_extensions()
     boottime=datetime.datetime.utcnow() - STARTUPTIME
     members=len(list(bot.get_all_members()))
-    startupid=blink.Config.startup(bot.user.name)
     if not loadexceptions == "":
         x=f"\n***ERRORS OCCURED ON STARTUP:***\n{loadexceptions}"
     else:
         x=""
     boot=f"{'-' * 79}\n**BOT STARTUP:** {bot.user} started at {datetime.datetime.utcnow().isoformat()}\n```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)\nGUILDS:{len(bot.guilds)}\nSHARDS:{bot.shard_count}```\n`d.py version: {discord.__version__}`{x}"
-    if startupid:
-        if not beta:
-            await bot.get_channel(startupid).send(boot)
+    if not beta:
+        await bot.get_channel(blink.Config.startup()).send(boot)
     bot.bootlog=boot
     print("Bot Ready")
-    update.start()
+    await update_pres()
 
 
-@tasks.loop(minutes=5)
-async def update():
-    for id in SHARD_IDS:
+async def update_pres():
+    for id in bot.shards:
         await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
 
 

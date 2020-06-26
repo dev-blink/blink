@@ -33,11 +33,8 @@ class Config():
         return int(702201821615358004)
 
     @classmethod
-    def startup(self,name:str):
-        if "beta" in name:
-            return None
-        else:
-            return 702705386557276271
+    def startup(self):
+        return 702705386557276271
 
     @classmethod
     def DBLtoken(self):
