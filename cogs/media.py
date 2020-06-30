@@ -27,6 +27,7 @@ class Media(commands.Cog,name="Media"):
 
     @commands.command(name="screenshot",aliases=["ss"])
     @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.is_nsfw()
     async def ss(self, ctx, *, url: str):
         async with ctx.typing():
             try:

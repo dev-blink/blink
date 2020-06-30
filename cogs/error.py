@@ -86,7 +86,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         elif isinstance(error, blink.NoChannelProvided):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')
         elif isinstance(error,commands.NSFWChannelRequired):
-            return await ctx.send("This is not an nsfw channel...")
+            return await ctx.send("This command is locked to nsfw channels only.")
 
         elif isinstance(error,commands.MaxConcurrencyReached):
             return await ctx.send(error)
