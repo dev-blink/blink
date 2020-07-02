@@ -97,14 +97,12 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         f = discord.File(fp=img_data, filename="av.png")
         try:
             m = await self.avs().send(file=f)
-        except aiohttp.client_exceptions.ClientOSError as e:
-            if e.errno != 104:
-                raise
+        except Exception:
+            if not isretry:
+                return await self._avurl(url,True)
             else:
-                if not isretry:
-                    return await self._avurl(url,True)
-                else:
-                    await self.bot.warn(f"Failed to upload url twice {url}")
+                await self.bot.warn(f"Failed to upload url twice {url}")
+                raise
         url = m.attachments[0].url
         return url
 
