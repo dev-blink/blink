@@ -14,11 +14,11 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         self.errorreport=self.statsserver.get_channel(blink.Config.errors())
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        return await self.handle(ctx,error)
+    async def on_error(self, ctx, error):
+        await self.bot.warn(f"Error occured {error}\n" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))))
 
     @commands.Cog.listener()
-    async def on_error(self, ctx, error):
+    async def on_command_error(self, ctx, error):
         return await self.handle(ctx,error)
 
     async def handle(self,ctx,error):
