@@ -69,7 +69,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             except discord.Forbidden:
                 pass
         elif isinstance(error, discord.errors.Forbidden):
-            return await ctx.send("I do not have permission to do that.")
+            try:
+                return await ctx.send("I do not have permission to do that.")
+            except discord.Forbidden:
+                pass
 
         elif isinstance(error, commands.BadArgument):
             return await ctx.send(error)

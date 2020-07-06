@@ -101,7 +101,7 @@ class Server(commands.Cog,name="Server"):
         g = ctx.guild
 
         embed=discord.Embed(colour=self.bot.colour)
-        embed.set_author(name=g.name,icon_url=g.icon_url_as(static_format="png"))
+        embed.set_author(name=f"{g.name} [{g.shard_id}]",icon_url=g.icon_url_as(static_format="png"))
 
         cd = g.created_at
         ge = str(g.explicit_content_filter)
@@ -134,7 +134,7 @@ class Server(commands.Cog,name="Server"):
         **Unlocked Features** : {' | '.join(m.replace('_',' ').lower().capitalize() for m in (f for f in g.features if f != "MORE_EMOJI"))}
         **Boosts** {g.premium_subscription_count} | **Boosters** {len(g.premium_subscribers)}
         **Channels** {len(g.channels)} ({len(list(c for c in g.channels if isinstance(c,discord.TextChannel)))} Text, {len(list(c for c in g.channels if isinstance(c,discord.VoiceChannel)))} Voice, {len(list(c for c in g.channels if isinstance(c,discord.CategoryChannel)))} Category){(nl +'**Bans** ' + str(len(await g.bans()))) if g.me.guild_permissions.ban_members else ""}
-        **Moderation requires 2FA** {'True' if g.mfa_level == 1 else 'False'}
+        **Moderation requires 2FA** {'Yes' if g.mfa_level == 1 else 'No'}
         {disboard if disboard else ""} {topgg if topgg else ""}
         """,inline=False)
         embed.set_footer(text=f"{self.bot.user.name}'s {'' if botmemberankpos == '1st' else botmemberankpos} largest server")

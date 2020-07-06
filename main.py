@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import blink
 import datetime
 import asyncpg
@@ -108,12 +108,16 @@ async def __init():
         await bot.get_channel(blink.Config.startup()).send(boot)
     bot.bootlog=boot
     print("Bot Ready")
-    await update_pres()
+    update_pres.start()
 
 
+@tasks.loop(hour=1)
 async def update_pres():
     for id in bot.shards:
-        await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
+        try:
+            await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
+        except Exception:
+            pass
 
 
 bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)

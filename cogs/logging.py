@@ -6,6 +6,7 @@ from io import BytesIO
 import random
 import blink
 import aiohttp
+from jishaku.paginators import WrappedPaginator, PaginatorInterface
 
 
 class AvPages(menus.ListPageSource):
@@ -137,6 +138,11 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             name = unformatted[1]
             names.append(f"{dt.day}/{dt.month}/{dt.year} @ {int(dt.hour):2}:{int(dt.minute):2} -> {name}")
         e = "\n".join(names)
+        if len(e) > 1994:
+            paginator = WrappedPaginator(wrap_on=('\n'),prefix='```',suffix='```')
+            paginator.add_line(e)
+            interface = PaginatorInterface(self.bot,paginator,owner=ctx.author)
+            await interface.send_to(ctx)
         await ctx.send(f'```{e}```')
 
     @commands.command(name="avatars",aliases=["avs"])
