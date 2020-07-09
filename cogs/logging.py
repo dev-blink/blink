@@ -3,10 +3,10 @@ from discord.ext import commands,menus
 import asyncio
 import datetime
 from io import BytesIO
-import random
-import blink
 import aiohttp
+import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
+from gcloud.aio.storage import Storage
 
 
 class AvPages(menus.ListPageSource):
@@ -23,14 +23,11 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
         self.active = True
-        ids = blink.Config.avatar_ids()
-        self.avatar_channels = []
-        for id in ids:
-            self.avatar_channels.append(bot.get_channel(id))
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
         self.bot.add_cog(self)
+        self.storage = Storage(service_file='./creds.json',session=self.session)
 
     def __unload(self):
         asyncio.create_task(self.session.close())
@@ -44,8 +41,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
-        beforeav = str(before.avatar_url_as(format="png", size=4096))
-        afterav = str(after.avatar_url_as(format="png", size=4096))
+        beforeav = str(before.avatar_url_as(static_format="png", size=4096))
+        afterav = str(after.avatar_url_as(static_format="png", size=4096))
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1",uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
@@ -55,9 +52,6 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
         if str(before.avatar_url) != str(after.avatar_url):
             await self._update_av(uid,afterav,tt)
-
-    def avs(self):
-        return random.choice(self.avatar_channels)
 
     def _format(self,timestamp:float,string:str):
         return f"{timestamp}:{string}"
@@ -92,20 +86,13 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         previousAvatars.append(self._format(tt,av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
-    async def _avurl(self,url,isretry=False):
+    async def _avurl(self,url):
         r = await self.session.get(str(url))
+        ext = str(url).replace("?size=4096","").split(".")[-1]
         img_data = BytesIO(await r.read())
-        f = discord.File(fp=img_data, filename="av.png")
-        try:
-            m = await self.avs().send(file=f)
-        except Exception:
-            if not isretry:
-                return await self._avurl(url,True)
-            else:
-                await self.bot.warn(f"Failed to upload url twice {url}")
-                raise
-        url = m.attachments[0].url
-        return url
+        path = f"avs/{id}/{uuid.uuid4()}.{ext}"
+        await self.storage.upload("blink-cdn",path,img_data)
+        return f"https://cdn.blinkbot.me/{path}"
 
 # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")

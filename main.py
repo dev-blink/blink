@@ -7,13 +7,14 @@ import logging
 import asyncio
 import aiohttp
 import os
+import secrets
 
 
 SHARD_COUNT = 3
 SHARD_IDS = [0,1,2]
 print(f"Starting with {SHARD_COUNT} shards ({SHARD_IDS[0]}-{SHARD_IDS[-1]})\n")
 
-beta=False
+beta=secrets.beta
 logger=logging.getLogger('discord')
 logger.setLevel(0)
 handler=logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -35,7 +36,9 @@ def get_prefix(bot, message):
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
-loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.logging","cogs.sql","cogs.nsfw","cogs.music"]
+loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.sql","cogs.nsfw","cogs.music"]
+if not beta:
+    loading_extensions.append("cogs.logging")
 loading_extensions.append("jishaku")
 INIT_SHARDS = []
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -90,7 +93,7 @@ async def on_shard_ready(id):
 async def __init():
     print("\nInitializing")
     bot.warn = warn
-    cn={"user":"blink","password":"local","database":"main","host":"localhost"}
+    cn={"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"}
     bot.DB=await asyncpg.create_pool(**cn)
     bot.session = aiohttp.ClientSession()
     bot.statsserver=bot.get_guild(blink.Config.statsserver())
