@@ -204,6 +204,10 @@ class Moderation(commands.Cog, name="Moderation"):
     async def clean(self,ctx, user: discord.Member=None,count:int =None):
         """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
         # CLEAN COMMAND CHECKS
+        if count:
+            if count > 100:
+                count = 100
+
         def checkbot(m):
             return m.author.bot
 
