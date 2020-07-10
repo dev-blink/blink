@@ -3,7 +3,9 @@ from discord.ext import commands
 
 
 class BotHelp(commands.HelpCommand):
-    colour = 16099001
+    def __init__(self):
+        super().__init__(verify_checks=False)
+        self.colour = 16099001
 
     def get_ending_note(self):
         return f'Use {self.clean_prefix}{self.invoked_with} <command> for more info on a command.'
