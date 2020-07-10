@@ -22,7 +22,7 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
-        self.active = True
+        self.active = False
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
@@ -97,7 +97,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
     async def update_db(self,message):
-        if message.author.bot or not message.guild:
+        if message.author.bot or not message.guild or not self.active:
             return
         result=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",message.author.id)
         if not result:

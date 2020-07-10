@@ -44,12 +44,12 @@ class Info(commands.Cog,name="Info"):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="info")
+    @commands.command(name="info",aliases=["about"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def info(self,ctx):
         """Shows info about the bot"""
         owner=self.bot.get_user(171197717559771136)
-        embed=discord.Embed(title=f"blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154/vote) || [Click for support](https://discord.gg/pCVhrMF)",colour=self.colour)
+        embed=discord.Embed(title="blink!",url="https://top.gg/bot/692738917236998154",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n[Vote for us here!](https://top.gg/bot/692738917236998154/vote) | [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
@@ -71,7 +71,7 @@ class Info(commands.Cog,name="Info"):
         before=time.monotonic()
         message=await ctx.send("pong")
         ping=(time.monotonic() - before) * 1000
-        await message.edit(embed=discord.Embed(title=f"\U0001f3d3 Pong",description=f"Ping: {int(ping)}ms\nLatency: {round((self.bot.latency * 1000),4)}ms",colour=self.bot.colour),content=None)
+        await message.edit(embed=discord.Embed(title="\U0001f3d3 Pong",description=f"Ping: {int(ping)}ms\nLatency: {round((self.bot.latency * 1000),4)}ms",colour=self.bot.colour),content=None)
 
 
 def setup(bot):

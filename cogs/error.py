@@ -36,21 +36,24 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             try:
                 await ctx.message.add_reaction("\U00002754")
             except discord.Forbidden:
-                pass
+                return
             return await ctx.send_help(ctx.command)
 
         elif isinstance(error,commands.TooManyArguments):
             try:
                 await ctx.message.add_reaction("\U00002754")
             except discord.Forbidden:
-                pass
+                return
             return await ctx.send_help(ctx.command)
 
         elif isinstance(error,menus.CannotAddReactions):
             return await ctx.send("I am unable to initialize the reaction menu. Please give me permissions to add reactions.")
 
         elif isinstance(error,commands.BotMissingPermissions):
-            return await ctx.send(f"***ERROR*** :{error}")
+            try:
+                return await ctx.send(f"***ERROR*** :{error}")
+            except discord.Forbidden:
+                return
         elif isinstance(error, commands.DisabledCommand):
             return await ctx.send(f'**`{ctx.command}`** has been disabled.')
 
@@ -61,18 +64,18 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             try:
                 return await ctx.message.add_reaction("\U000026d4")
             except discord.Forbidden:
-                pass
+                return
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
                 return await ctx.author.send(f'**`{ctx.command}`** can not be used in Private Messages.')
             except discord.Forbidden:
-                pass
+                return
         elif isinstance(error, discord.errors.Forbidden):
             try:
                 return await ctx.send("I do not have permission to do that.")
             except discord.Forbidden:
-                pass
+                return
 
         elif isinstance(error, commands.BadArgument):
             return await ctx.send(error)
@@ -84,7 +87,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             try:
                 return await ctx.message.add_reaction("\U000023f2")
             except discord.Forbidden:
-                pass
+                return
 
         elif isinstance(error, blink.NoChannelProvided):
             return await ctx.send('You must be in a voice channel or provide one to connect to.')

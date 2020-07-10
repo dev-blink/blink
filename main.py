@@ -114,7 +114,7 @@ async def __init():
     update_pres.start()
 
 
-@tasks.loop(hour=1)
+@tasks.loop(hours=1)
 async def update_pres():
     for id in bot.shards:
         try:
@@ -123,4 +123,4 @@ async def update_pres():
             pass
 
 
-bot.run(open("TOKEN","r").read(), bot=True, reconnect=True)
+bot.run(secrets.token, bot=True, reconnect=True)
