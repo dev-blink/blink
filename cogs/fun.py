@@ -15,7 +15,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.Cog.listener("on_message_delete")
     async def append_snipes(self,message):
-        if len(message.content) > 1024 or message.author.bot or not message.content:
+        if len(message.content) > 1024 or message.author.bot or not message.content or not message.guild:
             return
         g = self.snipes.get(message.guild.id)
         if g is None:
@@ -45,7 +45,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.Cog.listener("on_message_edit")
     async def append_edit_snipes(self,before,after):
-        if (len(before.content) + len(after.content)) > 1024 or before.author.bot or not before.content or before.content == after.content:
+        if (len(before.content) + len(after.content)) > 1024 or before.author.bot or not before.content or before.content == after.content or not before.guild:
             return
         g = self.esnipes.get(before.guild.id)
         if g is None:
