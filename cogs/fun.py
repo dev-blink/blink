@@ -108,7 +108,7 @@ class Fun(commands.Cog,name="Fun"):
             embed=discord.Embed(title="\U0001f3b1 8Ball shook!",description=f"***{response}***",colour=self.bot.colour)
         await ctx.send(embed=embed)
 
-    @commands.command(name="ship")
+    @commands.command(name="shipname")
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True)
     async def ship(self,ctx,member1:discord.Member=None,member2:discord.Member=None):
