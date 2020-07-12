@@ -7,6 +7,7 @@ import datetime
 import uuid
 import asyncio
 import re
+import secrets
 # CREATE TABLE social (id bigint PRIMARY KEY, hugs TEXT ARRAY, kisses TEXT ARRAY, relation bigint, ship TEXT, blocked bigint ARRAY)
 # CREATE TABLE ships (id TEXT PRIMARY KEY,captain bigint, partner bigint,name TEXT,customtext TEXT,colour bigint,icon TEXT,timestamp bigint)
 URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
@@ -96,6 +97,9 @@ class Ship(object):
     async def modify(self,scope,data):
         await self.db.execute(f"UPDATE ships SET {scope}=$1 WHERE id=$2",data,self.id)
 
+    async def sink(self):
+        await self.db.execute("DELETE FROM ships WHERE id=$1",self.id)
+
 
 class Action:
     def __init__(self,success:bool,reason:str=None,count:int=None):
@@ -124,6 +128,13 @@ class User(object):
         self.user = id
         self.db = db
 
+    def format(self):
+        self.hugs = self.res.get("hugs")
+        self.kisses = self.res.get("kisses")
+        self.relation = self.res.get("relation")
+        self.ship = self.res.get("ship")
+        self.blocked = self.res.get("blocked")
+
     async def __aenter__(self):
         query = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
         if str(query) == "SELECT 0" or query is None:
@@ -131,8 +142,9 @@ class User(object):
             self.res = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
         else:
             self.res = query
+            self.format()
 
-        self.taken = (True if self.res.get("ship") != 'nul' else False)
+        self.taken = (True if self.relation != 0 else False)
         self.session = aiohttp.ClientSession()
         return self
 
@@ -141,14 +153,18 @@ class User(object):
 
     async def setup(self):
         await self.db.execute("INSERT INTO social VALUES ($1,$2,$3,$4,$5,$6)",self.user,[],[],0,"nul",[]) # id, hugs, kisses, relationship, ship, blocked
+        self.res = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
+        self.format()
 
     async def elegible(self,scope:str,recipient:int) -> ElegibilityReason:
+        if self.relation == recipient:
+            return ElegibilityReason(True)
         async with User(recipient,self.db) as recp:
-            res = recp.res
+            res = recp
 
-        if recipient in self.res.get("blocked"):
+        if recipient in self.blocked:
             return ElegibilityReason(False,reason="userblocked")
-        if self.user in res.get("blocked"):
+        if self.user in res.blocked:
             return ElegibilityReason(False,reason="blocked")
 
         if scope == "hug":
@@ -156,12 +172,12 @@ class User(object):
         elif scope == "kiss" or "ship":
             if self.taken:
                 return ElegibilityReason(False,"usertaken")
-            if res.get("ship") != 'nul':
+            if res.taken:
                 return ElegibilityReason(False,"taken")
             return ElegibilityReason(True)
 
     async def block(self,recipient):
-        blocked = self.res.get("blocked")
+        blocked = self.blocked
         if recipient in blocked:
             return "User already blocked."
         blocked.append(recipient)
@@ -169,7 +185,7 @@ class User(object):
         return "Success"
 
     async def unblock(self,recipient):
-        blocked = self.res.get("blocked")
+        blocked = self.blocked
         if recipient not in blocked:
             return "User not blocked."
         blocked.remove(recipient)
@@ -227,8 +243,13 @@ class User(object):
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2",kisses,self.user)
         return Action(success=True,count=count)
 
-    async def set_ship(self,id:str):
+    async def set_ship(self,id:str,relation:int):
         await self.db.execute("UPDATE social SET ship = $1 WHERE id=$2",id,self.user)
+        await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2",relation,self.user)
+
+    async def sink_ship(self):
+        await self.db.execute("UPDATE social SET ship =$1 WHERE id =$2","nul",self.user)
+        await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2",0,self.user)
 
 
 class Social(commands.Cog):
@@ -237,7 +258,12 @@ class Social(commands.Cog):
 
     async def gen_kiss(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.blinkbot.me/social/images/kiss/",headers={"Authorization":"fK8Zvqxqf24RuxN6z5jAnCnABFpCvSA8YTufKB2629h6zRPt"}) as res:
+            async with session.get("https://api.blinkbot.me/social/images/kiss/",headers={"Authorization":secrets.api}) as res:
+                return (await res.json()).get("url")
+
+    async def gen_hug(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.blinkbot.me/social/images/hug/",headers={"Authorization":secrets.api}) as res:
                 return (await res.json()).get("url")
 
     @commands.group(name="blocked",invoke_without_command=True)
@@ -264,7 +290,7 @@ class Social(commands.Cog):
         """Show your blocked users"""
         format = []
         async with User(ctx.author.id,self.bot.DB) as user:
-            blocked = user.res.get("blocked")
+            blocked = user.blocked
         for user in blocked:
             name = self.bot.get_user(user)
             if name is None:
@@ -285,7 +311,7 @@ class Social(commands.Cog):
             res = await user.hug(member.id)
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} hugs {member.display_name}",colour=self.bot.colour)
-            embed.set_image(url="https://cdn.iblack.pink/f/1594518306.png")
+            embed.set_image(url=await self.gen_hug())
             embed.set_footer(text=f"Thats their {blink.ordinal(res.count)} hug!")
         else:
             embed = discord.Embed(title=f":x: {res.translate()}",colour=discord.Colour.red())
@@ -313,7 +339,7 @@ class Social(commands.Cog):
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.get('ship')
+            id = user.ship
             if id == "nul":
                 if not member:
                     return await ctx.send("You do not have a ship.")
@@ -338,7 +364,7 @@ class Social(commands.Cog):
     async def ship_rename(self,ctx,*,name:str):
         """Rename your ship"""
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.get('ship')
+            id = user.ship
         async with Ship(id,self.bot.DB) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
@@ -349,7 +375,7 @@ class Social(commands.Cog):
     async def ship_change_description(self,ctx,*,text:str):
         """Change your ship's description"""
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.get('ship')
+            id = user.ship
         async with Ship(id,self.bot.DB) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
@@ -360,7 +386,7 @@ class Social(commands.Cog):
     async def ship_recolour(self,ctx,colour:discord.Colour):
         """Change your ship's colour"""
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.get('ship')
+            id = user.ship
         async with Ship(id,self.bot.DB) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
@@ -373,12 +399,43 @@ class Social(commands.Cog):
         if not URLREGEX.match(icon):
             return await ctx.send("That doesnt look like a url to me... \nex (https://example.com/image.png)")
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.get('ship')
+            id = user.res.ship
         async with Ship(id,self.bot.DB) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="icon",data=icon)
         return await ctx.send(embed=discord.Embed(title="This is now your ship's icon",colour=self.bot.colour).set_image(url=icon))
+
+    @ship.command(name="sink",aliases=["stop","delete"])
+    async def ship_sink(self,ctx):
+        """Delete your ship"""
+        m = await ctx.send("Are you sure?")
+        await m.add_reaction("\U00002714")
+        await m.add_reaction("\U0000274c")
+
+        def check(reaction, user):
+            if str(reaction.emoji) not in ["\U00002714","\U0000274c"]:
+                return False
+            return user == ctx.author
+        try:
+            reaction = (await self.bot.wait_for('reaction_add', timeout=10, check=check))[0]
+        except asyncio.TimeoutError:
+            return await ctx.send("Timed out waiting for response. Sinking cancelled.")
+        else:
+            if str(reaction.emoji) != "\U00002714":
+                return await ctx.send("Cancelled")
+
+        async with User(ctx.author.id,self.bot.DB) as c:
+            ship = c.ship
+            relation = c.relation
+            await c.sink_ship()
+
+        async with User(relation,self.bot.DB) as p:
+            await p.sink_ship()
+
+        async with Ship(ship,self.bot.DB) as ship:
+            await ship.sink()
+        return await ctx.send("Your ship has sunk.")
 
     async def _new_ship(self,captain:int,partner:int,ctx:commands.Context):
         try:
@@ -405,11 +462,11 @@ class Social(commands.Cog):
             await ctx.send(f"<@{captain}> what should the ship icon be? (a link to an image is needed)")
             message = await self.bot.wait_for('message',check=is_captain,timeout=30)
 
-            if re.match(message.content):
+            if URLREGEX.match(message.content):
                 icon = message.content
             else:
                 await ctx.send("That doesnt look like a valid url, resorting to default \n ex (https://example.com/image.png)")
-                icon=None
+                icon ="https://cdn.blinkbot.me/assets/ship.png"
 
             await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)")
             message = await self.bot.wait_for('message',check=is_captain,timeout=30)
@@ -417,7 +474,7 @@ class Social(commands.Cog):
                 colour = (await commands.converter.ColourConverter().convert(None,message.content)).value
             except commands.BadArgument:
                 await ctx.send("unable to determine a colour, using default colour")
-                colour = None
+                colour = 16099001
 
         except asyncio.TimeoutError:
             return False
@@ -426,11 +483,11 @@ class Social(commands.Cog):
         async with Ship(id,self.bot.DB) as ship:
             await ship.create(captain=captain,partner=partner,name=name,description=description,colour=colour,icon=icon)
 
-        async with User(captain,self.bot.DB) as captain:
-            await captain.set_ship(id)
+        async with User(captain,self.bot.DB) as c:
+            await c.set_ship(id=id,relation=partner)
 
-        async with User(partner,self.bot.DB) as partner:
-            await partner.set_ship(id)
+        async with User(partner,self.bot.DB) as p:
+            await p.set_ship(id=id,relation=captain)
         return await ctx.send(embed=await ship.to_embed())
 
 
