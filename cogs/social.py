@@ -206,7 +206,7 @@ class User(object):
         else:
             count = int(count) + 1
             hugs.pop(index)
-            hugs.append(f"{id}:{count}")
+            hugs.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET hugs=$1 WHERE id=$2",hugs,self.user)
         return Action(success=True,count=count)
 
@@ -223,7 +223,7 @@ class User(object):
         else:
             count = int(count) + 1
             kisses.pop(index)
-            kisses.append(f"{id}:{count}")
+            kisses.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2",kisses,self.user)
         return Action(success=True,count=count)
 
