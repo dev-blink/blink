@@ -132,7 +132,7 @@ class User(object):
         else:
             self.res = query
 
-        self.taken = (True if self.res.get("relation") != 0 else False)
+        self.taken = (True if self.res.get("ship") != 'nul' else False)
         self.session = aiohttp.ClientSession()
         return self
 
@@ -156,7 +156,7 @@ class User(object):
         elif scope == "kiss" or "ship":
             if self.taken:
                 return ElegibilityReason(False,"usertaken")
-            if res.get("relation") != 0:
+            if res.get("ship") != 'nul':
                 return ElegibilityReason(False,"taken")
             return ElegibilityReason(True)
 
