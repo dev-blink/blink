@@ -63,7 +63,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     async def _newuser(self,id,oldname,oldav,timestamp):
         name = self._format(timestamp,oldname)
-        oldav = await self._avurl(oldav)
+        oldav = await self._avurl(oldav,id)
         avatar = self._format(timestamp,oldav)
         await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,[name],[avatar]) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
 
@@ -78,7 +78,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     async def _update_av(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
-        av = await self._avurl(after)
+        av = await self._avurl(after,id)
         try:
             previousAvatars=query[0]["avatar"]
         except IndexError:
@@ -86,7 +86,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         previousAvatars.append(self._format(tt,av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
-    async def _avurl(self,url):
+    async def _avurl(self,url,id):
         r = await self.session.get(str(url))
         ext = str(url).replace("?size=4096","").split(".")[-1]
         img_data = BytesIO(await r.read())
