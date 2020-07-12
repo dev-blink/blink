@@ -235,6 +235,11 @@ class Social(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
 
+    async def gen_kiss(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.blinkbot.me/social/images/kiss/",headers={"Authorization":"fK8Zvqxqf24RuxN6z5jAnCnABFpCvSA8YTufKB2629h6zRPt"}) as res:
+                return (await res.json()).get("url")
+
     @commands.group(name="blocked",invoke_without_command=True)
     async def blocked(self,ctx):
         """Manage users blocked from using social commands on you"""
@@ -274,11 +279,13 @@ class Social(commands.Cog):
     @commands.command(name="hug")
     async def hug(self,ctx,member:discord.Member):
         """Hug someone"""
+        if member == ctx.author:
+            return await ctx.send("You cant do that :(")
         async with User(ctx.author.id,self.bot.DB) as user:
             res = await user.hug(member.id)
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} hugs {member.display_name}",colour=self.bot.colour)
-            embed.set_image(url="https://cdn.iblack.pink/f/1594484723.png")
+            embed.set_image(url="https://cdn.iblack.pink/f/1594518306.png")
             embed.set_footer(text=f"Thats their {blink.ordinal(res.count)} hug!")
         else:
             embed = discord.Embed(title=f":x: {res.translate()}",colour=discord.Colour.red())
@@ -287,11 +294,13 @@ class Social(commands.Cog):
     @commands.command(name="kiss")
     async def kiss(self,ctx,member:discord.Member):
         """Kiss someone"""
+        if member == ctx.author:
+            return await ctx.send("You cant do that :(")
         async with User(ctx.author.id,self.bot.DB) as user:
             res = await user.kiss(member.id)
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} kisses {member.display_name}",colour=self.bot.colour)
-            embed.set_image(url="https://cdn.iblack.pink/f/1594484809.png")
+            embed.set_image(url=await self.gen_kiss())
             embed.set_footer(text=f"Thats their {blink.ordinal(res.count)} kiss!")
         else:
             embed = discord.Embed(title=f":x: {res.translate()}",colour=discord.Colour.red())
@@ -301,9 +310,9 @@ class Social(commands.Cog):
     @commands.cooldown(1,5,commands.BucketType.user)
     async def ship(self,ctx,member:discord.Member=None):
         """Show and manage your ship"""
+        if member == ctx.author:
+            return await ctx.send("You cant do that :(")
         async with User(ctx.author.id,self.bot.DB) as user:
-            if member == ctx.author:
-                member=None
             id = user.res.get('ship')
             if id == "nul":
                 if not member:
