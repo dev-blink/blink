@@ -395,7 +395,7 @@ class Social(commands.Cog):
 
     @ship.command(name="icon")
     async def ship_change_icon(self,ctx,*,icon:str):
-        """Rename your ship's icon"""
+        """Change your ship's icon"""
         if not URLREGEX.match(icon):
             return await ctx.send("That doesnt look like a url to me... \nex (https://example.com/image.png)")
         async with User(ctx.author.id,self.bot.DB) as user:
