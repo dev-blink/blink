@@ -22,7 +22,7 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
-        self.active = False
+        self.active = True
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
@@ -116,7 +116,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1",uid)
         if not result or result["name"] is None:
-            return await ctx.send("No names tracked. (LOGGING IS CURRENTLY PARTIALLY UNAVAILABLE)") # TEMP
+            return await ctx.send("No names tracked.")
         result = result["name"]
         names=[]
         for entry in result:
@@ -124,7 +124,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             dt = unformatted[0]
             name = unformatted[1]
             names.append(f"{dt.day}/{dt.month}/{dt.year} @ {int(dt.hour):2}:{int(dt.minute):2} -> {name}")
-        e = "\n".join(names) + "\nLOGGING IS CURRENTLY PARTIALLY UNAVAILABLE" # TEMP
+        e = "\n".join(names)
         if len(e) > 1994:
             paginator = WrappedPaginator(wrap_on=('\n'),prefix='```',suffix='```')
             paginator.add_line(e)
@@ -142,7 +142,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
         if not result or result["avatar"] is None:
-            return await ctx.send("No avatars tracked. (LOGGING IS CURRENTLY PARTIALLY UNAVAILABLE)") # TEMP
+            return await ctx.send("No avatars tracked.")
         result = result["avatar"]
         embeds=[]
         for entry in result:
@@ -152,7 +152,6 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             timestamp = f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:02}:{dt.minute:02}"
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
-            embed.set_footer(text="LOGGING IS CURRENTLY PARTIALLY UNAVAILABLE") # TEMP
             embeds.append(embed)
         embeds.reverse()
         if len(embeds) == 1:
