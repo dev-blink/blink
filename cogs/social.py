@@ -61,7 +61,7 @@ class Ship(object):
             if captain_kisses is None:
                 captain_kisses = 0
 
-        async with User(self.captain,self.db) as partner:
+        async with User(self.partner,self.db) as partner:
             partner_hugs = (await partner.decompile(scope="hugs",recipient=self.captain))[1]
             partner_kisses = (await partner.decompile(scope="kisses",recipient=self.captain))[1]
 
