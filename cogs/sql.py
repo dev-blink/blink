@@ -45,7 +45,7 @@ class SQL(commands.Cog):
         fmt = f'```\n{render}\n```\n*Returned {plural(rows):row} in {dt:.2f}ms*'
         if len(fmt) > 2000:
             fp = io.BytesIO(fmt.encode('utf-8'))
-            await ctx.send('Too many results...', file=discord.File(fp, 'results.txt'))
+            await ctx.send('Too many results...', file=discord.File(fp, 'message.txt'))
         else:
             await ctx.send(fmt)
 

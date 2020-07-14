@@ -10,7 +10,6 @@ class TopGG(commands.Cog):
         self.bot=bot
         self.token=blink.Config.DBLtoken()
         self.dblpy=dbl.DBLClient(self.bot, self.token, autopost=True)  # Autopost will post your guild count every 30 minutes
-        self.dbllog=bot.get_channel(703611171139223572)
 
     async def on_guild_post(self):
         await self.dbllog.send(f"Posted {len(self.bot.guilds)} guilds to DBL.")

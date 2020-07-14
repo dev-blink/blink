@@ -5,6 +5,7 @@ import blink
 import datetime
 import asyncpg
 from wavelink import ZeroConnectedNodes as NoNodes
+import sys
 
 
 class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
@@ -12,10 +13,6 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         self.bot=bot
         self.statsserver=bot.statsserver
         self.errorreport=self.statsserver.get_channel(blink.Config.errors())
-
-    @commands.Cog.listener()
-    async def on_error(self, ctx, error):
-        await self.bot.warn(f"Error occured {error}\n" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))))
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

@@ -54,11 +54,12 @@ loadexceptions=""
 bot.INITIALIZED=False
 
 
-async def warn(message):
+async def warn(message,shouldRaise=True):
     time: datetime.datetime = datetime.datetime.utcnow()
     message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [BLINK/WARNING] {message}"
     await bot.get_channel(722131357136060507).send(message)
-    raise blink.SilentWarning(message)
+    if shouldRaise:
+        raise blink.SilentWarning(message)
 
 
 def load_extensions():
@@ -118,9 +119,9 @@ async def __init():
 async def update_pres():
     for id in bot.shards:
         try:
-            await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
-        except Exception:
-            pass
+            await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}/{len(bot.guilds)}/{id}]', url='https://www.twitch.tv/#'))
+        except Exception as e:
+            await bot.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
 
 bot.run(secrets.token, bot=True, reconnect=True)
