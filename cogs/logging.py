@@ -7,6 +7,7 @@ import aiohttp
 import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
 from gcloud.aio.storage import Storage
+from secrets import beta
 
 
 class AvPages(menus.ListPageSource):
@@ -22,7 +23,10 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
-        self.active = True
+        if not beta:
+            self.active = True
+        else:
+            self.active= False
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
@@ -144,6 +148,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not result or result["avatar"] is None:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
+        result = sorted(result,key=lambda x:float(x.split(":",1)[0]))
         embeds=[]
         for entry in result:
             unformatted = self._unformat(entry)
