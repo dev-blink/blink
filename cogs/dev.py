@@ -10,6 +10,19 @@ class Owner(commands.Cog, name="Developer"):
     def __init__(self, bot):
         self.bot=bot
 
+    @commands.command(name="delav",hidden=True)
+    @commands.is_owner()
+    async def rm_avatar(self,ctx,user:int,link:str):
+        """Remove an avatar from a user"""
+        avs = (await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id=$1",user))["avatar"]
+        query = [av for av in avs if av.split(":",1)[1].endswith(link)]
+        if query == []:
+            return await ctx.send("Not Found")
+        for match in query:
+            avs.pop(avs.index(match))
+        res = await self.bot.DB.execute("UPDATE userlog SET avatar=$1 WHERE id=$2",avs,user)
+        return await ctx.send(res)
+
     # Hidden means it won't show up on the default help.
     @commands.command(name='load', hidden=True)
     @commands.is_owner()
