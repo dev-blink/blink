@@ -119,7 +119,7 @@ async def __init():
 async def update_pres():
     for id in bot.shards:
         try:
-            await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}/{len(bot.guilds)}/{id}]', url='https://www.twitch.tv/#'))
+            await bot.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}/{len(bot.guilds)}]', url='https://www.twitch.tv/#'))
         except Exception as e:
             await bot.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
