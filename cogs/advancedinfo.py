@@ -81,7 +81,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
 
         embed=discord.Embed(title="No return")
 
-        clientinstance=discord.Client()
+        clientinstance=discord.Client(guild_subscriptions=False,max_messages=None,fetch_offline_members=False)
         @clientinstance.event
         async def on_ready():
             nonlocal embed
