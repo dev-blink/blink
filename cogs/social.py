@@ -91,7 +91,6 @@ class Ship(object):
         embed.add_field(name="**Ship Age**",value=stats.age,inline=False)
         embed.set_author(name=self.name,icon_url=self.icon)
         embed.set_thumbnail(url="https://cdn.blinkbot.me/assets/ship.png")
-        embed.set_footer(text="Tip: use the command 'ship help'")
         return embed
 
     async def modify(self,scope,data):
