@@ -71,7 +71,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
 
     @commands.command(name="checktoken",aliases=["tokencheck"])
     @commands.bot_has_permissions(embed_links=True,send_messages=True)
-    @commands.cooldown(1,30,commands.BucketType.user)
+    @commands.is_owner()
     async def token_eval(self,ctx,token:str=None):
         """Check a bot token."""
         if not token:
