@@ -286,6 +286,7 @@ class Social(commands.Cog):
             return await ctx.send(await user.unblock(recipient.id))
 
     @blocked.command(name="list",aliases=["show"])
+    @commands.bot_has_permissions(embed_links=True)
     async def show_blocked(self,ctx):
         """Show your blocked users"""
         format = []
@@ -303,6 +304,7 @@ class Social(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
+    @commands.bot_has_permissions(embed_links=True)
     async def hug(self,ctx,member:discord.Member):
         """Hug someone"""
         if member == ctx.author:
@@ -318,6 +320,7 @@ class Social(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="kiss")
+    @commands.bot_has_permissions(embed_links=True)
     async def kiss(self,ctx,member:discord.Member):
         """Kiss someone"""
         if member == ctx.author:
@@ -333,6 +336,7 @@ class Social(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.group(name="ship",invoke_without_command=True)
+    @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1,5,commands.BucketType.user)
     async def ship(self,ctx,member:discord.Member=None):
         """Show and manage your ship"""
@@ -356,6 +360,7 @@ class Social(commands.Cog):
             return await ctx.send(embed=await ship.to_embed())
 
     @ship.command(name="help")
+    @commands.bot_has_permissions(embed_links=True)
     async def ship_help(self,ctx):
         """Show ship help"""
         return await ctx.send_help(ctx.command.parent)
