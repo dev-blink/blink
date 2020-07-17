@@ -36,7 +36,7 @@ def get_prefix(bot, message):
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
-loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.DBL","cogs.sql","cogs.nsfw","cogs.music","cogs.social"]
+loading_extensions=["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.stats","cogs.media","cogs.listing","cogs.sql","cogs.nsfw","cogs.music","cogs.social"]
 if not beta:
     loading_extensions.append("cogs.logging")
 loading_extensions.append("jishaku")
