@@ -128,7 +128,7 @@ class Members(commands.Cog,name="Member"):
         if isinstance(base, discord.CustomActivity):
             if not base.name:
                 base.name="Custom Emoji:"
-            embed=discord.Embed(title=base.name or None,colour=0xf5a6b9)
+            embed=discord.Embed(title=base.name or discord.embeds.EmptyEmbed,colour=self.bot.colour)
             if base.emoji:
                 embed.set_thumbnail(url=base.emoji.url)
             embed.set_author(name=user.name,icon_url=user.avatar_url_as(static_format='png'))
@@ -139,7 +139,7 @@ class Members(commands.Cog,name="Member"):
             embed.add_field(name=base.name, value=base.details, inline=False)
 
         elif isinstance(base, discord.Streaming):
-            embed=discord.Embed(title="Streaming", url=base.url,description=base.name)
+            embed=discord.Embed(title="Streaming", url=base.url,description=base.name,colour=0x593695)
         else:
             embed=False
         if embed:
