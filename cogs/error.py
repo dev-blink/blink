@@ -74,7 +74,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
                 return
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=error))
+            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error, commands.CommandOnCooldown):
             if ctx.author.id in self.bot.owner_ids:
@@ -91,10 +91,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title="This command is locked to nsfw channels only."))
 
         elif isinstance(error,commands.MaxConcurrencyReached):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=error))
+            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error,asyncpg.exceptions.PostgresError):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=error))
+            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error,NoNodes):
             await self.bot.warn(error)
