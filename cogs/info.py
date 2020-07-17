@@ -14,19 +14,19 @@ class Info(commands.Cog,name="Info"):
 
     @commands.command(name="prefix")
     @commands.bot_has_permissions(send_messages=True)
-    async def prefix(self, ctx, *, member: discord.Member=None):
+    async def prefix(self, ctx):
         """Shows the bot's prefix."""
         await ctx.send("The bot prefix is ';' you can also use 'b;' or a ping.")
 
     @commands.command(name="creator")
     @commands.bot_has_permissions(send_messages=True)
-    async def creator(self, ctx, *, member: discord.Member=None):
+    async def creator(self, ctx):
         """Shows the bot's creator."""
         await ctx.send("aaix#0001 created this bot.")
 
     @commands.command(name="invite")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def invite(self, ctx, *, member: discord.Member=None):
+    async def invite(self, ctx):
         """Shows an invite for the server."""
         embed=discord.Embed(title="Click here.", url="https://top.gg/bot/692738917236998154", description="Invite the bot to your server",colour=self.colour)
         embed.set_author(name="Invite me!")
@@ -36,7 +36,7 @@ class Info(commands.Cog,name="Info"):
 
     @commands.command(name="support")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def support(self, ctx, *, member: discord.Member=None):
+    async def support(self, ctx):
         """Shows an invite for the support server."""
         embed=discord.Embed(title="https://discord.gg/d23VBaR", url="https://discord.gg/d23VBaR", description="Just ask for help.",colour=self.colour)
         embed.set_author(name="Join the support server!")
