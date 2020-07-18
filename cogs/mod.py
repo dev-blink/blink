@@ -48,6 +48,9 @@ class Moderation(commands.Cog, name="Moderation"):
         if not ctx.guild.owner == ctx.author:
             if user.top_role >= ctx.author.top_role:
                 return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        if user == self.bot.user:
+            await ctx.send("I cant do that. So i will leave instead.")
+            return await ctx.guild.leave()
         try:
             await dmattempt(user,"banned",reason,ctx.guild.name)
             if reason:
@@ -92,6 +95,8 @@ class Moderation(commands.Cog, name="Moderation"):
         if not ctx.guild.owner == ctx.author:
             if user.top_role >= ctx.author.top_role:
                 return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        if user == self.bot.user:
+            return await ctx.send("I cant do that.")
 
         try:
             await dmattempt(user,"kicked",reason,ctx.guild.name)
@@ -129,6 +134,8 @@ class Moderation(commands.Cog, name="Moderation"):
         if not ctx.guild.owner == ctx.author:
             if user.top_role >= ctx.author.top_role or user.id == ctx.guild.owner_id:
                 return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        if user == self.bot.user:
+            return await ctx.guild.leave()
 
         try:
             await dmattempt(user,"kicked",reason,ctx.guild.name)
