@@ -10,7 +10,7 @@ class Stats(commands.Cog,name="Stats"):
         self.bot=bot
         self.statsserver=bot.statsserver
         self.newguilds=self.statsserver.get_channel(blink.Config.newguilds())
-        self.statscord = statcord.Client(bot,secrets.statcord)
+        self.statscord = statcord.Client(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
         self.statscord.start_loop()
 
     @commands.command(name="stats")
@@ -41,6 +41,14 @@ class Stats(commands.Cog,name="Stats"):
     @commands.Cog.listener("on_command")
     async def statcord_push(self,ctx):
         self.statscord.command_run(ctx)
+
+    async def logging(self):
+        actions = str(self.bot.logActions)
+        self.bot.logActions = 0
+        return actions
+
+    async def music(self):
+        return str(len(self.bot.wavelink.players))
 
 
 def setup(bot):

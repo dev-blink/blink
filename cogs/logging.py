@@ -23,6 +23,7 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
+        self.bot.logActions = 0
         if not beta:
             self.active = True
         else:
@@ -49,6 +50,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         if before.id in self.blacklist:
             return
+        self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
         beforeav = str(before.avatar_url_as(static_format="png", size=4096))
