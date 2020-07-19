@@ -30,11 +30,15 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
-        self.bot.add_cog(self)
         self.storage = Storage(service_file='./creds.json',session=self.session)
+        await self.flush_blacklist()
+        self.bot.add_cog(self)
 
     def __unload(self):
         asyncio.create_task(self.session.close())
+
+    async def flush_blacklist(self):
+        self.blacklist = (await self.bot.DB.fetchrow("SELECT snowflakes FROM blacklist WHERE scope=$1","logging")).get("snowflakes")
 
 # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
@@ -42,6 +46,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not self.active:
             return
         if before.bot:
+            return
+        if before.id in self.blacklist:
             return
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
@@ -117,6 +123,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         """Show username history"""
         if not user:
             user = ctx.author
+        if ctx.author.id in self.blacklist:
+            return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1",uid)
         if not result or result["name"] is None:
@@ -143,6 +151,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         """Show avatar history"""
         if not user:
             user = ctx.author
+        if ctx.author.id in self.blacklist:
+            return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
         if not result or result["avatar"] is None:

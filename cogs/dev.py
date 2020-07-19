@@ -9,6 +9,31 @@ import asyncio
 class Owner(commands.Cog, name="Developer"):
     def __init__(self, bot):
         self.bot=bot
+        self.blacklist_scopes=["logging"]
+
+    @commands.command(name="blacklist",hidden=True)
+    @commands.is_owner()
+    async def blacklist(self,ctx,scope:str,action:str):
+        """Modifiy blacklists"""
+        if scope not in self.blacklist_scopes:
+            return await ctx.send("Invalid scope")
+        blacklist = (await self.bot.DB.fetchrow("SELECT snowflakes FROM blacklist WHERE scope=$1",scope)).get("snowflakes")
+        if "+" in action:
+            id = int(action.replace("+",""))
+            if id in blacklist:
+                return await ctx.send("Already blacklisted")
+            else:
+                blacklist.append(id)
+        elif "-" in action:
+            id = int(action.replace("-",""))
+            try:
+                blacklist.remove(id)
+            except ValueError:
+                return await ctx.send("User not in blacklist")
+        else:
+            return await ctx.send("invalid action (+ or -)")
+        await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
+        return await ctx.send("Updated")
 
     @commands.command(name="delav",hidden=True)
     @commands.is_owner()
