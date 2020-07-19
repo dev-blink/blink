@@ -10,6 +10,9 @@ class Owner(commands.Cog, name="Developer"):
     def __init__(self, bot):
         self.bot=bot
         self.blacklist_scopes=["logging"]
+        self.blacklist_update_mappings = {
+            "logging":"Global logging",
+        }
 
     @commands.command(name="blacklist",hidden=True)
     @commands.is_owner()
@@ -33,6 +36,7 @@ class Owner(commands.Cog, name="Developer"):
         else:
             return await ctx.send("invalid action (+ or -)")
         await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
+        await self.bot.get_cog(self.blacklist_update_mappings[scope]).blacklist
         return await ctx.send("Updated")
 
     @commands.command(name="delav",hidden=True)
