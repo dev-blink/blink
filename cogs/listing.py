@@ -12,7 +12,7 @@ class ListingHandler(commands.Cog):
             "dbl":secrets.dblapi,
             "bdb":secrets.bdbapi,
             "del":secrets.delapi,
-            "dlabs":secrets.dlabsapi
+            "dlabs":secrets.dlabsapi,
         }
         self.loop.start()
 
