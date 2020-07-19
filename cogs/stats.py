@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 import blink
+import statcord
+import secrets
 
 
 class Stats(commands.Cog,name="Stats"):
@@ -8,6 +10,8 @@ class Stats(commands.Cog,name="Stats"):
         self.bot=bot
         self.statsserver=bot.statsserver
         self.newguilds=self.statsserver.get_channel(blink.Config.newguilds())
+        self.statscord = statcord.Client(bot,secrets.statcord)
+        self.statscord.start_loop()
 
     @commands.command(name="stats")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -33,6 +37,10 @@ class Stats(commands.Cog,name="Stats"):
         embed.add_field(name="Guild owner:",value=f"{guild.owner.name}#{guild.owner.discriminator}\n{guild.owner.mention}")
         embed.set_thumbnail(url=guild.icon_url_as(static_format="png"))
         await self.newguilds.send(embed=embed)
+
+    @commands.Cog.listener("on_command")
+    async def statcord_push(self,ctx):
+        self.statscord.command_run(ctx)
 
 
 def setup(bot):
