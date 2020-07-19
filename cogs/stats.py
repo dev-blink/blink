@@ -40,7 +40,7 @@ class Stats(commands.Cog,name="Stats"):
 
     @commands.Cog.listener("on_command")
     async def statcord_push(self,ctx):
-        self.statscord.command_run(ctx)
+        self.statcord.command_run(ctx)
 
     async def logging(self):
         actions = str(self.bot.logActions)
