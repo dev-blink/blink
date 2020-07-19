@@ -12,6 +12,7 @@ class ListingHandler(commands.Cog):
             "dbl":secrets.dblapi,
             "bdb":secrets.bdbapi,
             "del":secrets.delapi,
+            "dlabs":secrets.dlabsapi
         }
         self.loop.start()
 
@@ -35,6 +36,11 @@ class ListingHandler(commands.Cog):
             r = await cs.post("https://api.discordextremelist.xyz/v2/bot/692738917236998154/stats",json={"guildCount":guilds},headers={"Authorization":self.tokens["del"],"Content-Type":"application/json"})
             if not r.status == 200:
                 await self.bot.warn(f"Error in DEL post, response {r.status} `{await r.json()}`",False)
+
+        async with aiohttp.ClientSession() as cs:
+            r = await cs.post("https://bots.discordlabs.org/v2/bot/692738917236998154/stats",json={"server_count":guilds,"token":self.tokens["dlabs"]},headers={"Content-Type":"application/json"})
+            if not r.status == 200:
+                await self.bot.warn(f"Error in DLABS post, response {r.status} `{await r.json()}`",False)
 
 
 def setup(bot):
