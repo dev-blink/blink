@@ -38,7 +38,7 @@ class ListingHandler(commands.Cog):
                 await self.bot.warn(f"Error in DEL post, response {r.status} `{await r.json()}`",False)
 
         async with aiohttp.ClientSession() as cs:
-            r = await cs.post("https://bots.discordlabs.org/v2/bot/692738917236998154/stats",json={"server_count":guilds,"token":self.tokens["dlabs"]},headers={"Content-Type":"application/json"})
+            r = await cs.post("https://bots.discordlabs.org/v2/bot/692738917236998154/stats",json={"server_count":guilds,"token":self.tokens["dlabs"]})
             if not r.status == 200:
                 await self.bot.warn(f"Error in DLABS post, response {r.status} `{await r.json()}`",False)
 
