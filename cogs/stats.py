@@ -10,7 +10,7 @@ class Stats(commands.Cog,name="Stats"):
         self.bot=bot
         self.statsserver=bot.statsserver
         self.newguilds=self.statsserver.get_channel(blink.Config.newguilds())
-        self.statcord = statcord.Client(bot,secrets.statcord,custom1=self.logging,custom2=self.music,debug=True)
+        self.statcord = statcord.Client(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
         self.statcord.start_loop()
 
     @commands.command(name="stats")
