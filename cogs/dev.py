@@ -36,7 +36,7 @@ class Owner(commands.Cog, name="Developer"):
         else:
             return await ctx.send("invalid action (+ or -)")
         await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
-        await self.bot.get_cog(self.blacklist_update_mappings[scope]).blacklist
+        await self.bot.get_cog(self.blacklist_update_mappings[scope]).flush_blacklist()
         return await ctx.send("Updated")
 
     @commands.command(name="delav",hidden=True)
