@@ -9,6 +9,7 @@ import typing
 import wavelink
 from discord.ext import commands, menus
 import blink
+import secrets
 
 # URL matching REGEX...
 URL_REG=re.compile(r'https?://(?:www\.)?.+')
@@ -285,7 +286,7 @@ class Music(commands.Cog):
                     await node.destroy()
                 except Exception:
                     pass
-        nodes={'MAIN': {'host': '162.251.122.232','port': 5259,'rest_uri': 'http://162.251.122.232:5259','password': 'xd16678542','identifier': 'MAIN','region': 'us_east'}}
+        nodes={'MAIN': {'host': 'll.blinkbot.me','port': 5259,'rest_uri': 'http://ll.blinkbot.me:5259','password': secrets.lavalink,'identifier': 'MAIN','region': 'us_east'}}
 
         for n in nodes.values():
             node=await self.bot.wavelink.initiate_node(**n)
