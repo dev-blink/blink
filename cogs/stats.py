@@ -43,12 +43,18 @@ class Stats(commands.Cog,name="Stats"):
         self.statcord.command_run(ctx)
 
     async def logging(self):
-        actions = str(self.bot.logActions)
+        try:
+            actions = str(self.bot.logActions)
+        except Exception:
+            actions = "0"
         self.bot.logActions = 0
         return actions
 
     async def music(self):
-        return str(sum([len(c.voice_states) - 1 for c in [self.bot.get_channel(int(self.bot.wavelink.players[s].channel_id)) for s in self.bot.wavelink.players]]))
+        try:
+            return str(sum([len(c.voice_states) - 1 for c in [self.bot.get_channel(int(self.bot.wavelink.players[s].channel_id)) for s in self.bot.wavelink.players]]))
+        except Exception:
+            return "0"
 
 
 def setup(bot):
