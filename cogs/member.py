@@ -55,7 +55,7 @@ class Members(commands.Cog,name="Member"):
 
         await ctx.send(content=None, embed=embed)
 
-    @commands.command(name="whois",aliases=["userinfo","who"])
+    @commands.command(name="whois",aliases=["userinfo","who","ui"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def whois(self, ctx, user: discord.Member=None):
