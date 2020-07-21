@@ -110,8 +110,8 @@ class Action:
         translations = {
             "userblocked":"You have blocked this user.",
             "blocked":"You have been blocked by this user.",
-            "usertaken": "You are taken.",
-            "taken": "That user is taken.",
+            "usertaken": "You have a ship.",
+            "taken": "That user has a ship.",
         }
         return translations[self.reason]
 
