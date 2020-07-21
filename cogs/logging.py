@@ -6,7 +6,6 @@ from io import BytesIO
 import aiohttp
 import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
-from gcloud.aio.storage import Storage
 from secrets import beta
 
 
@@ -31,7 +30,9 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
-        self.storage = Storage(service_file='./creds.json',session=self.session)
+        if not beta:
+            from gcloud.aio.storage import Storage
+            self.storage = Storage(service_file='./creds.json',session=self.session)
         await self.flush_blacklist()
         self.bot.add_cog(self)
 
@@ -137,7 +138,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             unformatted = self._unformat(entry)
             dt = unformatted[0]
             name = unformatted[1]
-            names.append(f"{dt.day}/{dt.month}/{dt.year} @ {int(dt.hour):2}:{int(dt.minute):2} -> {name}")
+            names.append(f"{dt.day}/{dt.month}/{dt.year} @ {str(dt.hour).zfill(2)}:{str(dt.minute).zfill(2)} -> {name}")
         e = "\n".join(names)
         if len(e) > 1994:
             paginator = WrappedPaginator(wrap_on=('\n'),prefix='```',suffix='```')
