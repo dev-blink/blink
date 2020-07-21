@@ -14,6 +14,17 @@ class Owner(commands.Cog, name="Developer"):
             "logging":"Global logging",
         }
 
+    @commands.command(name="selfpurge",hidden=False)
+    @commands.is_owner()
+    async def selfpurge(self,ctx,count:int=10):
+        """Purge all messages within the given history"""
+        async for message in ctx.history(limit=count):
+            if message.author == ctx.me:
+                try:
+                    await message.delete()
+                except discord.errors.NotFound:
+                    pass
+
     @commands.command(name="blacklist",hidden=True)
     @commands.is_owner()
     async def blacklist(self,ctx,scope:str,action:str):
