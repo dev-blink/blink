@@ -62,10 +62,16 @@ class Members(commands.Cog,name="Member"):
         """Shows various info about a user"""
         if not user:
             user=ctx.author
+        statuses = {
+            "online":"<:bonline:707359046122078249>",
+            "idle":"<:bidle:707359045971083315>",
+            "dnd":"<:bdnd:707368559759720498>",
+            "offline":"<:boffline:707359046138855550>",
+        }
         member=ctx.guild.get_member(user.id)
 
         embed=discord.Embed(description=member.mention,colour=0xf5a6b9)
-        embed.set_author(name=str(user.name + "#" + str(user.discriminator)), url=user.avatar_url_as(static_format='png'),icon_url=user.avatar_url_as(static_format='png'))
+        embed.set_author(name=f"{user} {statuses[str(user.status)]}", url=user.avatar_url_as(static_format='png'),icon_url=user.avatar_url_as(static_format='png'))
 
         joined=member.joined_at
         joindate=str(joined.day) + "/" + str(joined.month) + "/" + str(joined.year) + "  " + str(joined.hour) + ":" + str(joined.minute).zfill(2)
