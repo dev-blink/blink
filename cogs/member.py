@@ -70,8 +70,8 @@ class Members(commands.Cog,name="Member"):
         }
         member=ctx.guild.get_member(user.id)
 
-        embed=discord.Embed(description=member.mention,colour=0xf5a6b9)
-        embed.set_author(name=f"{user} {statuses[str(user.status)]}", url=user.avatar_url_as(static_format='png'),icon_url=user.avatar_url_as(static_format='png'))
+        embed=discord.Embed(description=f"{member.mention} {statuses[str(user.status)]}",colour=0xf5a6b9)
+        embed.set_author(name=f"{user}", url=user.avatar_url_as(static_format='png'),icon_url=user.avatar_url_as(static_format='png'))
 
         joined=member.joined_at
         joindate=str(joined.day) + "/" + str(joined.month) + "/" + str(joined.year) + "  " + str(joined.hour) + ":" + str(joined.minute).zfill(2)
