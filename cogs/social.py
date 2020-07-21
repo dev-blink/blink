@@ -26,6 +26,11 @@ class Ship(object):
         self.id = uuid
         self.db = db
 
+    async def gen_thumbnail(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://api.blinkbot.me/social/images/ship/{self.colour}",headers={"Authorization":secrets.api}) as res:
+                return (await res.json()).get("url")
+
     async def __aenter__(self):
         self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
         if self.res is not None:
@@ -90,7 +95,7 @@ class Ship(object):
         embed.add_field(name="**Counters**",value=f"{stats.hugs} Hug{'s' if stats.hugs != 1 else ''} | {stats.kisses} Kiss{'es' if stats.kisses != 1 else ''}",inline=False)
         embed.add_field(name="**Ship Age**",value=stats.age,inline=False)
         embed.set_author(name=self.name,icon_url=self.icon)
-        embed.set_thumbnail(url="https://cdn.blinkbot.me/assets/ship.png")
+        embed.set_thumbnail(url=await self.gen_thumbnail())
         return embed
 
     async def modify(self,scope,data):
@@ -395,7 +400,7 @@ class Social(commands.Cog):
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="colour",data=colour.value)
-        return await ctx.send(embed=discord.Embed(colour=colour,title="This is now your ship's colour"))
+        return await ctx.send(embed=discord.Embed(colour=colour,title="This is now your ship's colour",description="**There may be a delay viewing your ship after updating the colour**"))
 
     @ship.command(name="icon")
     async def ship_change_icon(self,ctx,*,icon:str):
