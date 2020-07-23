@@ -58,7 +58,7 @@ class Members(commands.Cog,name="Member"):
     @commands.command(name="whois",aliases=["userinfo","who","ui"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def whois(self, ctx, user: discord.Member=None):
+    async def whois(self, ctx, *, user: discord.Member=None):
         """Shows various info about a user"""
         if not user:
             user=ctx.author
