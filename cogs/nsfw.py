@@ -36,14 +36,6 @@ class NSFW(commands.Cog,name="NSFW"):
         """Nsfw commands"""
         return await ctx.send(embed=discord.Embed(title="NSFW Commands",colour=self.bot.colour,description="\n".join(list((f"**{c.name}** {c.help}" for c in ctx.command.commands)))))
 
-    @nsfw.command(name="belle",aliases=["belledeplhine","delphine"])
-    @commands.is_nsfw()
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    @commands.cooldown(1,3,commands.BucketType.member)
-    async def belle_delphine(self,ctx):
-        """Random picture of belle delphine"""
-        return await ctx.send(embed=discord.Embed(colour=self.bot.colour).set_image(url=f"https://hentai.izthe.best/v1/random?{random.random()}"))
-
     @nsfw.command(name="hentai")
     @commands.is_nsfw()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
