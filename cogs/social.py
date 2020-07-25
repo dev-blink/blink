@@ -408,7 +408,7 @@ class Social(commands.Cog):
         if not URLREGEX.match(icon):
             return await ctx.send("That doesnt look like a url to me... \nex (https://example.com/image.png)")
         async with User(ctx.author.id,self.bot.DB) as user:
-            id = user.res.ship
+            id = user.ship
         async with Ship(id,self.bot.DB) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
