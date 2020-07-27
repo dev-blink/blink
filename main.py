@@ -114,10 +114,9 @@ class Blink(commands.AutoShardedBot):
         if not self.loadexceptions == "":
             boot.append("***BOOT ERRORS***\n" + self.loadexceptions)
 
-        if not self.beta:
-            await self.cluster.log_startup(boot)
         self.bootlog="\n".join(boot)
-
+        if not self.beta:
+            await self.cluster.log_startup(self.bootlog)
         print("Bot Ready")
         self.update_pres.start()
 

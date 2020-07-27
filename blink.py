@@ -28,7 +28,7 @@ class Config():
     @classmethod
     @property
     def errors(self):
-        return int(702201821615358004)
+        return 702201821615358004
 
     @classmethod
     @property
