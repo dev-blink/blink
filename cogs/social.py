@@ -28,7 +28,7 @@ class Ship(object):
 
     async def gen_thumbnail(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://api.blinkbot.me/social/images/ship/{self.colour}",headers={"Authorization":secrets.api}) as res:
+            async with session.get(f"https://api.blinkbot.me/social/images/ship/{self.colour:06}",headers={"Authorization":secrets.api}) as res:
                 if res.status == 200:
                     return (await res.json()).get("url")
                 return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
