@@ -76,7 +76,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="random")
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def random(self,ctx,*,term=None):
+    async def rand(self,ctx,*,term=None):
         """Prints a random member of a role (if none specified @everyone)"""
 
         if not term:
@@ -124,7 +124,7 @@ class Fun(commands.Cog,name="Fun"):
         choices=[f"{member1.nick[:len(member1.nick)//2]}{member2.nick[len(member2.nick)//2:]}",f"{member2.nick[:len(member2.nick)//2]}{member1.nick[len(member1.nick)//2:]}"]
         await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!")
 
-    @commands.command(name="pp",aliases=["dicksize","penis","penis","dick"])
+    @commands.command(name="pp",aliases=["dicksize","penis","dick"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def dick_size(self,ctx,member:discord.Member=None):

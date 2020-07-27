@@ -48,6 +48,7 @@ class Owner(commands.Cog, name="Developer"):
             return await ctx.send("invalid action (+ or -)")
         await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
         await self.bot.get_cog(self.blacklist_update_mappings[scope]).flush_blacklist()
+        await self.bot.cluster.dispatch({"event":"UPDATE_BLACKLIST","scope":scope})
         return await ctx.send("Updated")
 
     @commands.command(name="delav",hidden=True)
@@ -108,7 +109,7 @@ class Owner(commands.Cog, name="Developer"):
             if not await self.musiccheck(ctx):
                 return
         try:
-            if cog in ["jsk","jishaku"]:
+            if cog in ["jishaku"]:
                 cog="jishaku"
                 self.bot.unload_extension(cog)
                 self.bot.load_extension(cog)
@@ -119,6 +120,7 @@ class Owner(commands.Cog, name="Developer"):
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
             await ctx.send('**`SUCCESS`**')
+            await self.bot.cluster.dispatch({"event":"RELOAD","cog":("cogs." + cog if not cog == "jishaku" else cog)})
 
     @commands.command(name='cogs',aliases=["loaded","loadedcogs"], hidden=True)
     @commands.is_owner()
@@ -134,6 +136,8 @@ class Owner(commands.Cog, name="Developer"):
         """Logsout"""
         if not await self.musiccheck(ctx):
             return
+        await self.bot.cluster.dispatch({"event":"SHUTDOWN"})
+        await self.bot.cluster.quit()
         await ctx.send("Quitting safely.")
         await self.bot.logout()
         await self.bot.close()

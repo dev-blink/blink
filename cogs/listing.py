@@ -20,7 +20,7 @@ class ListingHandler(commands.Cog):
         await self.post()
 
     async def post(self):
-        guilds = len(self.bot.guilds)
+        guilds = self.bot.cluster.guilds
         async with aiohttp.ClientSession() as cs:
             r = await cs.post("https://top.gg/api/bots/692738917236998154/stats",data={"server_count":guilds},headers={"Authorization":self.tokens["dbl"]})
             if not r.status == 200:

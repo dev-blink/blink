@@ -6,7 +6,6 @@ from io import BytesIO
 import aiohttp
 import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
-from secrets import beta
 
 
 class AvPages(menus.ListPageSource):
@@ -23,14 +22,14 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
         self.bot.logActions = 0
-        if not beta:
+        if not self.bot.beta:
             self.active = True
         else:
             self.active= False
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
-        if not beta:
+        if not self.bot.beta:
             from gcloud.aio.storage import Storage
             self.storage = Storage(service_file='./creds.json',session=self.session)
         await self.flush_blacklist()

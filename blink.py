@@ -21,20 +21,24 @@ def ordinal(n:int):
 
 class Config():
     @classmethod
-    def statsserver(self):
-        return int(702200971781996606)
-
-    @classmethod
+    @property
     def newguilds(self):
         return int(702201857606549646)
 
     @classmethod
+    @property
     def errors(self):
         return int(702201821615358004)
 
     @classmethod
+    @property
     def startup(self):
         return 702705386557276271
+
+    @classmethod
+    @property
+    def warns(self):
+        return 722131357136060507
 
 
 def prettydelta(seconds):
