@@ -151,7 +151,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     @commands.command(name="avatars",aliases=["avs"])
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,add_reactions=True)
     @commands.cooldown(1,10,commands.BucketType.user)
-    async def avatarhistory(self,ctx,user:discord.Member=None):
+    async def avatarhistory(self,ctx,*,user:discord.Member=None):
         """Show avatar history"""
         if not user:
             user = ctx.author
@@ -180,10 +180,9 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
 # GLOBAL MESSAGES
     @commands.command(name="messages",aliases=["msgs"])
-    async def view_messages(self,ctx,member:discord.Member=None):
+    async def view_messages(self,ctx):
         """Show tracked messages sent globally"""
-        if not member:
-            member=ctx.author
+        member=ctx.author
         count=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",member.id)
         if not count:
             return await ctx.send("Nothing in our database.")

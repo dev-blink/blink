@@ -69,9 +69,8 @@ class RoleManagement(commands.Cog,name="Role Management"):
             return await ctx.send("You must specify a role name.")
         try:
             await ctx.guild.create_role(name=" ".join(rolename), permissions=discord.Permissions.none(),reason=f"Created by {ctx.author.name}#{ctx.author.discriminator}")
-            return await ctx.send(f"Successfully created the role: " +" ".join(rolename))
-        except Exception as e:
-            print(e)
+            return await ctx.send("Successfully created the role: " +" ".join(rolename))
+        except discord.DiscordException:
             return await ctx.send("I am unable to create that role.")
 
     @commands.command(name="rolecolour",aliases=["rolecolor"])

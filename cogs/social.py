@@ -309,7 +309,7 @@ class Social(commands.Cog):
 
     @commands.command(name="hug")
     @commands.bot_has_permissions(embed_links=True)
-    async def hug(self,ctx,member:discord.Member):
+    async def hug(self,ctx,*,member:discord.Member):
         """Hug someone"""
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
@@ -325,7 +325,7 @@ class Social(commands.Cog):
 
     @commands.command(name="kiss")
     @commands.bot_has_permissions(embed_links=True)
-    async def kiss(self,ctx,member:discord.Member):
+    async def kiss(self,ctx,*,member:discord.Member):
         """Kiss someone"""
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
@@ -342,7 +342,7 @@ class Social(commands.Cog):
     @commands.group(name="ship",invoke_without_command=True)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1,5,commands.BucketType.user)
-    async def ship(self,ctx,member:discord.Member=None):
+    async def ship(self,ctx,*,member:discord.Member=None):
         """Show and manage your ship"""
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
