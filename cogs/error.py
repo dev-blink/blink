@@ -99,7 +99,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
 
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
-        await self.bot.cluster.log_errors(f"Error occureed in guild: {ctx.guild or None} | {ctx.guild.id or None} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
+        await self.bot.cluster.log_errors(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id if ctx.guild else None} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
 
 
 def setup(bot):
