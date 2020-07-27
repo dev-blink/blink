@@ -99,6 +99,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
     async def _avurl(self,url,id):
+        if url.startswith("https://cdn.discordapp.com/embed/avatars/"):
+            return url
         r = await self.session.get(str(url))
         ext = str(url).replace("?size=4096","").split(".")[-1]
         img_data = BytesIO(await r.read())
