@@ -71,19 +71,19 @@ class Cluster(object):
 
     async def log_startup(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.startup()
-        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
+        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed.to_dict(),nonce=nonce)
 
     async def log_guilds(self,content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.newguilds()
-        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
+        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed.to_dict(),nonce=nonce)
 
     async def log_errors(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.errors()
-        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
+        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed.to_dict(),nonce=nonce)
 
     async def log_warns(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.warns()
-        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
+        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed.to_dict(),nonce=nonce)
 
 
 class ClusterSocket():
