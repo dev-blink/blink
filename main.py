@@ -59,7 +59,7 @@ class Blink(commands.AutoShardedBot):
         self.loadexceptions = ""
         self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.nsfw","cogs.music","cogs.social"]
         self.startingcogs.append("jishaku")
-        if self.beta:
+        if not self.beta:
             self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
