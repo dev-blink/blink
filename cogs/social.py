@@ -29,7 +29,9 @@ class Ship(object):
     async def gen_thumbnail(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://api.blinkbot.me/social/images/ship/{self.colour}",headers={"Authorization":secrets.api}) as res:
-                return (await res.json()).get("url")
+                if res.status == 200:
+                    return (await res.json()).get("url")
+                return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
 
     async def __aenter__(self):
         self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
@@ -479,9 +481,14 @@ class Social(commands.Cog):
 
             await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)")
             message = await self.bot.wait_for('message',check=is_captain,timeout=30)
-            try:
-                colour = (await commands.converter.ColourConverter().convert(None,message.content)).value
-            except commands.BadArgument:
+            content = message.content.replace("#","")
+            if len(content) == 6:
+                try:
+                    colour = (await commands.converter.ColourConverter().convert(None,content)).value
+                except commands.BadArgument:
+                    await ctx.send("unable to determine a colour, using default colour")
+                    colour = 16099001
+            else:
                 await ctx.send("unable to determine a colour, using default colour")
                 colour = 16099001
 
