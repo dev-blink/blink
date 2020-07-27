@@ -21,22 +21,18 @@ def ordinal(n:int):
 
 class Config():
     @classmethod
-    @property
     def newguilds(self):
         return int(702201857606549646)
 
     @classmethod
-    @property
     def errors(self):
         return 702201821615358004
 
     @classmethod
-    @property
     def startup(self):
         return 702705386557276271
 
     @classmethod
-    @property
     def warns(self):
         return 722131357136060507
 
