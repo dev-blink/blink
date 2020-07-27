@@ -54,7 +54,7 @@ class BotHelp(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_command_help(self,command):
-        embed = discord.Embed(title=f"**{command.name}** [{', '.join(command.aliases) if command.aliases else ''}]",colour=self.colour)
+        embed = discord.Embed(title=f"**{command.name}** {'('+', '.join(command.aliases) + ')' if command.aliases else ''}",colour=self.colour)
         embed.description = f"{self.get_command_signature(command)} {command.short_doc or '...'}"
         embed.set_footer(text=self.get_ending_note())
         await self.get_destination().send(embed=embed)
