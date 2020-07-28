@@ -4,12 +4,22 @@ import statcord
 import secrets
 
 
+class StatClient(statcord.CLient):
+    @property
+    def servers(self):
+        return self.bot.cluster.guilds
+
+    @property
+    def users(self):
+        return self.bot.cluster.users
+
+
 class Stats(commands.Cog,name="Stats"):
     def __init__(self,bot:commands.AutoShardedBot):
         self.bot=bot
         if bot.beta:
             return
-        self.statcord = statcord.Client(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
+        self.statcord = StatClient(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
         self.bot.add_listener(self.statcord_push,"on_command")
         self.statcord.start_loop()
 
