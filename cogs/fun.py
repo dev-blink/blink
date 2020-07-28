@@ -15,7 +15,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.Cog.listener("on_message_delete")
     async def append_snipes(self,message):
-        if len(message.content) > 1024 or message.author.bot or not message.content or not message.guild:
+        if len(message.content) > 1024 or message.author.bot or not message.content or not message.guild or len(message.content) == 1:
             return
         g = self.snipes.get(message.guild.id)
         if g is None:
