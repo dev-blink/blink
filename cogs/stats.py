@@ -4,7 +4,7 @@ import statcord
 import secrets
 
 
-class StatClient(statcord.CLient):
+class StatClient(statcord.Client):
     @property
     def servers(self):
         return self.bot.cluster.guilds
