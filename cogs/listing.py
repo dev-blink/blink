@@ -17,7 +17,10 @@ class ListingHandler(commands.Cog):
 
     @tasks.loop(hours=1)
     async def loop(self):
-        await self.post()
+        try:
+            await self.post()
+        except Exception as e:
+            await self.bot.warn(f"Error in guild post {type(e)} {e}",False)
 
     async def post(self):
         guilds = self.bot.cluster.guilds
