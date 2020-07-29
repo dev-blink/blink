@@ -194,14 +194,15 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     async def batch(self):
         if self.msgcache == {} or self.active is False:
             return
-        for user in self.msgcache:
-            count = self.msgcache[user]
+        cache = dict(self.msgcache)
+        self.msgcache = {}
+        for user in cache:
+            count = cache[user]
             result=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",user)
             if not result:
                 await self.bot.DB.execute("INSERT INTO globalmsg VALUES ($1,$2)",user,count)
             else:
                 await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + count,user)
-        self.msgcache = {}
 
     @tasks.loop(seconds=60)
     async def message_push(self):
