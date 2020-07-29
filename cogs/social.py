@@ -14,7 +14,7 @@ URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
 
 class ShipStats:
-    def __init__(self,hugs:int, kisses:int,xp:int,age:str):
+    def __init__(self,hugs:int, kisses:int,xp:str,age:str):
         self.hugs = hugs
         self.kisses = kisses
         self.xp = xp
@@ -84,7 +84,7 @@ class Ship(object):
         timestamp = datetime.datetime.utcnow().timestamp().__int__() - self.created.timestamp()
         days = datetime.timedelta(seconds=timestamp).days
         age = humanize.naturaldelta(timestamp)
-        xp = days *1000 + (total_hugs + total_kisses) * 75
+        xp = humanize.intword(int(((days ** 1.4175) / 43) * 1000) + (total_hugs + total_kisses) * 37)
 
         return ShipStats(hugs=total_hugs,kisses=total_kisses,xp=xp,age=age)
 
@@ -93,7 +93,7 @@ class Ship(object):
         embed = discord.Embed(colour=self.colour,description=self.description)
         embed.add_field(name="**Captain**",value=f"<@{self.captain}>")
         embed.add_field(name="**Partner**",value=f"<@{self.partner}>")
-        embed.add_field(name="**XP**",value=f"{stats.xp}xp")
+        embed.add_field(name="**XP**",value=f"{stats.xp} XP")
         embed.add_field(name="**Counters**",value=f"{stats.hugs} Hug{'s' if stats.hugs != 1 else ''} | {stats.kisses} Kiss{'es' if stats.kisses != 1 else ''}",inline=False)
         embed.add_field(name="**Ship Age**",value=stats.age,inline=False)
         embed.set_author(name=self.name,icon_url=self.icon)
