@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands,menus
+from discord.ext import commands,menus,tasks
 import asyncio
 import datetime
 from io import BytesIO
@@ -22,6 +22,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
         self.bot.logActions = 0
+        self.msgcache = {}
         if not self.bot.beta:
             self.active = True
         else:
@@ -33,6 +34,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             from gcloud.aio.storage import Storage
             self.storage = Storage(service_file='./creds.json',session=self.session)
         await self.flush_blacklist()
+        self.message_push.start()
         self.bot.add_cog(self)
 
     def __unload(self):
@@ -113,12 +115,11 @@ class GlobalLogs(commands.Cog,name="Global logging"):
     async def update_db(self,message):
         if message.author.bot or not message.guild or not self.active:
             return
-        result=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",message.author.id)
-        if not result:
-            await self.bot.DB.execute("INSERT INTO globalmsg VALUES ($1,$2)",message.author.id,1)
+        user = message.author.id
+        if self.msgcache.get(user) is None:
+            self.msgcache[user] = 1
         else:
-            await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + 1,message.author.id)
-        return
+            self.msgcache[user] +=1
 
 # USERNAME AND AVATAR
     @commands.command(name="names",aliases=["usernames","un"])
@@ -190,7 +191,26 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         embed.set_author(name=f"{member}",icon_url=member.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
 
+    async def batch(self):
+        if self.msgcache == {} or self.active is False:
+            return
+        for user in self.msgcache:
+            count = self.msgcache[user]
+            result=await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1",user)
+            if not result:
+                await self.bot.DB.execute("INSERT INTO globalmsg VALUES ($1,$2)",user,count)
+            else:
+                await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2",result["messages"] + count,user)
+        self.msgcache = {}
+
+    @tasks.loop(seconds=60)
+    async def message_push(self):
+        try:
+            await self.batch()
+        except Exception as e:
+            await self.bot.warn(f"Exception in message cache, ({type(e)}) {e}")
+
 
 def setup(bot):
     cog = GlobalLogs(bot)
-    asyncio.create_task(cog.init())
+    bot.loop.create_task(cog.init())
