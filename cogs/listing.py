@@ -44,4 +44,6 @@ class ListingHandler(commands.Cog):
 
 
 def setup(bot):
+    if bot.beta:
+        return
     bot.add_cog(ListingHandler(bot))
