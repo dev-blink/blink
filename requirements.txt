@@ -4,3 +4,4 @@ pyfiglet
 wavelink
 gcloud-aio-storage
 statcord.py-beta
+box
