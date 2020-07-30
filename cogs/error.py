@@ -95,11 +95,19 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error,NoNodes):
-            await self.bot.warn(error)
+            await self.bot.warn("no nodes "+ error,False)
             return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
 
         await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
-        await self.bot.cluster.log_errors(f"Error occureed in guild: {ctx.guild} | {ctx.guild.id if ctx.guild else None} channel: {ctx.channel.mention} | {ctx.channel.id} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow().isoformat()}")
+        if ctx.guild:
+            guild = f"{ctx.guild.id} -- {ctx.guild.name}"
+        else:
+            guild = "no guild"
+        if isinstance(ctx.channel,discord.DMChannel):
+            channel = f"DM WITH {ctx.channel.recipient}"
+        else:
+            channel = f"{ctx.channel.id} -- #{ctx.channel.name} ({ctx.channel.mention})"
+        await self.bot.cluster.log_errors(f"Error occureed in guild: {guild} | channel: {channel} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow()}")
 
 
 def setup(bot):
