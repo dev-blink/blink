@@ -34,11 +34,15 @@ class Cluster(object):
 
     @property
     def guilds(self):
-        return self.ws.query()[0]
+        return self.ws.query()["guilds"]
 
     @property
     def users(self):
-        return self.ws.query()[1]
+        return self.ws.query()["users"]
+
+    @property
+    def music(self):
+        return self.ws.query()["music"]
 
     def __str__(self):
         shards = self.shards["this"]
@@ -63,9 +67,14 @@ class Cluster(object):
         }
 
     def update(self):
+        try:
+            music = len(self.bot.wavelink.players)
+        except Exception:
+            music = 0
         stats = {
             "guilds":len(self.bot.guilds),
-            "users":len(self.bot.users)
+            "users":len(self.bot.users),
+            "music":music,
         }
         self.ws.update(stats)
 
@@ -101,6 +110,9 @@ class ClusterSocket():
         self._loop = bot.loop
         self.wait = {}
         self.bot_dispatch = bot.cluster_event
+        self.guilds=0
+        self.users=0
+        self.music = 0
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye.")
@@ -114,6 +126,7 @@ class ClusterSocket():
     def update(self,stats:dict):
         self.guilds = stats["guilds"]
         self.users = stats["users"]
+        self.music = stats["music"]
 
     async def dispatch(self,data):
         payload = {
@@ -136,7 +149,6 @@ class ClusterSocket():
                     if data["op"] == 3:
                         await self.intent(data["data"])
             except websockets.ConnectionClosed:
-                pass
                 self.beating=False
 
     async def identify(self,payload):
@@ -168,6 +180,7 @@ class ClusterSocket():
                     "identifier":self.identifier,
                     "guilds":self.guilds,
                     "users":self.users,
+                    "music":self.music,
                 }
             }
         }
@@ -175,20 +188,28 @@ class ClusterSocket():
 
     async def intent(self,data):
         if data.get("intent") == "STATS":
-            self.load_data(data["identifier"],data["guilds"],data["users"])
+            self.load_data(data["identifier"],data["guilds"],data["users"],data["music"])
         if data.get("intent") == "DISPATCH":
             await self.bot_dispatch(data)
 
-    def load_data(self,identifier,guilds,users):
-        self.wait[identifier] = (guilds,users)
+    def load_data(self,identifier,guilds,users,music):
+        self.wait[identifier] = (guilds,users,music)
 
     def query(self):
         if len(self.wait) != TOTAL_CLUSTERS - 1:
-            return (0,0)
+            guilds=0
+            users=0
+            music=-1
         else:
             guilds = self.guilds
             users = self.users
+            music = self.music
             for cluster in self.wait:
                 guilds += self.wait[cluster][0]
                 users += self.wait[cluster][1]
-            return (guilds,users)
+                music += self.wait[cluster][2]
+        return {
+            "guilds":guilds,
+            "users":users,
+            "music":music,
+        }
