@@ -124,9 +124,12 @@ class Blink(commands.AutoShardedBot):
         prefixes=[';','b;','B;','blink ']
 
         if self.beta:
-            return "beta;"
+            return ["beta;"]
         if message.guild and message.guild.id in [336642139381301249,264445053596991498,265828729970753537,568567800910839811]:
             prefixes.remove(";")
+
+        if message.author.id == 171197717559771136:
+            prefixes.append('')
 
         return commands.when_mentioned_or(*prefixes)(self,message)
 
@@ -139,12 +142,10 @@ class Blink(commands.AutoShardedBot):
                 await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
     async def cluster_event(self,payload):
-        print(f"Recieved cluster event {payload}")
         if payload is None:
             return
         if payload["event"] == "UPDATE_BLACKLIST":
             await self.get_cog(self.get_cog("Developer").blacklist_update_mappings[payload["scope"]]).flush_blacklist()
-            print("Updated blacklist")
         if payload["event"] == "SHUTDOWN":
             await self.cluster.quit()
             await self.logout()
@@ -153,7 +154,6 @@ class Blink(commands.AutoShardedBot):
             exit()
         if payload["event"] == "RELOAD":
             self.reload_extension(payload["cog"])
-            print("Reloaded cog")
 
 
 BOT = Blink(cluster)
