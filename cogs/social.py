@@ -356,7 +356,7 @@ class Social(commands.Cog):
                 else:
                     check = await user.elegible(scope="ship",recipient=member.id)
                     if not check.elegible:
-                        return await ctx.send(discord.Embed(title=f":x: {Action(reason=check.reason).translate()}",colour=discord.Colour.red()))
+                        return await ctx.send(discord.Embed(title=f":x: {Action(success=False,reason=check.reason).translate()}",colour=discord.Colour.red()))
                     if await self._new_ship(ctx.author.id,member.id,ctx) is False:
                         return await ctx.send("Ship cancelled.")
                     return
