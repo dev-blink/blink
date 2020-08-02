@@ -57,7 +57,7 @@ class Server(commands.Cog,name="Server"):
         description=""
         for member in role.members:
             description=description + member.mention
-        embed=discord.Embed(title="Current mutes")
+        embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
         embed.add_field(name="Members:", value=description, inline=False)
         await ctx.send(embed=embed)
 
