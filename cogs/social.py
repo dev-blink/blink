@@ -310,6 +310,7 @@ class Social(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
+    @commands.cooldown(1,3,commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     async def hug(self,ctx,*,member:discord.Member):
         """Hug someone"""
@@ -326,6 +327,7 @@ class Social(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="kiss")
+    @commands.cooldown(1,3,commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     async def kiss(self,ctx,*,member:discord.Member):
         """Kiss someone"""
