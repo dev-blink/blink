@@ -7,6 +7,7 @@ import config
 import asyncio
 import json
 import secrets
+import uuid
 
 
 TOTAL_CLUSTERS = config.clusters
@@ -25,6 +26,9 @@ class Cluster(object):
 
     async def dispatch(self,data:dict):
         await self.ws.dispatch(data)
+
+    async def dedupe(self,scope:str,hash:str):
+        return await self.ws.dedupe({"scope":scope,"content":hash},str(uuid.uuid4()))
 
     def start(self):
         self.ws = ClusterSocket(f"Cluster-{self.name}",self.bot)
@@ -114,6 +118,7 @@ class ClusterSocket():
         self.users=0
         self.music = 0
         self.bot = bot
+        self.dupes = {}
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye.")
@@ -150,6 +155,8 @@ class ClusterSocket():
                             await self.identify(data)
                         if data["op"] == 3:
                             await self.intent(data["data"])
+                        if data["op"] == 6:
+                            await self.reg_dupe(data["data"])
                     except Exception as e:
                         await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}")
             except websockets.ConnectionClosed:
@@ -217,3 +224,18 @@ class ClusterSocket():
             "users":users,
             "music":music,
         }
+
+    async def reg_dupe(self,payload):
+        self.dupes[payload["req"]] = payload["duplicate"]
+
+    async def dedupe(self,payload:dict,req:str):
+        payload["req"] = req
+        await self.ws.send(json.dumps({"op":6,"data":payload}))
+        while True:
+            await asyncio.sleep(0)
+            if self.dupes.get(req) is None:
+                continue
+            else:
+                res = self.dupes[req]
+                del self.dupes[req]
+                return res

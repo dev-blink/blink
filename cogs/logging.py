@@ -57,6 +57,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
+        if await self.bot.cluster.dedupe("logging",transaction):
+            return
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id

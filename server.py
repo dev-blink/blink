@@ -32,7 +32,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.sequence = 0
         self.authenticated = False
         self.open=False
-        self.ops = [0,1,2,3,4,5]
+        self.ops = [0,1,2,3,4,5,6]
         self.beating=False
         self.handlers={
             0:self.invalid_opcode,
@@ -41,6 +41,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             3:self.event,
             4:self.invalid_opcode,
             5:self.broadcast,
+            6:self.dedupe,
         }
 
     async def broadcast(self,payload):
@@ -63,6 +64,16 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
 
         self.authenticated=True
         self.factory.register(self)
+
+    async def dedupe(self,payload):
+        if payload.get("scope") is None:
+            return await self.close(code=4001,error="No scope provided")
+        if payload.get("content") is None:
+            return await self.close(code=4001,error="No content provided")
+        if payload.get("req") is None:
+            return await self.close(code=4001,error="No request id provided")
+        dupe = self.factory.dedupe(payload["scope"],payload["content"])
+        return await self.send(6,{"duplicate":dupe,"req":payload["req"]})
 
     async def event(self,payload):
         if payload.get("intent") is None:
@@ -90,7 +101,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         return Message(op=payload["op"],data=payload["data"])
 
     async def invalid_opcode(self,payload):
-        await self.close(code=4003,error="Payload opcode was incorrect")
+        await self.close(code=4003,error="Payload opcode was not acceptable")
 
     async def send(self,op,payload):
         self.sequence +=1
@@ -169,6 +180,7 @@ class Factory(websocket.WebSocketServerFactory):
     def __init__(self):
         super().__init__()
         self.clients = []
+        self.registered_dupes = {}
         self.protocol = ServerProtocol
 
     def register(self, client):
@@ -184,6 +196,14 @@ class Factory(websocket.WebSocketServerFactory):
     async def broadcast(self, client:str,event:Intent):
         for c in self.clients:
             await c.dispatch(client,event)
+
+    def dedupe(self,scope,hash):
+        if not self.registered_dupes.get(scope):
+            self.registered_dupes[scope] = {}
+        if self.registered_dupes[scope].get(hash) is None:
+            self.registered_dupes[scope][hash] = True
+            return False
+        return True
 
 
 loop = asyncio.get_event_loop()
