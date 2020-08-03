@@ -162,11 +162,10 @@ class User(object):
         self.res = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
         self.format()
 
-    async def elegible(self,scope:str,recipient:int) -> ElegibilityReason:
+    async def elegible(self,scope:str,recipient) -> ElegibilityReason:
         if self.relation == recipient:
             return ElegibilityReason(True)
-        async with User(recipient,self.db) as recp:
-            res = recp
+        res = recipient
 
         if recipient in self.blocked:
             return ElegibilityReason(False,reason="userblocked")
@@ -216,9 +215,13 @@ class User(object):
         return entry, count, index, action
 
     async def hug(self,recipient:int) -> Action:
-        check = await self.elegible(scope="hug",recipient=recipient)
-        if not check.elegible:
-            return Action(success=False,reason=check.reason)
+        async with User(recipient,self.bot.DB) as recp:
+            check = await self.elegible(scope="hug",recipient=recp)
+            if not check.elegible:
+                return Action(success=False,reason=check.reason)
+            rentry, rcount, rindex, rhugs = await recp.decompile(scope="hugs",recipient=self.user)
+            if rcount is None:
+                rcount = 0
 
         entry, count, index, hugs = await self.decompile(scope="hugs",recipient=recipient)
 
@@ -230,12 +233,16 @@ class User(object):
             hugs.pop(index)
             hugs.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET hugs=$1 WHERE id=$2",hugs,self.user)
-        return Action(success=True,count=count)
+        return Action(success=True,count=count + rcount)
 
     async def kiss(self,recipient:int) -> Action:
-        check = await self.elegible(scope="kiss",recipient=recipient)
-        if not check.elegible:
-            return Action(success=False,reason=check.reason)
+        async with User(recipient,self.db) as recp:
+            check = await self.elegible(scope="hug",recipient=recp)
+            if not check.elegible:
+                return Action(success=False,reason=check.reason)
+            rentry, rcount, rindex, rhugs = await recp.decompile(scope="kisses",recipient=self.user)
+            if rcount is None:
+                rcount = 0
 
         entry, count, index, kisses = await self.decompile(scope="kisses",recipient=recipient)
 
@@ -247,7 +254,7 @@ class User(object):
             kisses.pop(index)
             kisses.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2",kisses,self.user)
-        return Action(success=True,count=count)
+        return Action(success=True,count=count + rcount)
 
     async def set_ship(self,id:str,relation:int):
         await self.db.execute("UPDATE social SET ship = $1 WHERE id=$2",id,self.user)
@@ -419,7 +426,7 @@ class Social(commands.Cog):
             await ship.modify(scope="icon",data=icon)
         return await ctx.send(embed=discord.Embed(title="This is now your ship's icon",colour=self.bot.colour).set_image(url=icon))
 
-    @ship.command(name="sink",aliases=["stop","delete"])
+    @ship.command(name="sink",aliases=["stop","delete","cancel"])
     async def ship_sink(self,ctx):
         """Delete your ship"""
         m = await ctx.send("Are you sure?")
