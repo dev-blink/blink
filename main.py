@@ -26,6 +26,10 @@ os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
 
+class CogStorage:
+    pass
+
+
 class Blink(commands.AutoShardedBot):
     def __init__(self,cluster:str):
 
@@ -55,6 +59,7 @@ class Blink(commands.AutoShardedBot):
         self.boottime=datetime.datetime.utcnow()
 
         # Cogs
+        self._cogs = CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
         self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.nsfw","cogs.music","cogs.social"]

@@ -8,6 +8,7 @@ class ListingHandler(commands.Cog):
 
     def __init__(self, bot):
         self.bot=bot
+        self.bot._cogs.listing = self
         self.tokens={
             "dbl":secrets.dblapi,
             "bdb":secrets.bdbapi,

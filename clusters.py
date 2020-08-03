@@ -113,6 +113,7 @@ class ClusterSocket():
         self.guilds=0
         self.users=0
         self.music = 0
+        self.bot = bot
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye.")
@@ -143,11 +144,14 @@ class ClusterSocket():
             self.ws = await websockets.connect(config.gateway)
             try:
                 async for message in self.ws:
-                    data = json.loads(message)
-                    if data["op"] == 0:
-                        await self.identify(data)
-                    if data["op"] == 3:
-                        await self.intent(data["data"])
+                    try:
+                        data = json.loads(message)
+                        if data["op"] == 0:
+                            await self.identify(data)
+                        if data["op"] == 3:
+                            await self.intent(data["data"])
+                    except Exception as e:
+                        await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}")
             except websockets.ConnectionClosed:
                 self.beating=False
 

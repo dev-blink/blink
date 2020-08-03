@@ -10,6 +10,7 @@ from wavelink import ZeroConnectedNodes as NoNodes
 class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
         self.bot=bot
+        self.bot._cogs.error = self
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

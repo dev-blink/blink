@@ -9,6 +9,7 @@ import asyncio
 class NSFW(commands.Cog,name="NSFW"):
     def __init__(self,bot):
         self.bot = bot
+        self.bot._cogs.nsfw = self
         self.session = aiohttp.ClientSession()
         self.bot.add_cog(self)
 

@@ -17,6 +17,7 @@ class StatClient(statcord.Client):
 class Stats(commands.Cog,name="Stats"):
     def __init__(self,bot:commands.AutoShardedBot):
         self.bot=bot
+        self.bot._cogs.stats = self
         if bot.beta:
             return
         self.statcord = StatClient(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
@@ -60,10 +61,11 @@ class Stats(commands.Cog,name="Stats"):
         return actions
 
     async def music(self):
-        try:
-            return str(sum([len(c.voice_states) - 1 for c in [self.bot.get_channel(int(self.bot.wavelink.players[s].channel_id)) for s in self.bot.wavelink.players]]))
-        except Exception:
+        music = str(sum([len(c.voice_states) - 1 for c in [self.bot.get_channel(int(self.bot.wavelink.players[s].channel_id)) for s in self.bot.wavelink.players]]))
+        if music == -1:
             return "0"
+        else:
+            return str(music)
 
 
 def setup(bot):

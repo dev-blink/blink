@@ -8,6 +8,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
     def __init__(self,bot):
         self.bot=bot
         self.colour=bot.colour
+        self.bot._cogs.advancedinfo = self
 
     @commands.command(name="token",aliases=["guesstoken"])
     @commands.guild_only()

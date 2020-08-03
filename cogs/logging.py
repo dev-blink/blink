@@ -6,6 +6,8 @@ from io import BytesIO
 import aiohttp
 import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
+import config
+import hashlib
 
 
 class AvPages(menus.ListPageSource):
@@ -21,12 +23,13 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(commands.Cog,name="Global logging"):
     def __init__(self,bot):
         self.bot = bot
+        self.bot._cogs.logging = self
         self.bot.logActions = 0
         self.msgcache = {}
         if not self.bot.beta:
             self.active = True
         else:
-            self.active= False
+            self.active= True
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
@@ -52,6 +55,10 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         if before.id in self.blacklist:
             return
+        uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
+        transaction = str(hashlib.md5(uuid.encode()).hexdigest())
+        print(transaction)
+        return
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
@@ -107,7 +114,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         ext = str(url).replace("?size=4096","").split(".")[-1]
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
-        await self.storage.upload("blink-cdn",path,img_data)
+        await self.storage.upload(config.cdn,path,img_data)
         return f"https://cdn.blinkbot.me/{path}"
 
 # GLOBAL MESSAGES DB TRANSACTIONS

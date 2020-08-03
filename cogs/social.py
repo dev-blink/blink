@@ -268,6 +268,7 @@ class User(object):
 class Social(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
+        self.bot._cogs.social = self
 
     async def gen_kiss(self):
         async with aiohttp.ClientSession() as session:

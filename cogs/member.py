@@ -16,6 +16,7 @@ async def convert(seconds):
 class Members(commands.Cog,name="Member"):
     def __init__(self, bot):
         self.bot=bot
+        self.bot._cogs.member = self
 
     @commands.command(name="joined",aliases=["joinedat","joindate"])
     @commands.guild_only()

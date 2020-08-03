@@ -10,6 +10,7 @@ import time
 class Info(commands.Cog,name="Info"):
     def __init__(self,bot):
         self.bot=bot
+        self.bot._cogs.info = self
         self.colour=bot.colour
 
     @commands.command(name="prefix")

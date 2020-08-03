@@ -9,6 +9,7 @@ import asyncio
 class Media(commands.Cog,name="Media"):
     def __init__(self,bot):
         self.bot=bot
+        self.bot._cogs.media = self
         self.colour=self.bot.colour
         self.session=aiohttp.ClientSession()
 

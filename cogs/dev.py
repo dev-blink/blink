@@ -9,6 +9,7 @@ import asyncio
 class Owner(commands.Cog, name="Developer"):
     def __init__(self, bot):
         self.bot=bot
+        self.bot._cogs.dev = self
         self.blacklist_scopes=["logging"]
         self.blacklist_update_mappings = {
             "logging":"Global logging",
@@ -231,8 +232,8 @@ class Owner(commands.Cog, name="Developer"):
         return await ctx.send(f"total-cache```{sanity(channels[discord.TextChannel], 'discord.channel.TextChannel')}\n{sanity(channels[discord.VoiceChannel], 'discord.channel.VoiceChannel')}\n{sanity(128, 'discord.channel.DMChannel')}\n{sanity(channels[discord.CategoryChannel], 'discord.channel.CategoryChannel')}\n{sanity(len(bot.guilds), 'discord.guild.Guild')}\n{sanity(5000, 'discord.message.Message')}\n{sanity(len(bot.users), 'discord.user.User')}\n{sanity(sum(1 for _ in bot.get_all_members()), 'discord.member.Member')}\n{sanity(len(bot.emojis), 'discord.emoji.Emoji')}\n{sanity(get_all_overwrites(), 'discord.abc._Overwrites')}\n{sanity(get_all_roles(), 'discord.role.Role')}```")
 
     async def musiccheck(self,ctx):
-        if not len(self.bot.wavelink.players) == 0:
-            m=await ctx.send(f"There {'are' if len(self.bot.wavelink.players) > 1 else 'is'} {len(self.bot.wavelink.players)} player{'s' if len(self.bot.wavelink.players) > 1 else ''} playing continue?")
+        if not self.bot.cluster.music == 0:
+            m=await ctx.send(f"Players would be cancelled: {self.bot.cluster.music}")
             await m.add_reaction("\U00002714")
 
             def check(reaction, user):

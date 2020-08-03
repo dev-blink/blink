@@ -7,6 +7,7 @@ import blink
 class Server(commands.Cog,name="Server"):
     def __init__(self, bot):
         self.bot=bot
+        self.bot._cogs.server = self
 
     def memberscheck(self):
         def predicate(self,ctx):

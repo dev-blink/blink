@@ -10,6 +10,7 @@ import random
 class Fun(commands.Cog,name="Fun"):
     def __init__(self,bot):
         self.bot=bot
+        self.bot._cogs.fun = self
         self.snipes = {}
         self.esnipes= {}
 
@@ -163,6 +164,15 @@ class Fun(commands.Cog,name="Fun"):
             member=ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s gayness",description=f"{blink.prand(0.8526821782827291,member.id,0,100,True)}%",colour=self.bot.colour))
 
+    @commands.command(name="howhorny",aliases=["horny","hornyrate"])
+    @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    async def hornyrate(self,ctx,member:discord.Member=None):
+        """How horny are you?"""
+        if not member:
+            member=ctx.author
+        return await ctx.send(embed=discord.Embed(title=f"{member}'s horniness",description=f"{blink.prand(0.6950561467838507,member.id,60,100,True)}%",colour=self.bot.colour))
+
     @commands.command(name="nonce",aliases=["noncerate","hownonce"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -177,6 +187,7 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.command(name="mock")
     async def mock(self, ctx,*, text:str=None):
+        """Mock some text"""
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
 
 

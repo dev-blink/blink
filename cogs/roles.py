@@ -6,6 +6,7 @@ import blink
 class RoleManagement(commands.Cog,name="Role Management"):
     def __init__(self,bot):
         self.bot=bot
+        self.bot._cogs.roles = self
 
     @commands.command(name="role",aliases=["changerole","setrole"])
     @commands.guild_only()

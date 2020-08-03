@@ -9,6 +9,7 @@ class SQL(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.bot._cogs.sql = self
 
     def popcode(self, content):
         if content.startswith('```') and content.endswith('```'):
