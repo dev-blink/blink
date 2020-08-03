@@ -215,7 +215,7 @@ class User(object):
         return entry, count, index, action
 
     async def hug(self,recipient:int) -> Action:
-        async with User(recipient,self.bot.DB) as recp:
+        async with User(recipient,self.db) as recp:
             check = await self.elegible(scope="hug",recipient=recp)
             if not check.elegible:
                 return Action(success=False,reason=check.reason)
