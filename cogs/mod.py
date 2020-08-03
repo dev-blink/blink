@@ -42,7 +42,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     @commands.guild_only()
-    async def ban(self, ctx, *, user: discord.Member=None,reason:str=None):
+    async def ban(self, ctx,user: discord.Member=None,*,reason:str=None):
         """Bans a user."""
         if not user:
             return await ctx.send("You must specify a user.")
@@ -89,7 +89,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def softban(self, ctx, *, user: discord.Member=None, reason:str=None):
+    async def softban(self, ctx, user: discord.Member=None,*, reason:str=None):
         """Bans and unbans a member to delete their messages."""
         if not user:
             return await ctx.send("You must specify a user.")
@@ -114,7 +114,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    async def mute(self, ctx, *, user: discord.Member=None, reason:str=None):
+    async def mute(self, ctx,user: discord.Member=None, *, reason:str=None):
         """Mutes a user."""
         if not user:
             return await ctx.send("You must specify a user.")
@@ -128,7 +128,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
     @commands.guild_only()
-    async def kick(self, ctx, *, user: discord.Member=None,reason:str=None):
+    async def kick(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Kicks a user."""
         if not user:
             return await ctx.send("You must specify a user")
@@ -209,7 +209,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
-    async def clean(self,ctx, *, user: discord.Member=None,count:int =None):
+    async def clean(self,ctx,user: discord.Member=None,*,count:int =None):
         """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
         # CLEAN COMMAND CHECKS
         if count:
