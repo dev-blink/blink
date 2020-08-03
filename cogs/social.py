@@ -364,10 +364,11 @@ class Social(commands.Cog):
                 if not member:
                     return await ctx.send("You do not have a ship.")
                 else:
-                    check = await user.elegible(scope="ship",recipient=member.id)
+                    async with User(member.id,self.bot.DB) as memb:
+                        check = await user.elegible(scope="ship",recipient=memb)
                     if not check.elegible:
                         return await ctx.send(embed=discord.Embed(title=f":x: {Action(success=False,reason=check.reason).translate()}",colour=discord.Colour.red()))
-                    if await self._new_ship(ctx.author.id,member.id,ctx) is False:
+                    if await self._new_ship(ctx.author.id,memb.user,ctx) is False:
                         return await ctx.send("Ship cancelled.")
                     return
             if member:
