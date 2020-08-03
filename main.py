@@ -27,7 +27,8 @@ os.environ["JISHAKU_RETAIN"] = "True"
 
 
 class CogStorage:
-    pass
+    def __dir__(self):
+        return sorted([a for a in super().__dir__() if not (a.startswith("__") and a.endswith("__"))])
 
 
 class Blink(commands.AutoShardedBot):
@@ -39,7 +40,7 @@ class Blink(commands.AutoShardedBot):
 
         # Sharding
         self.INIT_SHARDS = []
-        self.SHARD_IDS = self.cluster.shards["this"]
+        self.SHARD_IDS = shards["this"]
 
         # Main
         super().__init__(
@@ -133,7 +134,7 @@ class Blink(commands.AutoShardedBot):
         if message.guild and message.guild.id in [336642139381301249,264445053596991498,265828729970753537,568567800910839811]:
             prefixes.remove(";")
 
-        if message.author.id == 171197717559771136:
+        if message.author.id in self.owner_ids:
             prefixes.append('')
 
         return commands.when_mentioned_or(*prefixes)(self,message)
