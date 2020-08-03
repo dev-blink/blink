@@ -29,7 +29,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not self.bot.beta:
             self.active = True
         else:
-            self.active= True
+            self.active= False
 
     async def init(self): # Async init things
         self.session = aiohttp.ClientSession()
@@ -57,7 +57,6 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
-        print(transaction)
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
