@@ -170,7 +170,7 @@ class Moderation(commands.Cog, name="Moderation"):
         if not user:
             return await ctx.send("You must specify a user.")
         term="muted"
-        role=await blink.searchrole(ctx.author.roles,term)
+        role=await blink.searchrole(user.roles,term)
         if not role:
             return await ctx.send("I could not find the muted role..")
         await user.remove_roles(role)
