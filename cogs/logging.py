@@ -62,8 +62,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
-        beforeav = str(before.avatar_url_as(static_format="png", size=4096))
-        afterav = str(after.avatar_url_as(static_format="png", size=4096))
+        beforeav = str(before.avatar_url_as(static_format="png", size=512))
+        afterav = str(after.avatar_url_as(static_format="png", size=512))
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1",uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
