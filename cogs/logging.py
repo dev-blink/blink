@@ -8,6 +8,7 @@ import uuid
 from jishaku.paginators import WrappedPaginator, PaginatorInterface
 import config
 import hashlib
+from async_timeout import timeout
 
 
 class AvPages(menus.ListPageSource):
@@ -57,8 +58,12 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             return
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
-        if await self.bot.cluster.dedupe("logging",transaction):
-            return
+        try:
+            async with timeout(30):
+                if await self.bot.cluster.dedupe("logging",transaction):
+                    return
+        except asyncio.TimeoutError:
+            return await self.bot.warn(f"Timeout waiting for dedupe ({transaction})")
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
