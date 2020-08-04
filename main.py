@@ -51,6 +51,7 @@ class Blink(commands.AutoShardedBot):
             case_insensitive=True,
             status=discord.Status.online,
             activity=discord.Streaming(name='b;help', url='https://www.twitch.tv/#'),
+            owner_ids=[171197717559771136],
         )
 
         # Globals
@@ -103,6 +104,7 @@ class Blink(commands.AutoShardedBot):
     async def create(self):
         print("\nInitializing")
         self.cluster.start()
+        await self.cluster.wait_until_ready()
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")

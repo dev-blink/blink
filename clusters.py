@@ -20,6 +20,10 @@ class Cluster(object):
         self.bot = bot
         self.name = cluster.capitalize()
 
+    async def wait_until_ready(self):
+        while self.guilds == 0:
+            await asyncio.sleep(1)
+
     async def quit(self):
         await self.ws.quit()
         self.active=False
