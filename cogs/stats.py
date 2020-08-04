@@ -61,7 +61,7 @@ class Stats(commands.Cog,name="Stats"):
         return actions
 
     async def music(self):
-        music = str(sum([len(c.voice_states) - 1 for c in [self.bot.get_channel(int(self.bot.wavelink.players[s].channel_id)) for s in self.bot.wavelink.players]]))
+        music = self.bot.cluster.music
         if music == -1:
             return "0"
         else:
