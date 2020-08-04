@@ -116,7 +116,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars/"):
             return url
         r = await self.session.get(str(url))
-        ext = str(url).replace("?size=4096","").split(".")[-1]
+        ext = str(url).replace("?size=512","").split(".")[-1]
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
         await self.storage.upload(config.cdn,path,img_data)
