@@ -116,11 +116,10 @@ class Blink(commands.AutoShardedBot):
             f"**BOT STARTUP:** {self.cluster.name} started at {datetime.datetime.utcnow()}",
             f"```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)",
             f"GUILDS:{len(self.guilds)}",
-            f"SHARDS:{self.shard_count}```",
-            f"`d.py version: {discord.__version__}`",
+            f"SHARDS:{len(self.shards)}```",
         ]
         if not self.loadexceptions == "":
-            boot.append("***BOOT ERRORS***\n" + self.loadexceptions)
+            boot.append("@everyone ***BOOT ERRORS***\n" + self.loadexceptions)
 
         self.bootlog="\n".join(boot)
         if not self.beta:
