@@ -467,22 +467,22 @@ class Social(commands.Cog):
             def is_partner(m):
                 return m.author.id == partner
             await ctx.send(f"<@{partner}> would you like to create a ship with <@{captain}> ? (type yes or no)")
-            message = await self.bot.wait_for('message',check=is_partner,timeout=30)
+            message = await self.bot.wait_for('message',check=is_partner,timeout=60)
             if "yes" not in message.content.lower():
                 return False
 
             await ctx.send(f"<@{captain}> what should the ship be called?")
-            message = await self.bot.wait_for('message',check=is_captain,timeout=30)
+            message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             name = message.content or "Ship Name"
 
             await ctx.send(f"<@{captain}> what should the ship description be?")
-            message = await self.bot.wait_for('message',check=is_captain,timeout=30)
+            message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             description = message.content
 
             await ctx.send(f"<@{captain}> what should the ship icon be? (a link to an image is needed)")
-            message = await self.bot.wait_for('message',check=is_captain,timeout=30)
+            message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             if URLREGEX.match(message.content):
                 icon = message.content
@@ -491,7 +491,7 @@ class Social(commands.Cog):
                 icon ="https://cdn.blinkbot.me/assets/ship.png"
 
             await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)")
-            message = await self.bot.wait_for('message',check=is_captain,timeout=30)
+            message = await self.bot.wait_for('message',check=is_captain,timeout=60)
             content = message.content.replace("#","")
             if len(content) == 6:
                 try:
