@@ -49,8 +49,8 @@ class Blink(commands.AutoShardedBot):
             shard_count=shards["total"],
             shard_ids=shards["this"],
             case_insensitive=True,
-            status=discord.Status.online,
-            activity=discord.Streaming(name='b;help', url='https://www.twitch.tv/#'),
+            status=discord.Status.dnd,
+            activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136],
         )
 
