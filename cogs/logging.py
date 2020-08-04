@@ -56,11 +56,9 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if before.id in self.blacklist:
             return
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
-        print(uuid)
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
         if await self.bot.cluster.dedupe("logging",transaction):
             return
-        print("passed")
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
