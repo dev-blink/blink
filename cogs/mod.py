@@ -169,8 +169,7 @@ class Moderation(commands.Cog, name="Moderation"):
         """Unmutes a muted user."""
         if not user:
             return await ctx.send("You must specify a user.")
-        term="muted"
-        role=await blink.searchrole(user.roles,term)
+        role=await blink.searchrole(user.roles,"muted")
         if not role:
             return await ctx.send("I could not find the muted role..")
         await user.remove_roles(role)
