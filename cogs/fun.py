@@ -128,7 +128,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="pp",aliases=["dicksize","penis","dick"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def dick_size(self,ctx,member:discord.Member=None):
+    async def dick_size(self,ctx,*,member:discord.Member=None):
         """....................."""
         if not member:
             member=ctx.author
@@ -149,7 +149,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="thot",aliases=["thotrate","howthot"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def thotrate(self,ctx,member:discord.Member=None):
+    async def thotrate(self,ctx,*,member:discord.Member=None):
         """How thotty are you?"""
         if not member:
             member=ctx.author
@@ -158,7 +158,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="gay",aliases=["gayrate","howgay"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def gayrate(self,ctx,member:discord.Member=None):
+    async def gayrate(self,ctx,*,member:discord.Member=None):
         """How gay are you?"""
         if not member:
             member=ctx.author
@@ -167,7 +167,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="howhorny",aliases=["horny","hornyrate"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def hornyrate(self,ctx,member:discord.Member=None):
+    async def hornyrate(self,ctx,*,member:discord.Member=None):
         """How horny are you?"""
         if not member:
             member=ctx.author
@@ -176,7 +176,7 @@ class Fun(commands.Cog,name="Fun"):
     @commands.command(name="nonce",aliases=["noncerate","hownonce"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def noncerate(self,ctx,member:discord.Member=None):
+    async def noncerate(self,ctx,*,member:discord.Member=None):
         """How much of a nonce are you?"""
         if not member:
             member=ctx.author
