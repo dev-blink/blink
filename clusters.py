@@ -20,6 +20,9 @@ class Cluster(object):
         self.bot = bot
         self.name = cluster.capitalize()
 
+    def __repr__(self):
+        return f"<Cluster={self.name}, shards={self.shards}, active={self.active}>"
+
     async def wait_until_ready(self):
         while self.guilds == 0:
             await asyncio.sleep(1)
