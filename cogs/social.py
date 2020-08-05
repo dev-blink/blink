@@ -425,9 +425,17 @@ class Social(commands.Cog):
             await ship.modify(scope="colour",data=colour.value)
         return await ctx.send(embed=discord.Embed(colour=colour,title="This is now your ship's colour",description="**There may be a delay viewing your ship after updating the colour**"))
 
-    @ship.command(name="icon")
-    async def ship_change_icon(self,ctx,*,icon:str):
+    @ship.command(name="icon",alisases=["img","image","picture"])
+    async def ship_change_icon(self,ctx,*,icon:str=None):
         """Change your ship's icon"""
+        if not icon:
+            async with User(ctx.author.id,self.bot.DB) as user:
+                id = user.ship
+            async with Ship(id,self.bot.DB) as ship:
+                if not ship.exists:
+                    return await ctx.send("You do not have a ship")
+                return await ctx.send(embed=discord.Embed(title="This is your ship's icon",colour=self.bot.colour).set_image(url=ship.icon))
+
         if not URLREGEX.match(icon):
             return await ctx.send("That doesnt look like a url to me... \nex (https://example.com/image.png)")
         async with User(ctx.author.id,self.bot.DB) as user:
