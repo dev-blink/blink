@@ -274,14 +274,20 @@ class Social(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get("https://api.blinkbot.me/social/images/kiss/",headers={"Authorization":secrets.api}) as res:
                 if res.status == 200:
-                    return (await res.json()).get("url")
+                    try:
+                        return (await res.json()).get("url")
+                    except aiohttp.ContentTypeError:
+                        pass
                 return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
 
     async def gen_hug(self):
         async with aiohttp.ClientSession() as session:
             async with session.get("https://api.blinkbot.me/social/images/hug/",headers={"Authorization":secrets.api}) as res:
                 if res.status == 200:
-                    return (await res.json()).get("url")
+                    try:
+                        return (await res.json()).get("url")
+                    except aiohttp.ContentTypeError:
+                        pass
                 return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
 
     @commands.group(name="blocked",invoke_without_command=True)
