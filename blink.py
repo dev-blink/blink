@@ -1,17 +1,58 @@
-from discord.utils import find
 from random import Random as RAND
 from discord.ext import commands
 import math
+import functools
+import asyncio
+
+
+def fancytext(name,term,scope:str):
+    eng = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    conversion = [
+        ["𝔞", "𝔟", "𝔠", "𝔡", "𝔢", "𝔣", "𝔤", "𝔥", "𝔦", "𝔧", "𝔨", "𝔩", "𝔪", "𝔫", "𝔬", "𝔭", "𝔮", "𝔯", "𝔰", "𝔱", "𝔲", "𝔳", "𝔴", "𝔵", "𝔶", "𝔷"],
+        ['𝖆', '𝖇', '𝖈', '𝖉', '𝖊', '𝖋', '𝖌', '𝖍', '𝖎', '𝖏', '𝖐', '𝖑', '𝖒', '𝖓', '𝖔', '𝖕', '𝖖', '𝖗', '𝖘', '𝖙', '𝖚', '𝖛', '𝖜', '𝖝', '𝖞', '𝖟'],
+        ['𝓪', '𝓫', '𝓬', '𝓭', '𝓮', '𝓯', '𝓰', '𝓱', '𝓲', '𝓳', '𝓴', '𝓵', '𝓶', '𝓷', '𝓸', '𝓹', '𝓺', '𝓻', '𝓼', '𝓽', '𝓾', '𝓿', '𝔀', '𝔁', '𝔂', '𝔃'],
+        ['𝒶', '𝒷', '𝒸', '𝒹', '𝑒', '𝒻', '𝑔', '𝒽', '𝒾', '𝒿', '𝓀', '𝓁', '𝓂', '𝓃', '𝑜', '𝓅', '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']
+
+    ]
+    if scope == "eq":
+        if name == term:
+            return True
+    elif scope == "sw":
+        if name.startswith(term):
+            return True
+    elif scope == "in":
+        if term in name:
+            return True
+
+    for alphabet in conversion:
+        check = term
+        for x in range(0,26):
+            check = check.replace(eng[x],alphabet[x])
+        if scope == "eq":
+            if name == check:
+                return True
+        elif scope == "sw":
+            if name.startswith(check):
+                return True
+        elif scope == "in":
+            if check in name:
+                return True
+    return False
 
 
 async def searchrole(roles:list,term:str):
     """Custom role search for discord.py"""
-    role=find(lambda r: r.name.lower() == term.lower(), roles)
-    if not role:
-        role=find(lambda r: r.name.lower().startswith(term.lower()), roles)
-    if not role:
-        role=find(lambda r: term.lower() in r.name.lower(), roles)
-    return role
+    loop = asyncio.get_event_loop()
+
+    for r in roles:
+        if await loop.run_in_executor(None,functools.partial(fancytext,r.name.lower(),term.lower(),"eq")):
+            return r
+    for r in roles:
+        if await loop.run_in_executor(None,functools.partial(fancytext,r.name.lower(),term.lower(),"sw")):
+            return r
+    for r in roles:
+        if await loop.run_in_executor(None,functools.partial(fancytext,r.name.lower(),term.lower(),"in")):
+            return r
 
 
 def ordinal(n:int):

@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.utils import find
 import blink
 
 
@@ -11,7 +10,6 @@ class Server(commands.Cog,name="Server"):
 
     def memberscheck(self):
         def predicate(self,ctx):
-            pass
             if ctx.command.endswith("members"):
                 return True
             elif ctx.author.guild_permissions.manage_roles:
@@ -28,11 +26,7 @@ class Server(commands.Cog,name="Server"):
         """Shows members for a given role (or all)"""
         if not term:
             return await self.users(ctx)
-        role=find(lambda r: r.name.lower() == term.lower(), ctx.guild.roles)
-        if not role:
-            role=find(lambda r: r.name.lower().startswith(term.lower()), ctx.guild.roles)
-        if not role:
-            role=find(lambda r: term.lower() in r.name.lower(), ctx.guild.roles)
+        role=await blink.searchrole(ctx.guild.roles,term)
         if not role:
             return await ctx.send("I could not find that role.")
         if len(role.members) > 35 or len(role.members) == 0:
