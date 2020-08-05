@@ -184,7 +184,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             timestamp = f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:02}:{dt.minute:02}"
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
-            embed.set_footer(text=f"{result.index(entry)+1}/{len(result)}")
+            embed.set_footer(text=f"{result.index(entry)}/{len(result)-1}")
             embeds.append(embed)
         if len(embeds) == 1:
             return await ctx.send(embed=embeds[0])
