@@ -31,11 +31,8 @@ class Server(commands.Cog,name="Server"):
             return await ctx.send("I could not find that role.")
         if len(role.members) > 35 or len(role.members) == 0:
             return await ctx.send("There are %s members with the role "% len(role.members) + role.name.replace("@everyone","@" + '\uFEFF' + "everyone"))
-        description=""
-        for member in role.members:
-            description=description + member.mention
-        embed=discord.Embed(title=role.name,colour=0xf5a6b9)
-        embed.add_field(name="Members:", value=description, inline=False)
+        embed=discord.Embed(title=f"{role.name} - {len(role.members)}",colour=0xf5a6b9)
+        embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
         await ctx.send(embed=embed)
 
     @commands.command(name="muted",aliases=["mutes","currentmutes"])
