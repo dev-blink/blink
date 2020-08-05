@@ -46,11 +46,10 @@ class Server(commands.Cog,name="Server"):
             return await ctx.send("I could not find the muted.")
         if len(role.members) == 0:
             return await ctx.send("There are no currently muted members.")
-        description=""
-        for member in role.members:
-            description=description + member.mention
         embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
-        embed.add_field(name="Members:", value=description, inline=False)
+        embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
+        if len(embed) > 6000:
+            return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display")
         await ctx.send(embed=embed)
 
     @commands.command(name="users",aliases=["membercount"])
