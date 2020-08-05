@@ -49,7 +49,7 @@ class Server(commands.Cog,name="Server"):
         embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
         embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
         if len(embed) > 6000:
-            return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display")
+            return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
         await ctx.send(embed=embed)
 
     @commands.command(name="users",aliases=["membercount"])
