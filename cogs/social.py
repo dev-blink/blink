@@ -415,6 +415,7 @@ class Social(commands.Cog):
         return await ctx.send(f"Your ship description is `{text}`!")
 
     @ship.command(name="colour",aliases=["color"])
+    @commands.cooldown(1,10,commands.BucketType.user)
     async def ship_recolour(self,ctx,colour:discord.Colour):
         """Change your ship's colour"""
         async with User(ctx.author.id,self.bot.DB) as user:
