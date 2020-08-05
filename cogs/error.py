@@ -100,7 +100,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             await self.bot.warn("no nodes "+ error,False)
             return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
 
-        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="if this persists please contact the bot dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
+        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="this should not have happened.. contact the dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
         if ctx.guild:
             guild = f"{ctx.guild.id} -- {ctx.guild.name}"
         else:
