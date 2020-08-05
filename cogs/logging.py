@@ -175,7 +175,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if not result or result["avatar"] is None:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
-        result = sorted(result,key=lambda x:float(x.split(":",1)[0]))
+        result = sorted(result,key=lambda x:float(x.split(":",1)[0]),reverse=True)
         embeds=[]
         for entry in result:
             unformatted = self._unformat(entry)
@@ -184,8 +184,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
             timestamp = f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:02}:{dt.minute:02}"
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
+            embed.set_footer(text=f"{result.index(entry)+1}/{len(result)}")
             embeds.append(embed)
-        embeds.reverse()
         if len(embeds) == 1:
             return await ctx.send(embed=embeds[0])
         pages = menus.MenuPages(source=AvPages(range(1,len(embeds)), embeds), clear_reactions_after=True)
