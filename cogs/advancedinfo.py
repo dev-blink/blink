@@ -23,35 +23,6 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         out=f"Non mfa token: **`{p1}.{p2}.{p3}`**"
         return await ctx.send(out)
 
-    @commands.command(name="pid",aliases=["parseid"])
-    @commands.bot_has_permissions(embed_links=True,send_messages=True)
-    async def parse_id(self,ctx,id):
-        """Parses a discord ID."""
-        return await ctx.send("Command disabled due to bug...")
-        print(id)
-        print(type(id))
-        if not id:
-            id=ctx.author.id
-        rm=["<",">","@","&","#","!"]
-        for x in rm:
-            id=id.replace(x,"")
-        print(id)
-        try:
-            id=int(id)
-        except Exception:
-            return await ctx.send("Not a valid ID.")
-        binaryid=bin(int(id))[2:]
-        time=id >> 22
-        worker=id << 22 >> 39
-        process=id << 27 >> 39
-        count=id << 54 >> 64
-        parsedid=f"{bin(time)}-{bin(worker)}-{bin(process)}-{bin(count)}"
-        embed=discord.Embed(title=id,description=parsedid,colour=self.colour)
-        msg=f"```INTERNAL WORKER: {worker}\nINTERNAL PROCESS ID: {process}\nGENERATOR ITERATIVE: {count}```"
-        embed.add_field(name="Parsed ID",value=msg)
-        embed.set_footer(text=f"CREATION DATE: {datetime.datetime.utcfromtimestamp(((id >> 22) + 1420070400000) / 1000).isoformat()}")
-        return await ctx.send(embed=embed)
-
     @commands.command(name="lookup")
     @commands.bot_has_permissions(embed_links=True,send_messages=True)
     async def lookup_user(self,ctx,userid:int=None):
