@@ -11,16 +11,13 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
         self.bot=bot
         self.bot._cogs.error = self
+        self.nocooldown = bot.owner_ids + [572372027202076682]
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         return await self.handle(ctx,error)
 
     async def handle(self,ctx,error):
-        """The event triggered when an error is raised while invoking a command.
-        ctx   : Context
-        error : Exception"""
-
         ignored=(commands.CommandNotFound,blink.SilentWarning,blink.IncorrectChannelError)
         error=getattr(error, 'original', error)
 
@@ -80,7 +77,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error, commands.CommandOnCooldown):
-            if ctx.author.id in self.bot.owner_ids:
+            if ctx.author.id in self.nocooldown:
                 await ctx.reinvoke()
                 return
             try:
