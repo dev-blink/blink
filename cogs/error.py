@@ -24,12 +24,12 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         ignored=(commands.CommandNotFound,blink.SilentWarning,blink.IncorrectChannelError)
         error=getattr(error, 'original', error)
 
-        if isinstance(error, ignored):
-            return
-
         if ctx.prefix == "":
             if isinstance(error,commands.UserInputError):
                 return
+
+        if isinstance(error, ignored):
+            return
 
         elif isinstance(error,commands.MissingRequiredArgument):
             try:
