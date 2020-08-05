@@ -21,7 +21,7 @@ logger.addHandler(handler)
 
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
-os.environ["JISHAKU_NO_DM_TRACEBACK"] = "False"
+os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
 
@@ -29,6 +29,9 @@ os.environ["JISHAKU_RETAIN"] = "True"
 class CogStorage:
     def __dir__(self):
         return sorted([a for a in super().__dir__() if not (a.startswith("__") and a.endswith("__"))])
+
+    def __len__(self):
+        return len(dir(self))
 
 
 class Blink(commands.AutoShardedBot):
