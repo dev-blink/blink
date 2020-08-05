@@ -447,6 +447,20 @@ class Social(commands.Cog):
             await ship.modify(scope="icon",data=icon)
         return await ctx.send(embed=discord.Embed(title="This is now your ship's icon",colour=self.bot.colour).set_image(url=icon))
 
+    @ship.command(name="debug",hidden=True)
+    @commands.is_owner()
+    async def ship_debug(self,ctx,*,member:discord.User=None):
+        if not member:
+            member=ctx.author
+        async with User(member.id,self.bot.DB) as user:
+            async with Ship(user.ship,self.bot.DB) as ship:
+                embed = discord.Embed(title=ship.id,colour=self.bot.colour)
+                if ship.exists:
+                    embed.description = f"Captain : {ship.captain}\nPartner : {ship.partner}\nName : {ship.name}\nDescription : {ship.description}\nColour : {ship.colour}\nIcon : [Link]({ship.icon} \"{ship.icon}\")\nCreated : {ship.created}"
+                else:
+                    embed.description= "Doesn't exist"
+                return await ctx.send(embed=embed)
+
     @ship.command(name="sink",aliases=["stop","delete","cancel"])
     async def ship_sink(self,ctx):
         """Delete your ship"""
