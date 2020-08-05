@@ -26,6 +26,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.bot = bot
         self.bot._cogs.logging = self
         self.bot.logActions = 0
+        self.size = 512
         self.msgcache = {}
         if not self.bot.beta:
             self.active = True
@@ -67,8 +68,8 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
-        beforeav = str(before.avatar_url_as(static_format="png", size=512))
-        afterav = str(after.avatar_url_as(static_format="png", size=512))
+        beforeav = str(before.avatar_url_as(static_format="png", size=self.size))
+        afterav = str(after.avatar_url_as(static_format="png", size=self.size))
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1",uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
@@ -116,7 +117,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars/"):
             return url
         r = await self.session.get(str(url))
-        ext = str(url).replace("?size=512","").split(".")[-1]
+        ext = str(url).replace(f"?size={self.size}","").split(".")[-1]
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
         await self.storage.upload(config.cdn,path,img_data)
