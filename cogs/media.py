@@ -26,19 +26,6 @@ class Media(commands.Cog,name="Media"):
         embed.set_image(url=f"{emoji.url}?size=1024")
         return await ctx.send(embed=embed)
 
-    @commands.command(name="screenshot",aliases=["ss"])
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    @commands.is_nsfw()
-    async def ss(self, ctx, *, url: str):
-        async with ctx.typing():
-            try:
-                screener = "http://magmachain.herokuapp.com/api/v1"
-                async with self.session.post(screener, headers=dict(website=url)) as r:
-                    website = (await r.json())["snapshot"]
-                    await ctx.send(embed=discord.Embed(color=self.bot.colour).set_image(url=website))
-            except Exception:
-                return await ctx.send("An error occured. most likely due to the unstable nature of the api.")
-
     @commands.command(name="meme",aliases=["memes"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
