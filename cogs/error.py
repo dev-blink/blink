@@ -27,6 +27,10 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
         if isinstance(error, ignored):
             return
 
+        if ctx.prefix == "":
+            if isinstance(error,commands.UserInputError):
+                return
+
         elif isinstance(error,commands.MissingRequiredArgument):
             try:
                 await ctx.message.add_reaction("\U00002754")
@@ -108,7 +112,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             channel = f"DM WITH {ctx.channel.recipient}"
         else:
             channel = f"{ctx.channel.id} -- #{ctx.channel.name} ({ctx.channel.mention})"
-        await self.bot.cluster.log_errors(f"Error occureed in guild: {guild} | channel: {channel} \nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow()}")
+        await self.bot.cluster.log_errors(f"Error occureed in guild: {guild} | channel: {channel} | author {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow()}")
 
 
 def setup(bot):
