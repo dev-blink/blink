@@ -19,9 +19,10 @@ class Cluster(object):
     def __init__(self,bot:commands.AutoShardedBot,cluster:str):
         self.bot = bot
         self.name = cluster.capitalize()
+        self.identifier = self.name[0]
 
     def __repr__(self):
-        return f"<Cluster={self.name}, shards={self.shards}, active={self.active}>"
+        return f"<Name={self.name}, shards={self.shards}, active={self.active}>"
 
     async def wait_until_ready(self):
         while self.guilds == 0:
@@ -67,7 +68,7 @@ class Cluster(object):
 
     @property
     def shards(self):
-        index = alphabet.index(self.name[0])
+        index = alphabet.index(self.identifier)
         if index >= TOTAL_CLUSTERS:
             raise RuntimeError("Cluster out of total cluster range")
         shards = (index + 1) * PER_CLUSTER
@@ -128,7 +129,7 @@ class ClusterSocket():
         self.dupes = {}
 
     async def quit(self):
-        await self.ws.close(code=1000,reason="Goodbye.")
+        await self.ws.close(code=1000,reason="Goodbye <3")
         self.active=False
         self.beating=False
 

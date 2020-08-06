@@ -55,6 +55,7 @@ class Blink(commands.AutoShardedBot):
             status=discord.Status.dnd,
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136],
+            allowed_mentions=discord.AllowedMentions(roles=False,everyone=False),
         )
 
         # Globals
@@ -74,6 +75,9 @@ class Blink(commands.AutoShardedBot):
             self.startingcogs.append("cogs.stats")
 
         print(f"Starting - {self.cluster}")
+
+    def __repr__(self):
+        return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self.INITIALIZED}, since={self.boottime}>"
 
     async def on_ready(self):
         if self.INITIALIZED:
@@ -107,6 +111,7 @@ class Blink(commands.AutoShardedBot):
     async def create(self):
         print("\nInitializing")
         self.cluster.start()
+        print("Waiting on clusters.")
         await self.cluster.wait_until_ready()
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
         self.session = aiohttp.ClientSession()
@@ -147,7 +152,7 @@ class Blink(commands.AutoShardedBot):
     async def update_pres(self):
         for id in self.shards:
             try:
-                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{id}]', url='https://www.twitch.tv/#'))
+                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
             except Exception as e:
                 await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
