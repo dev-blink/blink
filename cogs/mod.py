@@ -159,7 +159,7 @@ class Moderation(commands.Cog, name="Moderation"):
         try:
             await ctx.channel.purge(limit=limit + 1)  # also deletes your own message
         except Exception:
-            return await ctx.send("unable to purge those messages.")
+            return await ctx.send("Unable to purge those messages.")
         await ctx.send(f"Bulk deleted `{limit}` messages",delete_after=5)
 
     @commands.command(name="unmute")
@@ -172,7 +172,7 @@ class Moderation(commands.Cog, name="Moderation"):
             return await ctx.send("You must specify a user.")
         role=await blink.searchrole(user.roles,"muted")
         if not role:
-            return await ctx.send("I could not find the muted role..")
+            return await ctx.send("That user isnt muted, or I couldn't find the muted role")
         await user.remove_roles(role)
         await ctx.send(f"{user.mention} has been unmuted")
 
@@ -211,7 +211,6 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def clean(self,ctx,user: discord.Member=None,*,count:int =None):
         """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
-        # CLEAN COMMAND CHECKS
         if count:
             if count > 100:
                 count = 100
