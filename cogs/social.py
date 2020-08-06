@@ -339,7 +339,7 @@ class Social(commands.Cog):
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} hugs {member.display_name}",colour=self.bot.colour)
             embed.set_image(url=await self.gen_hug())
-            embed.set_footer(text=f"Thats their {blink.ordinal(res.count)} hug!")
+            embed.set_footer(text=f"That's their {blink.ordinal(res.count)} hug!")
         else:
             embed = discord.Embed(title=f":x: {res.translate()}",colour=discord.Colour.red())
         return await ctx.send(embed=embed)
@@ -356,7 +356,7 @@ class Social(commands.Cog):
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} kisses {member.display_name}",colour=self.bot.colour)
             embed.set_image(url=await self.gen_kiss())
-            embed.set_footer(text=f"Thats their {blink.ordinal(res.count)} kiss!")
+            embed.set_footer(text=f"That's their {blink.ordinal(res.count)} kiss!")
         else:
             embed = discord.Embed(title=f":x: {res.translate()}",colour=discord.Colour.red())
         return await ctx.send(embed=embed)
