@@ -5,7 +5,7 @@ import blink
 
 # Checks if there is a muted role on the server and creates one if there isn't
 async def mute(ctx, user, reason):
-    role=blink.searchrole(ctx.guild.roles,"Muted")
+    role=await blink.searchrole(ctx.guild.roles,"Muted")
     if not role:  # checks if there is muted role
         try:  # creates muted role
             muted=await ctx.guild.create_role(name="Muted", reason="To use for muting")
