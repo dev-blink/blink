@@ -5,7 +5,7 @@ import blink
 
 # Checks if there is a muted role on the server and creates one if there isn't
 async def mute(ctx, user, reason):
-    role=discord.utils.get(ctx.guild.roles, name="Muted")
+    role=blink.searchrole(ctx.guild.roles, name="Muted")
     if not role:  # checks if there is muted role
         try:  # creates muted role
             muted=await ctx.guild.create_role(name="Muted", reason="To use for muting")
@@ -24,7 +24,8 @@ async def dmattempt(user,action,reason,guild):
     try:
         await user.send(f"You were {action} in {guild} for {reason}")
     except discord.Forbidden:
-        pass
+        return False
+    return True
 
 
 class Moderation(commands.Cog, name="Moderation"):
@@ -53,14 +54,14 @@ class Moderation(commands.Cog, name="Moderation"):
             await ctx.send("I cant do that. So i will leave instead.")
             return await ctx.guild.leave()
         try:
-            await dmattempt(user,"banned",reason,ctx.guild.name)
+            dm = await dmattempt(user,"banned",reason,ctx.guild.name)
             if reason:
                 await ctx.guild.ban(user,reason=f"Banned by {ctx.author} for {reason}")
             else:
                 await ctx.guild.ban(user, reason=f"By {ctx.author} for None Specified")
-            await ctx.send(f"{user.mention} was banned for {reason}.")
+            await ctx.send(f"{user.mention} was banned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to ban that user, (discord.Forbidden)")
+            return await ctx.send("I am unable to ban that user")
 
     @commands.command(name="unban",aliases=["unbanish"])
     @commands.has_permissions(ban_members=True)
@@ -100,13 +101,13 @@ class Moderation(commands.Cog, name="Moderation"):
             return await ctx.send("I cant do that.")
 
         try:
-            await dmattempt(user,"kicked",reason,ctx.guild.name)
+            dm = await dmattempt(user,"kicked",reason,ctx.guild.name)
             if reason:
                 await ctx.guild.ban(user, reason=f"By {ctx.author} for {reason}")
             else:
                 await ctx.guild.ban(user, reason=f"By {ctx.author} for None Specified")
             await ctx.guild.unban(user, reason="Softbanned")
-            await ctx.send(f"{user.mention} was softbanned for {reason}.")
+            await ctx.send(f"{user.mention} was softbanned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
             return await ctx.send("I am unable to softban that user, (discord.Forbidden)")
 
@@ -139,13 +140,13 @@ class Moderation(commands.Cog, name="Moderation"):
             return await ctx.guild.leave()
 
         try:
-            await dmattempt(user,"kicked",reason,ctx.guild.name)
+            dm = await dmattempt(user,"kicked",reason,ctx.guild.name)
             if reason:
                 await ctx.guild.kick(user, reason=f"By {ctx.author} for {reason}")
                 await ctx.send(f"{user.mention} was kicked for {reason}.")
             else:
                 await ctx.guild.kick(user, reason=f"By {ctx.author} for None Specified")
-                await ctx.send(f"{user.mention} was kicked for {reason}.")
+                await ctx.send(f"{user.mention} was kicked for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
             return await ctx.send("I tried to kick that user and discord responded with 'Forbidden'")
 
