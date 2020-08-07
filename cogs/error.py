@@ -11,7 +11,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
     def __init__(self, bot):
         self.bot=bot
         self.bot._cogs.error = self
-        self.nocooldown = bot.owner_ids + [572372027202076682]
+        self.nocooldown = bot.owner_ids + []
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
