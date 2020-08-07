@@ -54,7 +54,7 @@ class Blink(commands.AutoShardedBot):
             case_insensitive=True,
             status=discord.Status.dnd,
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
-            owner_ids=[171197717559771136],
+            owner_ids=[171197717559771136,741225148509847642,],
             allowed_mentions=discord.AllowedMentions(roles=False,everyone=False),
         )
 
