@@ -123,7 +123,7 @@ class Fun(commands.Cog,name="Fun"):
         if not member2.nick:
             member2.nick=member2.name
         choices=[f"{member1.nick[:len(member1.nick)//2]}{member2.nick[len(member2.nick)//2:]}",f"{member2.nick[:len(member2.nick)//2]}{member1.nick[len(member1.nick)//2:]}"]
-        await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!")
+        await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!",allowed_mentions=discord.AllowedMentions(users=False,everyone=False,roles=False))
 
     @commands.command(name="pp",aliases=["penis"])
     @commands.guild_only()
