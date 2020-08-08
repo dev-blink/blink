@@ -163,11 +163,11 @@ class User(object):
         self.format()
 
     async def elegible(self,scope:str,recipient) -> ElegibilityReason:
-        if self.relation == recipient:
+        if self.relation == recipient.user:
             return ElegibilityReason(True)
         res = recipient
 
-        if recipient in self.blocked:
+        if recipient.user in self.blocked:
             return ElegibilityReason(False,reason="userblocked")
         if self.user in res.blocked:
             return ElegibilityReason(False,reason="blocked")
