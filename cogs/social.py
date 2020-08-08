@@ -237,7 +237,7 @@ class User(object):
 
     async def kiss(self,recipient:int) -> Action:
         async with User(recipient,self.db) as recp:
-            check = await self.elegible(scope="hug",recipient=recp)
+            check = await self.elegible(scope="kiss",recipient=recp)
             if not check.elegible:
                 return Action(success=False,reason=check.reason)
             rentry, rcount, rindex, rhugs = await recp.decompile(scope="kisses",recipient=self.user)
