@@ -84,7 +84,7 @@ class Ship(object):
         timestamp = datetime.datetime.utcnow().timestamp().__int__() - self.created.timestamp()
         days = datetime.timedelta(seconds=timestamp).days
         age = humanize.naturaldelta(timestamp)
-        xp = humanize.intword(int(((days ** 1.4175) / 43) * 1000) + (total_hugs + total_kisses) * 37)
+        xp = humanize.intword(int((days ** 2) * 50) + (total_hugs + total_kisses) * 37)
 
         return ShipStats(hugs=total_hugs,kisses=total_kisses,xp=xp,age=age)
 
