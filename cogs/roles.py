@@ -12,14 +12,12 @@ class RoleManagement(commands.Cog,name="Role Management"):
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    async def role(self, ctx,user: discord.Member=None, *,term):
+    async def role(self, ctx,user: discord.Member, *,term):
         """Changes roles for a user."""
         if not ctx.guild.me.guild_permissions.manage_roles:
             return await ctx.send("I do not have permission to manage roles.")
         if term == "everyone":
             return
-        if not user:
-            return await ctx.send("I am unable to find that user.")
         role=await blink.searchrole(ctx.guild.roles,term)
         if not role:
             return await ctx.send("I could not find that role.")
@@ -78,13 +76,9 @@ class RoleManagement(commands.Cog,name="Role Management"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     @commands.has_permissions(manage_roles=True)
-    async def rolecolour(self,ctx,term=None,colour: discord.Colour=None):
+    async def rolecolour(self,ctx,role:str,colour: discord.Colour):
         """Sets a role colour from a hex code."""
-        if not term:
-            return await ctx.send("Please specify a role.")
-        if not colour:
-            return await ctx.send("Please specify a colour.")
-        role=await blink.searchrole(ctx.guild.roles,term)
+        role=await blink.searchrole(ctx.guild.roles,role)
         if not role:
             return await ctx.send("I could not find that role.")
         if not ctx.author == ctx.guild.owner:
