@@ -23,7 +23,7 @@ async def mute(ctx, user, reason):
 async def dmattempt(user,action,reason,guild):
     try:
         await user.send(f"You were {action} in {guild} for {reason}")
-    except discord.Forbidden:
+    except discord.HTTPException:
         return False
     return True
 
