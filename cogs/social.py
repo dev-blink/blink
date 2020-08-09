@@ -426,7 +426,7 @@ class Social(commands.Cog):
             await ship.modify(scope="colour",data=colour.value)
         return await ctx.send(embed=discord.Embed(colour=colour,title="This is now your ship's colour",description="**There may be a delay viewing your ship after updating the colour**"))
 
-    @ship.command(name="icon",alisases=["img","image","picture"])
+    @ship.command(name="icon",aliases=["img","image","picture"])
     async def ship_change_icon(self,ctx,*,icon:str=None):
         """Change your ship's icon"""
         if not icon:
