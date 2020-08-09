@@ -5,7 +5,6 @@ from discord.ext import commands
 class BotHelp(commands.HelpCommand):
     def __init__(self):
         super().__init__(verify_checks=False)
-        self.colour = 16099001
 
     def get_ending_note(self):
         return f'Use {self.clean_prefix}{self.invoked_with} <command> for more info on a command.'
@@ -61,4 +60,6 @@ class BotHelp(commands.HelpCommand):
 
 
 def setup(bot):
-    bot.help_command=BotHelp()
+    help =BotHelp()
+    help.colour = bot.colour
+    bot.help_command=help
