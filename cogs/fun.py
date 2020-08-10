@@ -129,7 +129,6 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def dick_size(self,ctx,*,member:discord.Member=None):
-        """....................."""
         if not member:
             member=ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s size",description=f"8{'=' * blink.prand(0.7393904771901263,member.id,1,20)}D",colour=self.bot.colour))
@@ -150,7 +149,6 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def thotrate(self,ctx,*,member:discord.Member=None):
-        """How thotty are you?"""
         if not member:
             member=ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s thotiness",description=f"{blink.prand(0.7413340535366182,member.id,0,100)}%",colour=self.bot.colour))
@@ -159,16 +157,14 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def gayrate(self,ctx,*,member:discord.Member=None):
-        """How gay are you?"""
         if not member:
             member=ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s gayness",description=f"{blink.prand(0.8526821782827291,member.id,0,100,True)}%",colour=self.bot.colour))
 
-    @commands.command(name="howhorny",aliases=["horny","hornyrate"])
+    @commands.command(name="horny",aliases=["howhorny","hornyrate"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def hornyrate(self,ctx,*,member:discord.Member=None):
-        """How horny are you?"""
         if not member:
             member=ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s horniness",description=f"{blink.prand(0.6950561467838507,member.id,60,100,True)}%",colour=self.bot.colour))
@@ -177,7 +173,6 @@ class Fun(commands.Cog,name="Fun"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def noncerate(self,ctx,*,member:discord.Member=None):
-        """How much of a nonce are you?"""
         if not member:
             member=ctx.author
         em=discord.Embed(title=f"{member}'s nonciness",description=f"{blink.prand(0.8500969427926083,member.id,0,100,True)}%",colour=self.bot.colour)

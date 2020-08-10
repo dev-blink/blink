@@ -15,7 +15,7 @@ class Owner(commands.Cog, name="Developer"):
             "logging":"Global logging",
         }
 
-    @commands.command(name="selfpurge",hidden=False)
+    @commands.command(name="selfpurge",hidden=True)
     @commands.is_owner()
     async def selfpurge(self,ctx,count:int=10):
         """Purge all messages within the given history"""

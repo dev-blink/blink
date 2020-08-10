@@ -22,8 +22,8 @@ class Members(commands.Cog,name="Member"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True)
     async def joined(self, ctx, *, member: discord.Member):
-        """Says when a member joined."""
-        await ctx.send(f'{member.display_name} joined on {member.joined_at}')
+        """Show when a member joined."""
+        await ctx.send(f'{member.display_name} joined at {member.joined_at} UTC')
 
     @commands.command(name='toprole', aliases=['top_role'])
     @commands.guild_only()
