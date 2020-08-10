@@ -35,9 +35,23 @@ class Moderation(commands.Cog, name="Moderation"):
         self.bot=bot
         self.bot._cogs.mod = self
 
-    async def __error(self, ctx, error):
-        if isinstance(error, commands.BadArgument):
-            await ctx.send(error)
+    async def privcheck(self,ctx,user):
+        if not user:
+            await ctx.send("You must specify a user.")
+            raise blink.SilentWarning()
+
+        if user == ctx.author:
+            await ctx.send("You cannot sanction yourself.")
+            raise blink.SilentWarning()
+
+        if not ctx.guild.owner == ctx.author:
+            if user.top_role >= ctx.author.top_role:
+                await ctx.send("You are unable to sanction that user.")
+                raise blink.SilentWarning()
+
+        if user.top_role >= ctx.guild.me.top_role:
+            await ctx.send("I cannot sanction that user. (check my role position)")
+            raise blink.SilentWarning()
 
     @commands.command(name="ban",aliases=["banish"])
     @commands.has_permissions(ban_members=True)
@@ -45,11 +59,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.guild_only()
     async def ban(self, ctx,user: discord.Member=None,*,reason:str=None):
         """Bans a user."""
-        if not user:
-            return await ctx.send("You must specify a user.")
-        if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role:
-                return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        await self.privcheck(ctx,user)
         if user == self.bot.user:
             await ctx.send("I cant do that. So i will leave instead.")
             return await ctx.guild.leave()
@@ -61,7 +71,7 @@ class Moderation(commands.Cog, name="Moderation"):
                 await ctx.guild.ban(user, reason=f"By {ctx.author} for None Specified")
             await ctx.send(f"{user.mention} was banned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to ban that user")
+            return await ctx.send("I am unable to ban that user (Checks passed)")
 
     @commands.command(name="unban",aliases=["unbanish"])
     @commands.has_permissions(ban_members=True)
@@ -92,11 +102,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def softban(self, ctx, user: discord.Member=None,*, reason:str=None):
         """Bans and unbans a member to delete their messages."""
-        if not user:
-            return await ctx.send("You must specify a user.")
-        if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role:
-                return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        await self.privcheck(ctx,user)
         if user == self.bot.user:
             return await ctx.send("I cant do that.")
 
@@ -109,7 +115,7 @@ class Moderation(commands.Cog, name="Moderation"):
             await ctx.guild.unban(user, reason="Softbanned")
             await ctx.send(f"{user.mention} was softbanned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to softban that user, (discord.Forbidden)")
+            return await ctx.send("I am unable to softban that user (Checks passed)")
 
     @commands.command(name="mute",aliases=["silence"])
     @commands.has_permissions(manage_messages=True)
@@ -119,9 +125,7 @@ class Moderation(commands.Cog, name="Moderation"):
         """Mutes a user."""
         if not user:
             return await ctx.send("You must specify a user.")
-        if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role:
-                return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        await self.privcheck(ctx,user)
         """Mutes a user."""
         await mute(ctx, user, reason or "being annoying")
 
@@ -131,11 +135,7 @@ class Moderation(commands.Cog, name="Moderation"):
     @commands.guild_only()
     async def kick(self, ctx, user: discord.Member=None,*,reason:str=None):
         """Kicks a user."""
-        if not user:
-            return await ctx.send("You must specify a user")
-        if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role or user.id == ctx.guild.owner_id:
-                return await ctx.send("You are unable to sanction that user. (Check your roles)")
+        await self.privcheck(ctx,user)
         if user == self.bot.user:
             return await ctx.guild.leave()
 
@@ -148,7 +148,7 @@ class Moderation(commands.Cog, name="Moderation"):
                 await ctx.guild.kick(user, reason=f"By {ctx.author} for None Specified")
                 await ctx.send(f"{user.mention} was kicked for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I tried to kick that user and discord responded with 'Forbidden'")
+            return await ctx.send("I am unable to ban that user (Checks passed)'")
 
     @commands.command(name="purge",aliases=["prune"])
     @commands.has_permissions(manage_messages=True)
