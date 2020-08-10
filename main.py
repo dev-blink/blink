@@ -10,9 +10,14 @@ import os
 import secrets
 import clusters
 import config
+import time
+import humanize
 
 
 cluster=input("Cluster>")
+
+
+# Logging
 logger=logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 handler=logging.FileHandler(filename=f'{cluster}.log', encoding='utf-8', mode='w')
@@ -20,10 +25,21 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 
+# Environment
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
+
+
+class Ctx(commands.Context):
+    def __init__(self,*args,**kwargs):#
+        super().__init__(*args,**kwargs)
+        if self.guild and hasattr(self.bot,"wavelink"):
+            self.player = self.bot.wavelink.players.get(self.guild.id)
+
+    def __repr__(self):
+        return f"<Blink context, author={self.author}, guild={self.guild}, >"
 
 
 class CogStorage:
@@ -68,13 +84,13 @@ class Blink(commands.AutoShardedBot):
         self._cogs = CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
-        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.nsfw","cogs.music","cogs.social"]
+        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.music","cogs.social"]
         self.startingcogs.append("jishaku")
         if not self.beta:
             self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
-        print(f"Starting - {self.cluster}")
+        print(f"Starting - {self.cluster}\n")
 
     def __repr__(self):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self.INITIALIZED}, since={self.boottime}>"
@@ -90,8 +106,14 @@ class Blink(commands.AutoShardedBot):
     async def on_shard_ready(self,id):
         if id in self.INIT_SHARDS:
             return
-        print(f"Started shard {id}")
+        print(f"Shard {id} ready")
         self.INIT_SHARDS.append(id)
+
+    async def on_message(self,message):
+        if message.author.bot:
+            return
+        ctx = await self.get_context(message,cls=Ctx)
+        await self.invoke(ctx)
 
     def load_extensions(self):
         for extension in self.startingcogs:
@@ -109,10 +131,10 @@ class Blink(commands.AutoShardedBot):
             raise blink.SilentWarning(message)
 
     async def create(self):
-        print("\nInitializing")
+        before = time.perf_counter()
         self.cluster.start()
-        print("Waiting on clusters.")
         await self.cluster.wait_until_ready()
+        print(f"\nClusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start")
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")
@@ -132,7 +154,7 @@ class Blink(commands.AutoShardedBot):
         self.bootlog="\n".join(boot)
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
-        print("Bot Ready")
+        print(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}\nTotal start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}")
         self.update_pres.start()
 
     async def get_prefix(self, message):
