@@ -366,7 +366,7 @@ class Social(commands.Cog):
     @commands.cooldown(1,5,commands.BucketType.user)
     async def ship(self,ctx,*,member:discord.Member=None):
         """Show and manage your ship"""
-        if member == ctx.author or member.bot:
+        if member and member == ctx.author or member.bot:
             return await ctx.send("No...")
         async with User(ctx.author.id,self.bot.DB) as user:
             id = user.ship
