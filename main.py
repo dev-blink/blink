@@ -12,6 +12,8 @@ import clusters
 import config
 import time
 import humanize
+import sys
+import traceback
 
 
 cluster=input("Cluster>")
@@ -124,7 +126,7 @@ class Blink(commands.AutoShardedBot):
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
     async def warn(self,message,shouldRaise=True):
-        time= datetime.datetime.utcnow()
+        time = datetime.datetime.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.name}/WARNING] {message}"
         await self.cluster.log_warns(message)
         if shouldRaise:
@@ -191,6 +193,18 @@ class Blink(commands.AutoShardedBot):
             exit()
         if payload["event"] == "RELOAD":
             self.reload_extension(payload["cog"])
+
+    async def on_error(self,event_method,*args,**kwargs):
+        exc = sys.exc_info()
+        tb = traceback.format_exc()
+        embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
+        embed.set_author(name=f"Exception in event {event_method}")
+        async with aiohttp.ClientSession() as cs:
+            async with cs.post("https://hastebin.com/documents",data=tb) as haste:
+                data = await haste.json()
+                embed.description = f"[Traceback](https://hastebin.com/{data['key']})"
+            hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
+            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
 
 BOT = Blink(cluster)
