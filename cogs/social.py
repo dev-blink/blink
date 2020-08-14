@@ -366,8 +366,8 @@ class Social(commands.Cog):
     @commands.cooldown(1,5,commands.BucketType.user)
     async def ship(self,ctx,*,member:discord.Member=None):
         """Show and manage your ship"""
-        if member == ctx.author:
-            return await ctx.send("You cant do that :(")
+        if member == ctx.author or member.bot:
+            return await ctx.send("No...")
         async with User(ctx.author.id,self.bot.DB) as user:
             id = user.ship
             if id == "nul":
@@ -464,33 +464,33 @@ class Social(commands.Cog):
     @ship.command(name="sink",aliases=["stop","delete","cancel"])
     async def ship_sink(self,ctx):
         """Delete your ship"""
-        m = await ctx.send("Are you sure?")
-        await m.add_reaction("\U00002714")
-        await m.add_reaction("\U0000274c")
 
         def check(reaction, user):
             if str(reaction.emoji) not in ["\U00002714","\U0000274c"]:
                 return False
             return user == ctx.author
-        try:
-            reaction = (await self.bot.wait_for('reaction_add', timeout=10, check=check))[0]
-        except asyncio.TimeoutError:
-            return await ctx.send("Timed out waiting for response. Sinking cancelled.")
-        else:
-            if str(reaction.emoji) != "\U00002714":
-                return await ctx.send("Cancelled")
 
         async with User(ctx.author.id,self.bot.DB) as c:
-            ship = c.ship
-            relation = c.relation
+            async with Ship(c.ship,self.bot.DB) as ship:
+                if not ship.exists:
+                    return await ctx.send("You do not have a ship.")
+                m = await ctx.send("Are you sure?")
+                await m.add_reaction("\U00002714")
+                await m.add_reaction("\U0000274c")
+
+                try:
+                    reaction = (await self.bot.wait_for('reaction_add', timeout=10, check=check))[0]
+                except asyncio.TimeoutError:
+                    return await ctx.send("Timed out waiting for response. Sinking cancelled.")
+                else:
+                    if str(reaction.emoji) != "\U00002714":
+                        return await ctx.send("Cancelled")
+                await ship.sink()
             await c.sink_ship()
 
-        async with User(relation,self.bot.DB) as p:
-            await p.sink_ship()
-
-        async with Ship(ship,self.bot.DB) as ship:
-            await ship.sink()
-        return await ctx.send("Your ship has sunk.")
+            async with User(c.relation,self.bot.DB) as p:
+                await p.sink_ship()
+            return await ctx.send("Your ship has sunk.")
 
     async def _new_ship(self,captain:int,partner:int,ctx:commands.Context):
         try:
