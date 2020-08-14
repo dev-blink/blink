@@ -20,6 +20,7 @@ class Cluster(object):
         self.bot = bot
         self.name = cluster.capitalize()
         self.identifier = self.name[0]
+        self.active=False
 
     def __repr__(self):
         return f"<Name={self.name}, shards={self.shards}, active={self.active}>"
@@ -127,6 +128,7 @@ class ClusterSocket():
         self.music = 0
         self.bot = bot
         self.dupes = {}
+        self.active = False
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye <3")
