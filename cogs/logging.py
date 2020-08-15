@@ -126,7 +126,7 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
     async def update_db(self,message):
-        if message.author.bot or not message.guild or not self.active:
+        if message.author.bot or not message.guild or not self.active or message.author.id in self.blacklist:
             return
         user = message.author.id
         if self.msgcache.get(user) is None:

@@ -13,6 +13,11 @@ import secrets
 URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
 
+class _Users(discord.AllowedMentions):
+    def __init__(self):
+        super().__init__(everyone=False,users=True,roles=False)
+
+
 class ShipStats:
     def __init__(self,hugs:int, kisses:int,xp:str,age:str):
         self.hugs = hugs
@@ -379,7 +384,7 @@ class Social(commands.Cog):
                     if not check.elegible:
                         return await ctx.send(embed=discord.Embed(title=f":x: {Action(success=False,reason=check.reason).translate()}",colour=discord.Colour.red()))
                     if await self._new_ship(ctx.author.id,memb.user,ctx) is False:
-                        return await ctx.send("Ship cancelled.")
+                        return await ctx.send(f"<@{ctx.author.id}> Your ship has not been created, either due to a time-out or the partner denied.")
                     return
             if member:
                 return await ctx.send("You already have a ship.")
@@ -499,22 +504,23 @@ class Social(commands.Cog):
 
             def is_partner(m):
                 return m.author.id == partner
-            await ctx.send(f"<@{partner}> would you like to create a ship with <@{captain}> ? (type yes or no)")
+
+            await ctx.send(f"<@{partner}> would you like to create a ship with <@{captain}> ? (type yes or no)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_partner,timeout=60)
             if "yes" not in message.content.lower():
                 return False
 
-            await ctx.send(f"<@{captain}> what should the ship be called?")
+            await ctx.send(f"<@{captain}> what should the ship be called?",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             name = message.content or "Ship Name"
 
-            await ctx.send(f"<@{captain}> what should the ship description be?")
+            await ctx.send(f"<@{captain}> what should the ship description be?",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             description = message.content
 
-            await ctx.send(f"<@{captain}> what should the ship icon be? (a link to an image is needed)")
+            await ctx.send(f"<@{captain}> what should the ship icon be? (a link to an image is needed)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
             if URLREGEX.match(message.content):
@@ -523,7 +529,7 @@ class Social(commands.Cog):
                 await ctx.send("That doesnt look like a valid url, resorting to default \n ex (https://example.com/image.png)")
                 icon ="https://cdn.blinkbot.me/assets/ship.png"
 
-            await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)")
+            await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
             content = message.content.replace("#","")
             if len(content) == 6:
