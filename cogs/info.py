@@ -29,7 +29,7 @@ class Info(commands.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def invite(self, ctx):
         """A bot invite"""
-        embed=discord.Embed(title="Click here.", url="https://top.gg/bot/692738917236998154", description="Invite the bot to your server",colour=self.colour)
+        embed=discord.Embed(title="Click here.", url="https://blinkbot.me", description="Invite the bot to your server",colour=self.colour)
         embed.set_author(name="Invite me!")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
 
