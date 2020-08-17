@@ -73,7 +73,7 @@ class Blink(commands.AutoShardedBot):
             status=discord.Status.dnd,
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136,741225148509847642,],
-            allowed_mentions=discord.AllowedMentions(roles=False,everyone=False),
+            allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
         )
 
         # Globals
@@ -166,9 +166,6 @@ class Blink(commands.AutoShardedBot):
             return ["beta;"]
         if message.guild and message.guild.id in [336642139381301249,264445053596991498,265828729970753537,568567800910839811]:
             prefixes.remove(";")
-
-        if message.author.id in self.owner_ids:
-            prefixes.append('')
 
         return commands.when_mentioned_or(*prefixes)(self,message)
 
