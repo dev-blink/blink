@@ -31,7 +31,7 @@ class Info(commands.Cog,name="Info"):
         """A bot invite"""
         embed=discord.Embed(title="Click here.", url="https://blinkbot.me", description="Invite the bot to your server",colour=self.colour)
         embed.set_author(name="Invite me!")
-        embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
+        embed.set_thumbnail(url=self.bot.user.avatar_url_as(static_format='png'))
 
         await ctx.send(embed=embed)
 
