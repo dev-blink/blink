@@ -507,8 +507,8 @@ class Social(commands.Cog):
 
             await ctx.send(f"<@{partner}> would you like to create a ship with <@{captain}> ? (type yes or no)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_partner,timeout=60)
-            if "yes" not in message.content.lower():
-                return False
+            if not any(m in message.content.lower() for m in ['yes','yea','ok','yeah','sure']):
+                return
 
             await ctx.send(f"<@{captain}> what should the ship be called?",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
