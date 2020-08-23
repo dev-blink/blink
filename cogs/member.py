@@ -3,6 +3,32 @@ from discord.ext import commands
 import datetime
 
 
+statuses = {
+    discord.Status.online:"https://cdn.discordapp.com/emojis/707359046122078249.png?v=1",
+    discord.Status.idle:"https://cdn.discordapp.com/emojis/707359045971083315.png?v=1",
+    discord.Status.dnd:"https://cdn.discordapp.com/emojis/707368559759720498.png?v=1",
+    discord.Status.offline:"https://cdn.discordapp.com/emojis/707359046138855550.png?v=1",
+}
+flags = {
+    discord.UserFlags.bug_hunter: "<:bughunter:747172876624593007>",
+    discord.UserFlags.bug_hunter_level_2: "<:bughunter2:747166557204906055>",
+
+    discord.UserFlags.staff: "<:staff:747166866127978518>",
+    discord.UserFlags.system: "<:system1:747173687882416128><:system2:747173765149884467>",
+    discord.UserFlags.partner: "<:partner:747174087201128498>",
+
+    discord.UserFlags.verified_bot_developer: "<:earlydev:747166557129539586>",
+    discord.UserFlags.verified_bot: "<:bot1:747181929844965437><:bot2:747181965018529862>",
+
+    discord.UserFlags.early_supporter: "<:earlysupporter:747168624313237515>",
+
+    discord.UserFlags.hypesquad: "<:hypesquad:747166557678862439>",
+    discord.UserFlags.hypesquad_balance: "<:balance:747166557137797133>",
+    discord.UserFlags.hypesquad_bravery: "<:bravery:747166557326803074>",
+    discord.UserFlags.hypesquad_brilliance: "<:brilliance:747166557083402371>",
+}
+
+
 async def convert(seconds):
     delta=str(datetime.timedelta(seconds=seconds))
     if delta[:3] == "0:0":
@@ -59,26 +85,20 @@ class Members(commands.Cog,name="Member"):
     @commands.command(name="whois",aliases=["userinfo","who","ui"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def whois(self, ctx, *, user: discord.Member=None):
+    async def whois(self, ctx, *, member: discord.Member=None):
         """Shows various info about a user"""
-        if not user:
-            user=ctx.author
-        statuses = {
-            "online":"<:bonline:707359046122078249>",
-            "idle":"<:bidle:707359045971083315>",
-            "dnd":"<:bdnd:707368559759720498>",
-            "offline":"<:boffline:707359046138855550>",
-        }
-        member=ctx.guild.get_member(user.id)
+        if not member:
+            member: discord.Member =ctx.author
 
-        embed=discord.Embed(description=f"{statuses[str(user.status)]} {member.mention}",colour=0xf5a6b9)
-        embed.set_author(name=f"{user}", url=user.avatar_url_as(static_format='png'),icon_url=user.avatar_url_as(static_format='png'))
+        embed=discord.Embed(description=' '.join(flags[f] for f in member.public_flags.all()),colour=0xf5a6b9)
+        embed.set_author(name=f"{member}", url=member.avatar_url_as(static_format='png'),icon_url=statuses[member.status])
+        embed.set_thumbnail(url=member.avatar_url_as(static_format='png'))
 
         joined=member.joined_at
         joindate=str(joined.day) + "/" + str(joined.month) + "/" + str(joined.year) + "  " + str(joined.hour) + ":" + str(joined.minute).zfill(2)
         embed.add_field(name="User joined:", value=joindate, inline=True)
 
-        registered=user.created_at
+        registered=member.created_at
         registerdate=str(registered.day) + "/" + str(registered.month) + "/" + str(registered.year) + "  " + str(registered.hour) + ":" + str(registered.minute).zfill(2)
         embed.add_field(name="User registered:", value=registerdate, inline=True)
 
