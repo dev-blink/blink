@@ -3,18 +3,13 @@ from discord.ext import commands
 import aiohttp
 import random
 import box
-import asyncio
+import blink
 
 
-class NSFW(commands.Cog,name="NSFW"):
-    def __init__(self,bot):
-        self.bot = bot
-        self.bot._cogs.nsfw = self
+class NSFW(blink.Cog,name="NSFW"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.session = aiohttp.ClientSession()
-        self.bot.add_cog(self)
-
-    def __unload(self):
-        asyncio.create_task(self.session.close())
 
     async def _do_reddit(self,term):
         r=await self.session.get(f"https://reddit.com/r/{term}.json")
@@ -87,4 +82,4 @@ class NSFW(commands.Cog,name="NSFW"):
 
 
 def setup(bot):
-    NSFW(bot)
+    bot.add_cog(NSFW(bot,"nsfw"))

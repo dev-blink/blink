@@ -3,6 +3,7 @@ from discord.ext import commands
 import math
 import functools
 import asyncio
+from aiohttp import ClientSession
 
 
 def fancytext(name,term,scope:str):
@@ -114,3 +115,15 @@ class IncorrectChannelError(commands.CommandError):
 class SilentWarning(Exception):
     """Error for backing out of tasks with a warning"""
     pass
+
+
+class Cog(commands.Cog):
+    def __init__(self,bot:commands.Bot,identifier:str):
+        self.bot = bot
+        self.identifier = identifier
+        bot._cogs.register(self,self.identifier)
+
+    def cog_unload(self):
+        self.bot._cogs.unregister(self.identifier)
+        if hasattr(self,"session") and isinstance(self.session,ClientSession):
+            self.bot.loop.create_task(self.session.close(),loop=self.bot.loop)

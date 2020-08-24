@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import statcord
 import secrets
+import blink
 
 
 class StatClient(statcord.Client):
@@ -14,13 +15,12 @@ class StatClient(statcord.Client):
         return self.bot.cluster.users
 
 
-class Stats(commands.Cog,name="Stats"):
-    def __init__(self,bot:commands.AutoShardedBot):
-        self.bot=bot
-        self.bot._cogs.stats = self
-        if bot.beta:
+class Stats(blink.Cog,name="Stats"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        if self.bot.beta:
             return
-        self.statcord = StatClient(bot,secrets.statcord,custom1=self.logging,custom2=self.music)
+        self.statcord = StatClient(self.bot,secrets.statcord,custom1=self.logging,custom2=self.music)
         self.bot.add_listener(self.statcord_push,"on_command")
         self.statcord.start_loop()
 
@@ -69,4 +69,4 @@ class Stats(commands.Cog,name="Stats"):
 
 
 def setup(bot):
-    bot.add_cog(Stats(bot))
+    bot.add_cog(Stats(bot,"stats"))

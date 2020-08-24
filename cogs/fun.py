@@ -7,16 +7,21 @@ import datetime
 import random
 
 
-class Fun(commands.Cog,name="Fun"):
-    def __init__(self,bot):
-        self.bot=bot
-        self.bot._cogs.fun = self
+class Fun(blink.Cog,name="Fun"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.snipes = {}
         self.esnipes= {}
 
     @commands.Cog.listener("on_message_delete")
     async def append_snipes(self,message):
-        if len(message.content) > 1024 or message.author.bot or not message.content or not message.guild or len(message.content) == 1:
+        if len(message.content) > 1024:
+            return
+        if message.author.bot:
+            return
+        if not message.content or not message.guild:
+            return
+        if len(message.content) == 1:
             return
         g = self.snipes.get(message.guild.id)
         if g is None:
@@ -46,7 +51,17 @@ class Fun(commands.Cog,name="Fun"):
 
     @commands.Cog.listener("on_message_edit")
     async def append_edit_snipes(self,before,after):
-        if (len(before.content) + len(after.content)) > 1024 or before.author.bot or not before.content or before.content == after.content or not before.guild:
+        if (len(before.content) + len(after.content)) > 1000:
+            return
+        if before.author.bot:
+            return
+        if not before.content or not after.content:
+            return
+        if before.content == after.content:
+            return
+        if not before.guild:
+            return
+        if (len(before.content) - len(after.content)) in range(-1,2):
             return
         g = self.esnipes.get(before.guild.id)
         if g is None:
@@ -187,4 +202,4 @@ class Fun(commands.Cog,name="Fun"):
 
 
 def setup(bot):
-    bot.add_cog(Fun(bot))
+    bot.add_cog(Fun(bot,"fun"))

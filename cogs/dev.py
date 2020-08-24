@@ -4,12 +4,12 @@ from discord.utils import find
 import objgraph
 from collections import Counter
 import asyncio
+import blink
 
 
-class Owner(commands.Cog, name="Developer"):
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.dev = self
+class Owner(blink.Cog, name="Developer"):
+    def __init__(self, *args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.blacklist_scopes=["logging"]
         self.blacklist_update_mappings = {
             "logging":"Global logging",
@@ -250,4 +250,4 @@ class Owner(commands.Cog, name="Developer"):
 
 
 def setup(bot):
-    bot.add_cog(Owner(bot))
+    bot.add_cog(Owner(bot,"dev"))

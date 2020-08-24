@@ -1,15 +1,10 @@
 import discord
 from discord.ext import commands
 import base64
-import datetime
+import blink
 
 
-class AdvancedInfo(commands.Cog,name="Advanced info"):
-    def __init__(self,bot):
-        self.bot=bot
-        self.colour=bot.colour
-        self.bot._cogs.advancedinfo = self
-
+class AdvancedInfo(blink.Cog,name="Advanced info"):
     @commands.command(name="token",aliases=["guesstoken"])
     @commands.guild_only()
     async def tokenguess(self,ctx,member:discord.Member=None):
@@ -34,7 +29,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         except Exception:
             return await ctx.send("I am unable to find that user.")
 
-        embed=discord.Embed(title=f"User lookup for: {userid}",description=user.mention,colour=self.colour)
+        embed=discord.Embed(title=f"User lookup for: {userid}",description=user.mention,colour=self.bot.colour)
         registered=user.created_at
         embed.add_field(name="Tag:",value=f"{user.name}#{user.discriminator}")
         registerdate=str(registered.day) + "/" + str(registered.month) + "/" + str(registered.year) + "  " + str(registered.hour) + ":" + str(registered.minute).zfill(2)
@@ -54,6 +49,7 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
         embed=discord.Embed(title="No return")
 
         clientinstance=discord.Client(guild_subscriptions=False,max_messages=None,fetch_offline_members=False)
+
         @clientinstance.event
         async def on_ready():
             nonlocal embed
@@ -85,4 +81,4 @@ class AdvancedInfo(commands.Cog,name="Advanced info"):
 
 
 def setup(bot):
-    bot.add_cog(AdvancedInfo(bot))
+    bot.add_cog(AdvancedInfo(bot,"advancedinfo"))

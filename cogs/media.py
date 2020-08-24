@@ -4,13 +4,12 @@ import aiohttp
 import box
 import random
 import asyncio
+import blink
 
 
-class Media(commands.Cog,name="Media"):
-    def __init__(self,bot):
-        self.bot=bot
-        self.bot._cogs.media = self
-        self.colour=self.bot.colour
+class Media(blink.Cog,name="Media"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.session=aiohttp.ClientSession()
 
     def __unload(self):
@@ -22,7 +21,7 @@ class Media(commands.Cog,name="Media"):
         """Enlarges a custom emoji"""
         if not emoji:
             return await ctx.send("Please send an emoji.")
-        embed=discord.Embed(description=f"**{emoji.name}**",colour=self.colour)
+        embed=discord.Embed(description=f"**{emoji.name}**",colour=self.bot.colour)
         embed.set_image(url=f"{emoji.url}?size=1024")
         return await ctx.send(embed=embed)
 
@@ -54,4 +53,4 @@ class Media(commands.Cog,name="Media"):
 
 
 def setup(bot):
-    bot.add_cog(Media(bot))
+    bot.add_cog(Media(bot,"media"))

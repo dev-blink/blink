@@ -9,6 +9,7 @@ from jishaku.paginators import WrappedPaginator, PaginatorInterface
 import config
 import hashlib
 from async_timeout import timeout
+import blink
 
 
 class AvPages(menus.ListPageSource):
@@ -21,10 +22,9 @@ class AvPages(menus.ListPageSource):
         return self.embeds[entries]
 
 
-class GlobalLogs(commands.Cog,name="Global logging"):
-    def __init__(self,bot):
-        self.bot = bot
-        self.bot._cogs.logging = self
+class GlobalLogs(blink.Cog,name="Global logging"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.bot.logActions = 0
         self.size = 512
         self.msgcache = {}
@@ -226,5 +226,5 @@ class GlobalLogs(commands.Cog,name="Global logging"):
 
 
 def setup(bot):
-    cog = GlobalLogs(bot)
+    cog = GlobalLogs(bot,"logging")
     bot.loop.create_task(cog.init())

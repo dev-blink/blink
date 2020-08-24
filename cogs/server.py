@@ -3,11 +3,7 @@ from discord.ext import commands
 import blink
 
 
-class Server(commands.Cog,name="Server"):
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.server = self
-
+class Server(blink.Cog,name="Server"):
     def memberscheck(self):
         def predicate(self,ctx):
             if ctx.command.endswith("members"):
@@ -135,4 +131,4 @@ class Server(commands.Cog,name="Server"):
 
 
 def setup(bot):
-    bot.add_cog(Server(bot))
+    bot.add_cog(Server(bot,"server"))

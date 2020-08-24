@@ -28,13 +28,8 @@ async def dmattempt(user,action,reason,guild):
     return True
 
 
-class Moderation(commands.Cog, name="Moderation"):
+class Moderation(blink.Cog, name="Moderation"):
     """Commands used to moderate your guild"""
-
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.mod = self
-
     async def privcheck(self,ctx,user):
         if not user:
             await ctx.send("You must specify a user.")
@@ -262,4 +257,4 @@ class Moderation(commands.Cog, name="Moderation"):
 
 
 def setup(bot):
-    bot.add_cog(Moderation(bot))
+    bot.add_cog(Moderation(bot,"mod"))

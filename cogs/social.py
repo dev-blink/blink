@@ -270,10 +270,7 @@ class User(object):
         await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2",0,self.user)
 
 
-class Social(commands.Cog):
-    def __init__(self,bot):
-        self.bot = bot
-        self.bot._cogs.social = self
+class Social(blink.Cog):
 
     async def gen_kiss(self):
         async with aiohttp.ClientSession() as session:
@@ -558,4 +555,4 @@ class Social(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Social(bot))
+    bot.add_cog(Social(bot,"social"))

@@ -1,14 +1,14 @@
-from discord.ext import commands,tasks
+from discord.ext import tasks
 import secrets
 import aiohttp
+import blink
 
 
-class ListingHandler(commands.Cog):
+class ListingHandler(blink.Cog):
     """Handles interactions with bot listing sites """
 
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.listing = self
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
         self.tokens={
             "dbl":secrets.dblapi,
             "bdb":secrets.bdbapi,
@@ -41,4 +41,4 @@ class ListingHandler(commands.Cog):
 def setup(bot):
     if bot.beta:
         return
-    bot.add_cog(ListingHandler(bot))
+    bot.add_cog(ListingHandler(bot,"listing"))

@@ -7,12 +7,7 @@ import platform
 import time
 
 
-class Info(commands.Cog,name="Info"):
-    def __init__(self,bot):
-        self.bot=bot
-        self.bot._cogs.info = self
-        self.colour=bot.colour
-
+class Info(blink.Cog,name="Info"):
     @commands.command(name="prefix")
     @commands.bot_has_permissions(send_messages=True)
     async def prefix(self, ctx):
@@ -29,7 +24,7 @@ class Info(commands.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def invite(self, ctx):
         """A bot invite"""
-        embed=discord.Embed(title="Click here.", url="https://blinkbot.me", description="Invite the bot to your server",colour=self.colour)
+        embed=discord.Embed(title="Click here.", url="https://blinkbot.me", description="Invite the bot to your server",colour=self.bot.colour)
         embed.set_author(name="Invite me!")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(static_format='png'))
 
@@ -39,7 +34,7 @@ class Info(commands.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def support(self, ctx):
         """Shows an invite for the support server."""
-        embed=discord.Embed(title="https://discord.gg/d23VBaR", url="https://discord.gg/d23VBaR", description="Just ask for help.",colour=self.colour)
+        embed=discord.Embed(title="https://discord.gg/d23VBaR", url="https://discord.gg/d23VBaR", description="Just ask for help.",colour=self.bot.colour)
         embed.set_author(name="Join the support server!")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
 
@@ -50,7 +45,7 @@ class Info(commands.Cog,name="Info"):
     async def info(self,ctx):
         """Shows info about the bot"""
         owner=self.bot.get_user(171197717559771136)
-        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.colour)
+        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.bot.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
@@ -79,4 +74,4 @@ class Info(commands.Cog,name="Info"):
 
 
 def setup(bot):
-    bot.add_cog(Info(bot))
+    bot.add_cog(Info(bot,"info"))

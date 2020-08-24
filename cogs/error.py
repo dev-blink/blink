@@ -7,11 +7,10 @@ import asyncpg
 from wavelink import ZeroConnectedNodes as NoNodes
 
 
-class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.error = self
-        self.nocooldown = bot.owner_ids + []
+class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
+    def __init__(self, *args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.nocooldown = self.bot.owner_ids + []
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -101,7 +100,7 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
 
         elif isinstance(error,commands.UnexpectedQuoteError):
-            return await ctx.send("Looks like you tried to use a quote in an argument (don't do that) it's hard to distinguish arguments")
+            return await ctx.send("Looks like you tried to use a quote in an argument (don't do that) it makes it impossible to distinguish arguments.")
         #
         # Error reporting
         #
@@ -118,4 +117,4 @@ class CommandErrorHandler(commands.Cog,name="ErrorHandler"):
 
 
 def setup(bot):
-    bot.add_cog(CommandErrorHandler(bot))
+    bot.add_cog(CommandErrorHandler(bot,"error"))

@@ -46,10 +46,16 @@ class Ctx(commands.Context):
 
 class CogStorage:
     def __dir__(self):
-        return sorted([a for a in super().__dir__() if not (a.startswith("__") and a.endswith("__"))])
+        return sorted([a for a in super().__dir__() if not ((a.startswith("__") and a.endswith("__")) or a in ["register","unregister"])])
 
     def __len__(self):
         return len(dir(self))
+
+    def register(self,obj:object,identifier:str):
+        setattr(self,identifier,obj)
+
+    def unregister(self,identifer:str):
+        delattr(self,identifer)
 
 
 class Blink(commands.AutoShardedBot):

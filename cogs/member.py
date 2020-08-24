@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
+import blink
 
 
 statuses = {
@@ -39,11 +40,7 @@ async def convert(seconds):
         return delta
 
 
-class Members(commands.Cog,name="Member"):
-    def __init__(self, bot):
-        self.bot=bot
-        self.bot._cogs.member = self
-
+class Members(blink.Cog,name="Member"):
     @commands.command(name="joined",aliases=["joinedat","joindate"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True)
@@ -60,9 +57,9 @@ class Members(commands.Cog,name="Member"):
         if member is None:
             member=ctx.author
 
-        await ctx.send(f'The top role for {member.display_name} is ```{member.top_role.name}```')
+        await ctx.send(f'The top role for {member.display_name} is `{member.top_role.name}`')
 
-    @commands.command(name='perms', aliases=['perms_for', 'permissions'])
+    @commands.command(name='perms', aliases=['permsfor', 'permissions'])
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -215,4 +212,4 @@ class Members(commands.Cog,name="Member"):
 
 
 def setup(bot):
-    bot.add_cog(Members(bot))
+    bot.add_cog(Members(bot,"member"))

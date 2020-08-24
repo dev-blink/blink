@@ -2,14 +2,11 @@ import discord
 from discord.ext import commands
 import time
 import io
+import blink
 
 
-class SQL(commands.Cog):
+class SQL(blink.Cog):
     """Commands having to do with SQL."""
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.bot._cogs.sql = self
 
     def popcode(self, content):
         if content.startswith('```') and content.endswith('```'):
@@ -117,4 +114,4 @@ class plural:
 
 
 def setup(bot):
-    bot.add_cog(SQL(bot))
+    bot.add_cog(SQL(bot,"sql"))

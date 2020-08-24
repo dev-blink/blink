@@ -3,11 +3,7 @@ from discord.ext import commands
 import blink
 
 
-class RoleManagement(commands.Cog,name="Role Management"):
-    def __init__(self,bot):
-        self.bot=bot
-        self.bot._cogs.roles = self
-
+class RoleManagement(blink.Cog,name="Role Management"):
     @commands.command(name="role",aliases=["changerole","setrole"])
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
@@ -91,4 +87,4 @@ class RoleManagement(commands.Cog,name="Role Management"):
 
 
 def setup(bot):
-    bot.add_cog(RoleManagement(bot))
+    bot.add_cog(RoleManagement(bot,"roles"))
