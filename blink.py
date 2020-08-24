@@ -126,4 +126,4 @@ class Cog(commands.Cog):
     def cog_unload(self):
         self.bot._cogs.unregister(self.identifier)
         if hasattr(self,"session") and isinstance(self.session,ClientSession):
-            self.bot.loop.create_task(self.session.close(),loop=self.bot.loop)
+            self.bot.loop.create_task(self.session.close())
