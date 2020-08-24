@@ -96,7 +96,7 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
             return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
 
         elif isinstance(error,NoNodes):
-            await self.bot.warn("no nodes "+ error,False)
+            await self.bot.warn("no nodes",False)
             return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
 
         elif isinstance(error,commands.UnexpectedQuoteError):
