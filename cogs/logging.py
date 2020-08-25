@@ -5,7 +5,7 @@ import datetime
 from io import BytesIO
 import aiohttp
 import uuid
-from jishaku.paginators import WrappedPaginator, PaginatorInterface
+from jishaku.paginators import PaginatorEmbedInterface
 import config
 import hashlib
 from async_timeout import timeout
@@ -154,13 +154,12 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             dt = unformatted[0]
             name = unformatted[1]
             names.append(f"{dt.day}/{dt.month}/{dt.year} @ {str(dt.hour).zfill(2)}:{str(dt.minute).zfill(2)} -> {name}")
-        e = "\n".join(names)
-        if len(e) > 1994:
-            paginator = WrappedPaginator(wrap_on=('\n'),prefix='```',suffix='```')
-            paginator.add_line(e)
-            interface = PaginatorInterface(self.bot,paginator,owner=ctx.author)
-            return await interface.send_to(ctx)
-        await ctx.send(f'```{e}```')
+        paginator = commands.Paginator(prefix='```',suffix='```',max_size=500)
+        for line in reversed(names):
+            paginator.add_line(line)
+        embed = discord.Embed(colour=self.bot.colour,title=f"Usernames for {user}")
+        interface = PaginatorEmbedInterface(self.bot,paginator,owner=ctx.author,embed=embed,timeout=60)
+        return await interface.send_to(ctx)
 
     @commands.command(name="avatars",aliases=["avs"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True,add_reactions=True)
