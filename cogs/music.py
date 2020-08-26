@@ -495,7 +495,7 @@ class Music(blink.Cog):
             await ctx.send('An admin or DJ has skipped the song.', delete_after=10)
             player.skip_votes.clear()
 
-        if ctx.author in player.resume_votes:
+        if ctx.author in player.skip_votes:
             return
 
             return await player.stop()
@@ -529,7 +529,7 @@ class Music(blink.Cog):
             await ctx.send('An admin or DJ has stopped the player.', delete_after=10)
             return await player.teardown()
 
-        if ctx.author in player.resume_votes:
+        if ctx.author in player.stop_votes:
             return
 
         required=self.required(ctx)
