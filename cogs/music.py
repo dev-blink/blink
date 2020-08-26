@@ -441,6 +441,9 @@ class Music(blink.Cog):
 
             return await player.set_pause(True)
 
+        if ctx.author in player.pause_votes:
+            return
+
         required=self.required(ctx)
         player.pause_votes.add(ctx.author)
 
@@ -466,6 +469,9 @@ class Music(blink.Cog):
 
             return await player.set_pause(False)
 
+        if ctx.author in player.resume_votes:
+            return
+
         required=self.required(ctx)
         player.resume_votes.add(ctx.author)
 
@@ -488,6 +494,9 @@ class Music(blink.Cog):
         if self.is_privileged(ctx):
             await ctx.send('An admin or DJ has skipped the song.', delete_after=10)
             player.skip_votes.clear()
+
+        if ctx.author in player.resume_votes:
+            return
 
             return await player.stop()
         if player.current:
@@ -519,6 +528,9 @@ class Music(blink.Cog):
         if self.is_privileged(ctx):
             await ctx.send('An admin or DJ has stopped the player.', delete_after=10)
             return await player.teardown()
+
+        if ctx.author in player.resume_votes:
+            return
 
         required=self.required(ctx)
         player.stop_votes.add(ctx.author)
