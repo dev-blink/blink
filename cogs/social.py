@@ -8,9 +8,23 @@ import uuid
 import asyncio
 import re
 import secrets
+from async_timeout import timeout
 # CREATE TABLE social (id bigint PRIMARY KEY, hugs TEXT ARRAY, kisses TEXT ARRAY, relation bigint, ship TEXT, blocked bigint ARRAY)
 # CREATE TABLE ships (id TEXT PRIMARY KEY,captain bigint, partner bigint,name TEXT,customtext TEXT,colour bigint,icon TEXT,timestamp bigint)
 URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
+
+
+async def api(route,method):
+    try:
+        async with timeout(5):
+            async with aiohttp.ClientSession() as cs:
+                async with cs.request(method=method,url=route,headers={"Authorization":secrets.api}) as res:
+                    if res.status == 200:
+                        return (await res.json()).get("url")
+                    else:
+                        return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
+    except asyncio.TimeoutError:
+        return "https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+TIMEOUT"
 
 
 class _Users(discord.AllowedMentions):
@@ -32,11 +46,7 @@ class Ship(object):
         self.db = db
 
     async def gen_thumbnail(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://api.blinkbot.me/social/images/ship/{self.colour:06}",headers={"Authorization":secrets.api}) as res:
-                if res.status == 200:
-                    return (await res.json()).get("url")
-                return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
+        return await api(f"https://api.blinkbot.me/social/images/ship/{self.colour:06}","GET")
 
     async def __aenter__(self):
         self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
@@ -273,24 +283,10 @@ class User(object):
 class Social(blink.Cog):
 
     async def gen_kiss(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.blinkbot.me/social/images/kiss/",headers={"Authorization":secrets.api}) as res:
-                if res.status == 200:
-                    try:
-                        return (await res.json()).get("url")
-                    except aiohttp.ContentTypeError:
-                        pass
-                return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
+        return await api("https://api.blinkbot.me/social/images/kiss/","GET")
 
     async def gen_hug(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.blinkbot.me/social/images/hug/",headers={"Authorization":secrets.api}) as res:
-                if res.status == 200:
-                    try:
-                        return (await res.json()).get("url")
-                    except aiohttp.ContentTypeError:
-                        pass
-                return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
+        return await api("https://api.blinkbot.me/social/images/hug/","GET")
 
     @commands.group(name="blocked",invoke_without_command=True)
     async def blocked(self,ctx):
