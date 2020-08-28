@@ -3,6 +3,7 @@ from discord.ext import commands, menus
 import discord
 import blink
 import datetime
+import aiohttp
 import asyncpg
 from wavelink import ZeroConnectedNodes as NoNodes
 
@@ -104,7 +105,7 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
         #
         # Error reporting
         #
-        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went wrong...",description="this should not have happened.. contact the dev via ;support\nThis incident has been logged.",colour=discord.Colour.red()))
+        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went drastically wrong...",description="This shouldnt happen. Please contact us in the [support server](https://discord.gg/d23VBaR)",colour=discord.Colour.red()).set_footer(text="This incident has been logged."))
         if ctx.guild:
             guild = f"{ctx.guild.id} -- {ctx.guild.name}"
         else:
@@ -113,7 +114,15 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
             channel = f"DM WITH {ctx.channel.recipient}"
         else:
             channel = f"{ctx.channel.id} -- #{ctx.channel.name} ({ctx.channel.mention})"
-        await self.bot.cluster.log_errors(f"Error occureed in guild: {guild} | channel: {channel} | author {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`** " + "```" + str("\n".join(traceback.format_exception(type(error), error, error.__traceback__))) + f"```\nOCCURED AT : {datetime.datetime.utcnow()}")
+
+        tb = '\n'.join(traceback.format_exception(type(error), error, error.__traceback__))
+        embed = discord.Embed(description=f"Guild: {guild}\nChannel: {channel}\nAuthor: {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`**",colour=discord.Colour.red(),timestamp=datetime.datetime.utcnow())
+        async with aiohttp.ClientSession() as cs:
+            async with cs.post("https://hastebin.com/documents",data=tb) as haste:
+                data = await haste.json()
+                embed.set_author(name="UNCAUGHT EXCEPTION",url=f"https://hastebin.com/{data['key']}")
+
+        await self.bot.cluster.log_errors(embed=embed)
 
 
 def setup(bot):
