@@ -3,6 +3,6 @@ autobahn
 pyfiglet
 wavelink
 gcloud-aio-storage
-statcord.py-beta
+statcord.py
 box
 psutil

@@ -35,6 +35,10 @@ class Moderation(blink.Cog, name="Moderation"):
             await ctx.send("You must specify a user.")
             raise blink.SilentWarning()
 
+        if user.id == ctx.guild.owner_id:
+            await ctx.send("That's the owner..")
+            raise blink.SilentWarning()
+
         if user == ctx.author:
             await ctx.send("You cannot sanction yourself.")
             raise blink.SilentWarning()
@@ -66,7 +70,7 @@ class Moderation(blink.Cog, name="Moderation"):
                 await ctx.guild.ban(user, reason=f"By {ctx.author} for None Specified")
             await ctx.send(f"{user.mention} was banned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to ban that user (Checks passed)")
+            return await ctx.send("I am unable to sanction that user. (this probably shouldn't have happened)")
 
     @commands.command(name="unban",aliases=["unbanish"])
     @commands.has_permissions(ban_members=True)
@@ -110,7 +114,7 @@ class Moderation(blink.Cog, name="Moderation"):
             await ctx.guild.unban(user, reason="Softbanned")
             await ctx.send(f"{user.mention} was softbanned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to softban that user (Checks passed)")
+            return await ctx.send("I am unable to sanction that user. (this probably shouldn't have happened)")
 
     @commands.command(name="mute",aliases=["silence"])
     @commands.has_permissions(manage_messages=True)
@@ -143,7 +147,7 @@ class Moderation(blink.Cog, name="Moderation"):
                 await ctx.guild.kick(user, reason=f"By {ctx.author} for None Specified")
                 await ctx.send(f"{user.mention} was kicked for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
-            return await ctx.send("I am unable to ban that user (Checks passed)'")
+            return await ctx.send("I am unable to sanction that user. (this probably shouldn't have happened)")
 
     @commands.command(name="purge",aliases=["prune"])
     @commands.has_permissions(manage_messages=True)
