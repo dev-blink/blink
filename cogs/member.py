@@ -99,8 +99,8 @@ class Members(blink.Cog,name="Member"):
         registerdate=str(registered.day) + "/" + str(registered.month) + "/" + str(registered.year) + "  " + str(registered.hour) + ":" + str(registered.minute).zfill(2)
         embed.add_field(name="User registered:", value=registerdate, inline=True)
 
-        sortedmembers=sorted(ctx.guild.members, key=lambda member: member.joined_at)
-        joinposition=sortedmembers.index(member) + 1
+        #sortedmembers=sorted(ctx.guild.members, key=lambda member: member.joined_at)
+        joinposition="Unavailable" # sortedmembers.index(member) + 1
         embed.add_field(name="Join position:", value=joinposition, inline=True)
 
         if member == ctx.guild.owner:
