@@ -188,7 +188,7 @@ class Blink(commands.AutoShardedBot):
         if payload is None:
             return
         if payload["event"] == "UPDATE_BLACKLIST":
-            await self.get_cog(self.get_cog("Developer").blacklist_update_mappings[payload["scope"]]).flush_blacklist()
+            await self.get_cog(self._cogs.dev.blacklist_update_mappings[payload["scope"]]).flush_blacklist()
         if payload["event"] == "SHUTDOWN":
             await self.cluster.quit()
             await self.logout()
