@@ -80,7 +80,7 @@ class Blink(commands.AutoShardedBot):
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136,741225148509847642,],
             allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
-            intents=discord.Intents._from_value(14211),
+            intents=discord.Intents._from_value(13953),
             chunk_guilds_at_startup=True,
         )
 
