@@ -81,7 +81,7 @@ class Blink(commands.AutoShardedBot):
             owner_ids=[171197717559771136,741225148509847642,],
             allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
             intents=discord.Intents._from_value(13953),
-            chunk_guilds_at_startup=True,
+            chunk_guilds_at_startup=False,
         )
 
         # Globals
