@@ -80,7 +80,8 @@ class Blink(commands.AutoShardedBot):
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136,741225148509847642,],
             allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
-            intents=discord.Intents._from_value(14211)
+            intents=discord.Intents._from_value(14211),
+            chunk_guilds_at_startup=True,
         )
 
         # Globals
@@ -204,9 +205,12 @@ class Blink(commands.AutoShardedBot):
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
         embed.set_author(name=f"Exception in event {event_method}")
         async with aiohttp.ClientSession() as cs:
-            async with cs.post("https://hastebin.com/documents",data=tb) as haste:
-                data = await haste.json()
-                embed.description = f"[Traceback](https://hastebin.com/{data['key']})"
+            if len(tb) < 2040:
+                async with cs.post("https://hastebin.com/documents",data=tb) as haste:
+                    data = await haste.json()
+                    embed.description = f"[Traceback](https://hastebin.com/{data['key']})"
+            else:
+                embed.description = f"```{tb}```"
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
