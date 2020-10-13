@@ -14,6 +14,7 @@ import time
 import humanize
 import sys
 import traceback
+from io import BytesIO
 
 
 cluster=input("Cluster>")
@@ -80,7 +81,14 @@ class Blink(commands.AutoShardedBot):
             activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
             owner_ids=[171197717559771136,741225148509847642,],
             allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
-            intents=discord.Intents._from_value(13953),
+            intents=discord.Intents(
+                guilds=True,
+                voice_states=True,
+                messages=True,
+                reactions=True,
+                presences=False,
+                members=False,
+            ),
             chunk_guilds_at_startup=False,
         )
 
@@ -204,15 +212,14 @@ class Blink(commands.AutoShardedBot):
         tb = traceback.format_exc()
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
         embed.set_author(name=f"Exception in event {event_method}")
+        file = None
         async with aiohttp.ClientSession() as cs:
             if len(tb) < 2040:
-                async with cs.post("https://hastebin.com/documents",data=tb) as haste:
-                    data = await haste.json()
-                    embed.description = f"[Traceback](https://hastebin.com/{data['key']})"
+                file = discord.File(BytesIO(tb.encode("utf-8")))
             else:
                 embed.description = f"```{tb}```"
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
-            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
+            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR",file=file)
 
 
 BOT = Blink(cluster)
