@@ -105,7 +105,9 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
         #
         # Error reporting
         #
-        await ctx.send(content="**UPDATE 7/10/20 WAITING ON DISCORD SUPPORT TO RESOLVE COMMON ERRORS**", embed=discord.Embed(title="Uh Oh! Something went drastically wrong...",description="This shouldnt happen. Please contact us in the [support server](https://discord.gg/d23VBaR)",colour=discord.Colour.red()).set_footer(text="This incident has been logged."))
+        if ctx.author.id in self.bot.owner_ids:
+            await ctx.send(f"{error.__class__.__qualname__} - {error}")
+        await ctx.send(embed=discord.Embed(title="Uh Oh! Something went drastically wrong...",description="This shouldnt happen. Please contact us in the [support server](https://discord.gg/d23VBaR)",colour=discord.Colour.red()).set_footer(text="This incident has been logged."))
         if ctx.guild:
             guild = f"{ctx.guild.id} -- {ctx.guild.name}"
         else:
