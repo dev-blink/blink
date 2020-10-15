@@ -215,7 +215,7 @@ class Blink(commands.AutoShardedBot):
         file = None
         async with aiohttp.ClientSession() as cs:
             if len(tb) < 2040:
-                file = discord.File(BytesIO(tb.encode("utf-8")))
+                file = discord.File(BytesIO(tb.encode("utf-8")), filename="tb.txt")
             else:
                 embed.description = f"```{tb}```"
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
