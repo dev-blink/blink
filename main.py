@@ -87,9 +87,9 @@ class Blink(commands.AutoShardedBot):
                 messages=True,
                 reactions=True,
                 presences=False,
-                members=False,
+                members=True,
             ),
-            chunk_guilds_at_startup=False,
+            chunk_guilds_at_startup=True,
         )
 
         # Globals
