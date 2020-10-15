@@ -86,7 +86,7 @@ class Cluster(object):
             music = 0
         stats = {
             "guilds":len(self.bot.guilds),
-            "users":len(self.bot.users),
+            "users":sum(g.member_count for g in self.bot.guilds),
             "music":music,
         }
         self.ws.update(stats)
