@@ -14,12 +14,6 @@ class Info(blink.Cog,name="Info"):
         """Shows the bot's prefix."""
         await ctx.send("The bot prefix is ';' you can also use 'b;' or a ping.")
 
-    @commands.command(name="creator")
-    @commands.bot_has_permissions(send_messages=True)
-    async def creator(self, ctx):
-        """Shows the bot's creator."""
-        await ctx.send("aaix#0001 created this bot.")
-
     @commands.command(name="invite")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def invite(self, ctx):
@@ -44,8 +38,7 @@ class Info(blink.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def info(self,ctx):
         """Shows info about the bot"""
-        owner=self.bot.get_user(171197717559771136)
-        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description=f"Blink is a multipurpose bot designed by {owner.mention} ({owner.name}#{owner.discriminator})\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.bot.colour)
+        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description="Blink is a multipurpose bot designed for simplicity\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.bot.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
