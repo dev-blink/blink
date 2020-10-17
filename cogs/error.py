@@ -8,6 +8,16 @@ import asyncpg
 from wavelink import ZeroConnectedNodes as NoNodes
 
 
+async def sendEmbedError(ctx,message):
+    embed = discord.Embed(colour=15158332)
+    if len(message) < 256:
+        embed.title=message
+    else:
+        embed.title=":x: Error"
+        embed.description=message
+    await ctx.send(embed=embed)
+
+
 class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
     def __init__(self, *args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -30,20 +40,20 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
 
         elif isinstance(error,commands.MissingRequiredArgument):
             try:
-                await ctx.message.add_reaction("\U00002754")
-                return await ctx.send_help(ctx.command)
+                await ctx.send_help(ctx.command)
+                return await ctx.message.add_reaction("\U00002754")
             except discord.Forbidden:
                 return
 
         elif isinstance(error,commands.TooManyArguments):
             try:
-                await ctx.message.add_reaction("\U00002754")
-                return await ctx.send_help(ctx.command)
+                await ctx.send_help(ctx.command)
+                return await ctx.message.add_reaction("\U00002754")
             except discord.Forbidden:
                 return
 
         elif isinstance(error,menus.CannotAddReactions):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title="I am unable to initialize the reaction menu. Please give me permissions to add reactions."))
+            return await sendEmbedError(ctx,"I am unable to initialize the reaction menu. Please give me permissions to add reactions.")
 
         elif isinstance(error,commands.BotMissingPermissions):
             try:
@@ -51,10 +61,10 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
             except discord.Forbidden:
                 return
         elif isinstance(error, commands.DisabledCommand):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=f'**`{ctx.command}`** has been disabled.'))
+            return await sendEmbedError(ctx,f'**`{ctx.command}`** has been disabled.')
 
         elif isinstance(error, commands.MissingPermissions):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=f'You do not have permission to use the command **`{ctx.command}`**'))
+            return await sendEmbedError(ctx,f'You do not have permission to use the command **`{ctx.command}`**')
 
         elif isinstance(error, commands.NotOwner):
             try:
@@ -64,17 +74,17 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
-                return await ctx.author.send(f'**`{ctx.command}`** can not be used in Private Messages.')
+                return await sendEmbedError(ctx,f'**`{ctx.command}`** can not be used in Private Messages.')
             except discord.Forbidden:
                 return
         elif isinstance(error, discord.errors.Forbidden):
             try:
-                return await ctx.send(embed=discord.Embed(colour=15158332,title="I do not have permission to do that."))
+                return await sendEmbedError(ctx,"I do not have permission to do that.")
             except discord.Forbidden:
                 return
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
+            return await sendEmbedError(ctx,str(error))
 
         elif isinstance(error, commands.CommandOnCooldown):
             if ctx.author.id in self.nocooldown:
@@ -86,22 +96,23 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
                 return
 
         elif isinstance(error, blink.NoChannelProvided):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title='You must be in a voice channel or provide one to connect to.'))
+            return await sendEmbedError(ctx,'You must be in a voice channel or provide one to connect to.')
         elif isinstance(error,commands.NSFWChannelRequired):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title="This command is locked to nsfw channels only."))
+            return await sendEmbedError(ctx,"This command is locked to nsfw channels only.")
 
         elif isinstance(error,commands.MaxConcurrencyReached):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
+            return await sendEmbedError(ctx,str(error))
 
         elif isinstance(error,asyncpg.exceptions.PostgresError):
-            return await ctx.send(embed=discord.Embed(colour=15158332,title=str(error)))
+            if ctx.author.id in self.bot.owner_ids:
+                return await sendEmbedError(ctx,str(error))
 
         elif isinstance(error,NoNodes):
             await self.bot.warn("no nodes",False)
-            return await ctx.send(embed=discord.Embed(colour=15158332,title="Music is temporarily unavailable right now. please try again later."))
+            return await sendEmbedError(ctx,"Music is temporarily unavailable right now. please try again later.")
 
         elif isinstance(error,commands.UnexpectedQuoteError):
-            return await ctx.send("Looks like you tried to use a quote in an argument (don't do that) it makes it impossible to distinguish arguments.")
+            return await sendEmbedError(ctx,"Looks like you tried to use a quote in an argument (don't do that) it makes it impossible to distinguish arguments.")
         #
         # Error reporting
         #

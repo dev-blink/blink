@@ -34,24 +34,6 @@ class Stats(blink.Cog,name="Stats"):
         embed=discord.Embed(title="Bot statistics!",colour=self.bot.colour,description=f"```Servers: {self.bot.cluster.guilds}\nUnique users: {self.bot.cluster.users}```")
         return await ctx.send(embed=embed)
 
-    @commands.Cog.listener("on_guild_join")
-    async def guild_join(self,guild):
-        embed=discord.Embed(title=f"Bot added to guild {guild.id} on cluster {self.bot.cluster.name}",colour=0x00ff3c,description=f"Total guilds: {self.bot.cluster.guilds+1}")
-        embed.add_field(name="Guild name:",value=f"{guild.name}")
-        embed.add_field(name="Guild members:",value=f"{guild.member_count}")
-        embed.add_field(name="Guild owner:",value=f"{guild.owner}\n<@{guild.owner_id}>")
-        embed.set_thumbnail(url=guild.icon_url_as(static_format="png"))
-        await self.bot.cluster.log_guilds(embed=embed)
-
-    @commands.Cog.listener("on_guild_remove")
-    async def guild_remove(self,guild):
-        embed=discord.Embed(title=f"Bot removed from guild {guild.id} on cluster {self.bot.cluster.name}",colour=0xff0003,description=f"Total guilds: {self.bot.cluster.guilds-1}")
-        embed.add_field(name="Guild name:",value=f"{guild.name}")
-        embed.add_field(name="Guild members:",value=f"{guild.member_count}")
-        embed.add_field(name="Guild owner:",value=f"{guild.owner}\n<@{guild.owner_id}>")
-        embed.set_thumbnail(url=guild.icon_url_as(static_format="png"))
-        await self.bot.cluster.log_guilds(embed=embed)
-
     async def statcord_push(self,ctx):
         self.statcord.command_run(ctx)
 

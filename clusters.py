@@ -59,7 +59,8 @@ class Cluster(object):
 
     def __str__(self):
         shards = self.shards["this"]
-        return f"Cluster {self.name}, Shards ({shards[0]}-{shards[-1]})"
+        series = self.shards["series"]
+        return f"Cluster {self.name} ({series[0]}/{series[1]}), Shards ({shards[0]}-{shards[-1]})"
 
     async def loop(self):
         while self.active:
@@ -77,6 +78,7 @@ class Cluster(object):
         return {
             "total":TOTAL_SHARDS,
             "this": shards,
+            "series": (index + 1,TOTAL_CLUSTERS),
         }
 
     def update(self):
@@ -93,12 +95,6 @@ class Cluster(object):
 
     async def log_startup(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.startup()
-        if embed:
-            embed = embed.to_dict()
-        return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
-
-    async def log_guilds(self,content=None, tts=False, embed=None, nonce=None):
-        channel = blink.Config.newguilds()
         if embed:
             embed = embed.to_dict()
         return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
