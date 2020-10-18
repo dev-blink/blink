@@ -155,6 +155,8 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def purge(self, ctx, limit: int):
         """Bulk deletes messages."""
+        if limit > 1000:
+            limit = 1000
         try:
             await ctx.channel.purge(limit=limit + 1)  # also deletes your own message
         except Exception:
