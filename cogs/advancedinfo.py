@@ -67,7 +67,7 @@ class AdvancedInfo(blink.Cog,name="Advanced info"):
                 embed.add_field(name="Guilds:",value=f"```{formated}```")
             await clientinstance.logout()
             await clientinstance.close()
-        await ctx.message.add_reaction("<a:b-loading:701617517663354910>")
+        await ctx.message.add_reaction("<a:bloading:705202826946674718>")
         try:
             await clientinstance.start(token,bot=True)
         except Exception:
