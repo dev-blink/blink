@@ -61,8 +61,6 @@ class Fun(blink.Cog,name="Fun"):
             return
         if not before.guild:
             return
-        if (len(before.content) - len(after.content)) in range(-1,2):
-            return
         g = self.esnipes.get(before.guild.id)
         if g is None:
             g = {}
