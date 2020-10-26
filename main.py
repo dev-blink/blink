@@ -97,6 +97,7 @@ class Blink(commands.AutoShardedBot):
         self.INITIALIZED = False
         self.beta=config.beta
         self.boottime=datetime.datetime.utcnow()
+        self.created = False
 
         # Cogs
         self._cogs = CogStorage()
@@ -172,6 +173,7 @@ class Blink(commands.AutoShardedBot):
         self.bootlog="\n".join(boot)
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
+        self.created = True
         print(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}\nTotal start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}")
         self.update_pres.start()
 
