@@ -64,9 +64,9 @@ class Cluster(object):
 
     async def loop(self):
         while self.active:
-            await asyncio.sleep(5)
             self.update()
             await self.ws.post_stats()
+            await asyncio.sleep(5)
 
     @property
     def shards(self):

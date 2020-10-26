@@ -48,7 +48,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
     async def flush_blacklist(self):
         self.blacklist = (await self.bot.DB.fetchrow("SELECT snowflakes FROM blacklist WHERE scope=$1","logging")).get("snowflakes")
 
-# AVATAR DB TRANSACTIONS
+    # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
     async def update(self,before,after):
         if not self.active:
@@ -123,7 +123,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.storage.upload(config.cdn,path,img_data)
         return f"https://cdn.blinkbot.me/{path}"
 
-# GLOBAL MESSAGES DB TRANSACTIONS
+    # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
     async def update_db(self,message):
         if message.author.bot or not message.guild or not self.active or message.author.id in self.blacklist:
@@ -134,7 +134,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         else:
             self.msgcache[user] +=1
 
-# USERNAME AND AVATAR
+    # USERNAME AND AVATAR
     @commands.command(name="names",aliases=["usernames","un"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def namehistory(self,ctx,user:discord.Member=None):
@@ -184,6 +184,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             timestamp = f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:02}:{dt.minute:02}"
             embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
             embed.set_image(url=avatar)
+            embed.set_author(name="This service is being discontinued, click this for support/info or to request your data.",url="https://discord.gg/d23VBaR")
             embed.set_footer(text=f"{result.index(entry)}/{len(result)-1}")
             embeds.append(embed)
         if len(embeds) == 1:
@@ -191,7 +192,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         pages = menus.MenuPages(source=AvPages(range(1,len(embeds)), embeds), clear_reactions_after=True)
         await pages.start(ctx)
 
-# GLOBAL MESSAGES
+    # GLOBAL MESSAGES
     @commands.command(name="messages",aliases=["msgs"])
     async def view_messages(self,ctx):
         """Show tracked messages sent globally"""
