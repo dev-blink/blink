@@ -15,6 +15,7 @@ URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
 
 async def api(route,method):
+    return "https://dummyimage.com/1024x1024/000000/f5a6b9.png&text=ERRORS+BEING+FIXED"
     try:
         async with timeout(5):
             async with aiohttp.ClientSession() as cs:
