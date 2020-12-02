@@ -21,6 +21,8 @@ async def mute(ctx, user, reason):
 
 
 async def dmattempt(user,action,reason,guild):
+    if user.bot:
+        return False
     try:
         await user.send(f"You were {action} in {guild} for {reason}")
     except discord.HTTPException:
@@ -76,24 +78,15 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def unban(self, ctx, *, username:int):
+    async def unban(self, ctx, *, userid:int):
         """Unbans a user by their id."""
-        if not username:
-            return await ctx.send("You must specify a user.")
         try:
-            banlist=await ctx.guild.bans()
-        except discord.errors.Forbidden:
-            await ctx.send("I do not have permission to unban that user.")
-            return
-        user=None
-        for ban in banlist:
-            if ban.user.id == username:
-                user=ban.user
-        if user is None:
-            await ctx.send("User not banned.")
-            return
-        await ctx.guild.unban(user)
-        await ctx.send("Unbanned user.")
+            await ctx.guild.unban(discord.Object(userid))
+        except discord.Forbidden:
+            return await ctx.send("I do not have permission to unban users.")
+        except discord.HTTPException as e:
+            return await ctx.send(e)
+        await ctx.send(f"Attempted to unban : {userid}")
 
     @commands.command(name="softban",aliases=["softbanish"])
     @commands.guild_only()

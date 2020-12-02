@@ -22,7 +22,7 @@ cluster=input("Cluster>")
 
 # Logging
 logger=logging.getLogger('discord')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 handler=logging.FileHandler(filename=f'{cluster}.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -59,6 +59,31 @@ class CogStorage:
         delattr(self,identifer)
 
 
+class ShardHolder(set):
+    def __init__(self, total):
+        self.free = False
+        self.total = total
+        super().__init__()
+
+    def __repr__(self):
+        return f"<Shard identify holder, free : {self.free} registered : {len(self)}>"
+
+    def add(self, shard):
+        if len(self) == 0:
+            self.start = time.perf_counter()
+
+        super().add(shard)
+        print(f"Holding shard {shard}")
+
+        if len(self) == self.total:
+            self.finish()
+
+    def finish(self):
+        self.free = True
+        print(f"Releasing {self.total} shards")
+        print(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start)}")
+
+
 class Blink(commands.AutoShardedBot):
     def __init__(self,cluster:str):
 
@@ -67,8 +92,9 @@ class Blink(commands.AutoShardedBot):
         shards = self.cluster.shards
 
         # Sharding
-        self.INIT_SHARDS = []
-        self.SHARD_IDS = shards["this"]
+        self._init_shards = []
+        self._shard_ids = shards["this"]
+        self._held = ShardHolder(shards["total"])
 
         # Main
         super().__init__(
@@ -89,12 +115,12 @@ class Blink(commands.AutoShardedBot):
                 presences=False,
                 members=True,
             ),
-            chunk_guilds_at_startup=True,
+            chunk_guilds_at_startup=False,
         )
 
         # Globals
         self.colour = 0xf5a6b9
-        self.INITIALIZED = False
+        self._initialized = False
         self.beta=config.beta
         self.boottime=datetime.datetime.utcnow()
         self.created = False
@@ -112,21 +138,34 @@ class Blink(commands.AutoShardedBot):
         print(f"Starting - {self.cluster}\n")
 
     def __repr__(self):
-        return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self.INITIALIZED}, since={self.boottime}>"
+        return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
+
+    def dispatch(self,*args,**kwargs):
+        if self._initialized:
+            super().dispatch(*args,**kwargs)
+
+    async def before_identify_hook(self, shard_id, *, initial=False):
+        if initial:
+            self._held.add(shard_id)
+            while not self._held.free:
+                await asyncio.sleep(0)
+            return
+        else:
+            await asyncio.sleep(5)
 
     async def on_ready(self):
-        if self.INITIALIZED:
+        if self._initialized:
             return
-        self.INITIALIZED=True
-        while len(self.INIT_SHARDS) != len(self.SHARD_IDS):
+        self._initialized=True
+        while len(self._init_shards) != len(self._shard_ids):
             await asyncio.sleep(1)
         await self.create()
 
     async def on_shard_ready(self,id):
-        if id in self.INIT_SHARDS:
+        if id in self._init_shards:
             return
         print(f"Shard {id} ready")
-        self.INIT_SHARDS.append(id)
+        self._init_shards.append(id)
 
     async def on_message(self,message):
         if message.author.bot:

@@ -4,5 +4,7 @@ pyfiglet
 wavelink
 gcloud-aio-storage
 statcord.py
-box
+python-box
 psutil
+jishaku
+humanize
