@@ -60,9 +60,12 @@ class CogStorage:
 
 
 class ShardHolder(set):
-    def __init__(self, total):
+    def __init__(self, bot):
         self.free = False
-        self.total = total
+        self.total = len(bot._shard_ids)
+        self.bot = bot
+        self.tasks = []
+        self.finished = False
         super().__init__()
 
     def __repr__(self):
@@ -75,13 +78,22 @@ class ShardHolder(set):
         super().add(shard)
         print(f"Holding shard {shard}")
 
-        if len(self) == self.total:
-            self.finish()
+        if self.total == len(self):
+            self.free = True
 
     def finish(self):
+        if self.finished:
+            return
+        self.finished = True
         self.free = True
+        self.bot._connection.shards_launched.set()
         print(f"Releasing {self.total} shards")
-        print(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start)}")
+        print(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start, minimum_unit='microseconds')}")
+
+    async def wait(self):
+        while (not self.free) and (not sum(task.done() for task in self.tasks) == self.total):
+            await asyncio.sleep(0)
+        self.finish()
 
 
 class Blink(commands.AutoShardedBot):
@@ -94,7 +106,7 @@ class Blink(commands.AutoShardedBot):
         # Sharding
         self._init_shards = []
         self._shard_ids = shards["this"]
-        self._held = ShardHolder(shards["total"])
+        self._held = ShardHolder(self)
 
         # Main
         super().__init__(
@@ -129,7 +141,7 @@ class Blink(commands.AutoShardedBot):
         self._cogs = CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
-        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.music","cogs.social"]
+        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.social"]
         self.startingcogs.append("jishaku")
         if not self.beta:
             self.startingcogs.append("cogs.logging")
@@ -140,18 +152,28 @@ class Blink(commands.AutoShardedBot):
     def __repr__(self):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
-    def dispatch(self,*args,**kwargs):
-        if self._initialized:
-            super().dispatch(*args,**kwargs)
+    def dispatch(self, event, *args,**kwargs):
+        if self._initialized or "ready" in event:
+            super().dispatch(event, *args,**kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
-        if initial:
+        if not self._held.free:
             self._held.add(shard_id)
-            while not self._held.free:
-                await asyncio.sleep(0)
+            await self._held.wait()
             return
         else:
             await asyncio.sleep(5)
+
+    async def launch_shards(self):
+        gateway = await self.http.get_gateway()
+
+        self._connection.shard_count = self.shard_count
+        self._connection.shard_ids = self.shard_ids
+
+        for shard_id in self.shard_ids:
+            self._held.tasks.append(self.loop.create_task(self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))))
+
+        await self._connection.shards_launched.wait()
 
     async def on_ready(self):
         if self._initialized:
