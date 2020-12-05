@@ -8,3 +8,5 @@ python-box
 psutil
 jishaku
 humanize
+objgraph
+git+https://github.com/Rapptz/discord-ext-menus

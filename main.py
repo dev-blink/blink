@@ -22,7 +22,7 @@ cluster=input("Cluster>")
 
 # Logging
 logger=logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 handler=logging.FileHandler(filename=f'{cluster}.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -104,7 +104,7 @@ class Blink(commands.AutoShardedBot):
         shards = self.cluster.shards
 
         # Sharding
-        self._init_shards = []
+        self._init_shards = set()
         self._shard_ids = shards["this"]
         self._held = ShardHolder(self)
 
@@ -127,7 +127,7 @@ class Blink(commands.AutoShardedBot):
                 presences=False,
                 members=True,
             ),
-            chunk_guilds_at_startup=False,
+            chunk_guilds_at_startup=True,
         )
 
         # Globals
@@ -184,10 +184,8 @@ class Blink(commands.AutoShardedBot):
         await self.create()
 
     async def on_shard_ready(self,id):
-        if id in self._init_shards:
-            return
         print(f"Shard {id} ready")
-        self._init_shards.append(id)
+        self._init_shards.add(id)
 
     async def on_message(self,message):
         if message.author.bot:
