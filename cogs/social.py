@@ -9,6 +9,7 @@ import asyncio
 import re
 import secrets
 from async_timeout import timeout
+import config
 # CREATE TABLE social (id bigint PRIMARY KEY, hugs TEXT ARRAY, kisses TEXT ARRAY, relation bigint, ship TEXT, blocked bigint ARRAY)
 # CREATE TABLE ships (id TEXT PRIMARY KEY,captain bigint, partner bigint,name TEXT,customtext TEXT,colour bigint,icon TEXT,timestamp bigint)
 URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
@@ -19,7 +20,7 @@ async def api(route,method):
     try:
         async with timeout(5):
             async with aiohttp.ClientSession() as cs:
-                async with cs.request(method=method,url=route,headers={"Authorization":secrets.api}) as res:
+                async with cs.request(method=method,url=f"{config.api}{route}",headers={"Authorization":secrets.api}) as res:
                     if res.status == 200:
                         return (await res.json()).get("url")
                     else:
@@ -47,7 +48,7 @@ class Ship(object):
         self.db = db
 
     async def gen_thumbnail(self):
-        return await api(f"https://api.blinkbot.me/social/images/ship/{self.colour:06}","GET")
+        return await api(f"/social/images/ship/{self.colour:06}","GET")
 
     async def __aenter__(self):
         self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
@@ -284,10 +285,10 @@ class User(object):
 class Social(blink.Cog):
 
     async def gen_kiss(self):
-        return await api("https://api.blinkbot.me/social/images/kiss/","GET")
+        return await api("/social/images/kiss/","GET")
 
     async def gen_hug(self):
-        return await api("https://api.blinkbot.me/social/images/hug/","GET")
+        return await api("/social/images/hug/","GET")
 
     @commands.group(name="blocked",invoke_without_command=True)
     async def blocked(self,ctx):
