@@ -9,4 +9,6 @@ psutil
 jishaku
 humanize
 objgraph
+asyncpg
+websockets
 git+https://github.com/Rapptz/discord-ext-menus
