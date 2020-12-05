@@ -1,22 +1,31 @@
+# External
 import discord
 from discord.ext import commands, tasks
-import blink
-import datetime
 import asyncpg
+import aiohttp
+import humanize
+
+
+# Library
+import datetime
 import logging
 import asyncio
-import aiohttp
-import os
-import secrets
-import clusters
-import config
 import time
-import humanize
+import os
 import sys
 import traceback
+import platform
 from io import BytesIO
 
 
+# Custom
+import blink
+import clusters
+import config
+import secrets
+
+
+# Cluster
 cluster=input("Cluster>")
 
 
@@ -33,6 +42,13 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
+
+
+# Event loop
+if platform.platform().startswith("Windows"):
+    print("Using Windows Selector loop")
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Ctx(commands.Context):
