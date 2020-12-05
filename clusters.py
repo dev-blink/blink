@@ -65,7 +65,7 @@ class Cluster(object):
     async def loop(self):
         while self.active:
             self.update()
-            await self.ws.post_stats()
+            await self.ws.post_stats() if self.ws.connected else None
             await asyncio.sleep(5)
 
     @property
@@ -79,6 +79,7 @@ class Cluster(object):
             "total":TOTAL_SHARDS,
             "this": shards,
             "series": (index + 1,TOTAL_CLUSTERS),
+            "count": PER_CLUSTER,
         }
 
     def update(self):
@@ -125,6 +126,7 @@ class ClusterSocket():
         self.bot = bot
         self.dupes = {}
         self.active = False
+        self.connected = False
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye <3")
@@ -153,6 +155,7 @@ class ClusterSocket():
     async def loop(self):
         while self.active:
             self.ws = await websockets.connect(config.gateway)
+            self.connected = True
             try:
                 async for message in self.ws:
                     try:

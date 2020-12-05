@@ -1,22 +1,31 @@
+# External
 import discord
 from discord.ext import commands, tasks
-import blink
-import datetime
 import asyncpg
+import aiohttp
+import humanize
+
+
+# Library
+import datetime
 import logging
 import asyncio
-import aiohttp
-import os
-import secrets
-import clusters
-import config
 import time
-import humanize
+import os
 import sys
 import traceback
+import platform
 from io import BytesIO
 
 
+# Custom
+import blink
+import clusters
+import config
+import secrets
+
+
+# Cluster
 cluster=input("Cluster>")
 
 
@@ -33,6 +42,13 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_RETAIN"] = "True"
+
+
+# Event loop
+if platform.platform().startswith("Windows"):
+    print("Using Windows Selector loop")
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Ctx(commands.Context):
@@ -59,6 +75,43 @@ class CogStorage:
         delattr(self,identifer)
 
 
+class ShardHolder(set):
+    def __init__(self, bot):
+        self.free = False
+        self.total = len(bot._shard_ids)
+        self.bot = bot
+        self.tasks = []
+        self.finished = False
+        super().__init__()
+
+    def __repr__(self):
+        return f"<Shard identify holder, free : {self.free} registered : {len(self)}>"
+
+    def add(self, shard):
+        if len(self) == 0:
+            self.start = time.perf_counter()
+
+        super().add(shard)
+        print(f"Holding shard {shard}")
+
+        if self.total == len(self):
+            self.free = True
+
+    def finish(self):
+        if self.finished:
+            return
+        self.finished = True
+        self.free = True
+        self.bot._connection.shards_launched.set()
+        print(f"Releasing {self.total} shards")
+        print(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start, minimum_unit='microseconds')}")
+
+    async def wait(self):
+        while (not self.free) and (not sum(task.done() for task in self.tasks) == self.total):
+            await asyncio.sleep(0)
+        self.finish()
+
+
 class Blink(commands.AutoShardedBot):
     def __init__(self,cluster:str):
 
@@ -67,8 +120,9 @@ class Blink(commands.AutoShardedBot):
         shards = self.cluster.shards
 
         # Sharding
-        self.INIT_SHARDS = []
-        self.SHARD_IDS = shards["this"]
+        self._init_shards = set()
+        self._shard_ids = shards["this"]
+        self._held = ShardHolder(self)
 
         # Main
         super().__init__(
@@ -94,7 +148,7 @@ class Blink(commands.AutoShardedBot):
 
         # Globals
         self.colour = 0xf5a6b9
-        self.INITIALIZED = False
+        self._initialized = False
         self.beta=config.beta
         self.boottime=datetime.datetime.utcnow()
         self.created = False
@@ -103,7 +157,7 @@ class Blink(commands.AutoShardedBot):
         self._cogs = CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
-        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.music","cogs.social"]
+        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.social"]
         self.startingcogs.append("jishaku")
         if not self.beta:
             self.startingcogs.append("cogs.logging")
@@ -112,21 +166,42 @@ class Blink(commands.AutoShardedBot):
         print(f"Starting - {self.cluster}\n")
 
     def __repr__(self):
-        return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self.INITIALIZED}, since={self.boottime}>"
+        return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
+
+    def dispatch(self, event, *args,**kwargs):
+        if self._initialized or "ready" in event:
+            super().dispatch(event, *args,**kwargs)
+
+    async def before_identify_hook(self, shard_id, *, initial=False):
+        if not self._held.free:
+            self._held.add(shard_id)
+            await self._held.wait()
+            return
+        else:
+            await asyncio.sleep(5)
+
+    async def launch_shards(self):
+        gateway = await self.http.get_gateway()
+
+        self._connection.shard_count = self.shard_count
+        self._connection.shard_ids = self.shard_ids
+
+        for shard_id in self.shard_ids:
+            self._held.tasks.append(self.loop.create_task(self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))))
+
+        await self._connection.shards_launched.wait()
 
     async def on_ready(self):
-        if self.INITIALIZED:
+        if self._initialized:
             return
-        self.INITIALIZED=True
-        while len(self.INIT_SHARDS) != len(self.SHARD_IDS):
+        self._initialized=True
+        while len(self._init_shards) != len(self._shard_ids):
             await asyncio.sleep(1)
         await self.create()
 
     async def on_shard_ready(self,id):
-        if id in self.INIT_SHARDS:
-            return
         print(f"Shard {id} ready")
-        self.INIT_SHARDS.append(id)
+        self._init_shards.add(id)
 
     async def on_message(self,message):
         if message.author.bot:
