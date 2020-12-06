@@ -5,6 +5,7 @@ import platform
 import asyncio
 from async_timeout import timeout
 import config
+from string import ascii_uppercase as alphabet
 
 tokens = config.gatewayauth
 loop = asyncio.get_event_loop()
@@ -122,6 +123,10 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         print(f"\n[GATEWAY]Client connection from [{request.peer}]")
 
     async def onOpen(self):
+        cluster = await self.factory.getCluster(self)
+        if not cluster:
+            return
+        self.identifier = cluster
         self.open=True
         self.sessionID = str(uuid.uuid4())
         self.heartbeatInterval = 30
@@ -129,6 +134,9 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             "id":self.sessionID,
             "host":platform.node(),
             "heartbeat":self.heartbeatInterval,
+            "cluster": cluster,
+            "total": config.clusters,
+            "shard": config.shards,
         }
         await self.send(0,hello)
         await loop.create_task(self.heartbeat())
@@ -204,6 +212,13 @@ class Factory(websocket.WebSocketServerFactory):
             self.registered_dupes[scope][hash] = True
             return False
         return True
+
+    async def getCluster(self,client):
+        config.clusters
+        if len(self.clients) == config.clusters:
+            await client.close(4007,"Too many clusters")
+            return
+        return [i for i in alphabet[:config.clusters] if i not in [client.identifier for client in self.clients]][0]
 
 
 loop = asyncio.get_event_loop()

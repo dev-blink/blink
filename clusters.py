@@ -1,5 +1,5 @@
 import discord # noqa F401
-from discord.ext import commands
+from discord.ext.commands import AutoShardedBot
 from string import ascii_uppercase as alphabet
 import blink
 import websockets
@@ -16,18 +16,24 @@ TOTAL_SHARDS = TOTAL_CLUSTERS * PER_CLUSTER
 
 
 class Cluster(object):
-    def __init__(self,bot:commands.AutoShardedBot,cluster:str):
-        self.bot = bot
-        self.name = cluster.capitalize()
-        self.identifier = self.name[0]
+    def __init__(self):
         self.active=False
 
+    def reg_bot(self,bot:AutoShardedBot):
+        self.bot = bot
+        self.ws.bot = bot
+        self.ws.bot_dispatch = bot.cluster_event
+
+    async def wait_identifier(self):
+        await self.ws._ready.wait()
+        self.identifier = self.ws.identifier
+        return self.identifier
+
     def __repr__(self):
-        return f"<Name={self.name}, shards={self.shards}, active={self.active}>"
+        return f"<Identifier={self.identifier}, shards={self.shards}, active={self.active}>"
 
     async def wait_until_ready(self):
-        while self.guilds == 0:
-            await asyncio.sleep(1)
+        await self.ws._online.wait()
 
     async def quit(self):
         await self.ws.quit()
@@ -39,11 +45,11 @@ class Cluster(object):
     async def dedupe(self,scope:str,hash:str):
         return await self.ws.dedupe({"scope":scope,"content":hash},str(uuid.uuid4()))
 
-    def start(self):
-        self.ws = ClusterSocket(f"Cluster-{self.name}",self.bot)
+    def start(self,loop):
+        self.ws = ClusterSocket(loop)
         self.ws.start()
-        self.bot.loop.create_task(self.loop())
-        self.active=True
+        self.active = True
+        loop.create_task(self.loop())
 
     @property
     def guilds(self):
@@ -60,9 +66,11 @@ class Cluster(object):
     def __str__(self):
         shards = self.shards["this"]
         series = self.shards["series"]
-        return f"Cluster {self.name} ({series[0]}/{series[1]}), Shards ({shards[0]}-{shards[-1]})"
+        return f"Cluster {self.identifier} ({series[0]}/{series[1]}), Shards ({shards[0]}-{shards[-1]})"
 
     async def loop(self):
+        await self.wait_identifier()
+        await self.bot._post.wait()
         while self.active:
             self.update()
             await self.ws.post_stats() if self.ws.connected else None
@@ -112,21 +120,26 @@ class Cluster(object):
             embed = embed.to_dict()
         return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
 
+    async def wait_cluster(self,cluster:str):
+        await self.ws.wait_for_identify(cluster)
+
 
 class ClusterSocket():
-    def __init__(self,identifier,bot):
-        self.identifier=identifier
+    def __init__(self,loop):
         self.beating = False
-        self._loop = bot.loop
+        self._loop = loop
         self.wait = {}
-        self.bot_dispatch = bot.cluster_event
         self.guilds=0
         self.users=0
         self.music = 0
-        self.bot = bot
         self.dupes = {}
         self.active = False
         self.connected = False
+        self._ready = asyncio.Event()
+        self._online = asyncio.Event()
+        self.identify_holds = {}
+        for cluster in range(TOTAL_CLUSTERS):
+            self.identify_holds[alphabet[cluster]] = asyncio.Event()
 
     async def quit(self):
         await self.ws.close(code=1000,reason="Goodbye <3")
@@ -172,6 +185,7 @@ class ClusterSocket():
                 self.beating=False
 
     async def identify(self,payload):
+        self.identifier = payload["data"]["cluster"]
         identify = {
             "op":1,
             "data":{
@@ -179,6 +193,7 @@ class ClusterSocket():
                 "authorization":secrets.websocket,
             }
         }
+        self._ready.set()
         await self.ws.send(json.dumps(identify))
         self._loop.create_task(self.heartbeat(payload["data"]["heartbeat"]))
 
@@ -211,12 +226,17 @@ class ClusterSocket():
             self.load_data(data["identifier"],data["guilds"],data["users"],data["music"])
         if data.get("intent") == "DISPATCH":
             await self.bot_dispatch(data)
+        if data.get("intent") == "IDENTIFIED":
+            self.identify_holds[data["identifier"]].set()
 
     def load_data(self,identifier,guilds,users,music):
         self.wait[identifier] = (guilds,users,music)
+        if len(self.wait) == TOTAL_CLUSTERS - 1:
+            if not self._online.is_set():
+                self._online.set()
 
     def query(self):
-        if len(self.wait) != TOTAL_CLUSTERS - 1:
+        if not self._online.is_set():
             guilds=0
             users=0
             music=-1
@@ -248,3 +268,26 @@ class ClusterSocket():
                 res = self.dupes[req]
                 del self.dupes[req]
                 return res
+
+    async def wait_for_identify(self,cluster):
+        await self.identify_holds[cluster].wait()
+
+    async def post_identify(self):
+        payload = {
+            "op":5,
+            "data":{
+                "intent":"IDENTIFIED",
+                "content":{
+                    "identifier":self.identifier
+                }
+            }
+        }
+        await self.ws.send(json.dumps(payload))
+        if alphabet.index(self.identifier) + 1 == TOTAL_CLUSTERS:
+            return
+        self._loop.create_task(self.post_identify_loop(payload))
+
+    async def post_identify_loop(self,payload):
+        while not self.identify_holds[alphabet[alphabet.index(self.identifier) + 1]].is_set():
+            await asyncio.sleep(5)
+            await self.ws.send(json.dumps(payload))

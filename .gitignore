@@ -2,7 +2,7 @@ __pycache__
 .gitattributes
 cogs/__pycache__
 secrets.py
-*.log
+logs/
 cogs/OLD HELP.py
 creds.json
 config.py
