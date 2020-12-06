@@ -35,6 +35,17 @@ logger.setLevel(logging.INFO)
 handler=logging.FileHandler(filename=f'{cluster}.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+printscope = ""
+
+
+def log(msg:str, scope:str):
+    global printscope
+    if scope == printscope:
+        joiner = ""
+    else:
+        joiner = "\n"
+        printscope = scope
+    print(f"{joiner}[{scope.upper()}] {msg}")
 
 
 # Environment
@@ -46,7 +57,7 @@ os.environ["JISHAKU_RETAIN"] = "True"
 
 # Event loop
 if platform.platform().startswith("Windows"):
-    print("Using Windows Selector loop")
+    log("Using Windows Selector loop","loop")
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
@@ -83,16 +94,17 @@ class ShardHolder(set):
         self.tasks = []
         self.finished = False
         super().__init__()
+        self.events = {}
 
     def __repr__(self):
-        return f"<Shard identify holder, free : {self.free} registered : {len(self)}>"
+        return f"<Shard identify holder, free={self.free}, registered={len(self)}>"
 
     def add(self, shard):
         if len(self) == 0:
             self.start = time.perf_counter()
-
+        self.events[shard] = asyncio.Event()
         super().add(shard)
-        print(f"Holding shard {shard}")
+        log(f"Holding shard {shard}","sharding")
 
         if self.total == len(self):
             self.free = True
@@ -103,13 +115,21 @@ class ShardHolder(set):
         self.finished = True
         self.free = True
         self.bot._connection.shards_launched.set()
-        print(f"Releasing {self.total} shards")
-        print(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start, minimum_unit='microseconds')}")
+        log(f"Unlocking {self.total} shards","sharding")
+        log(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start, minimum_unit='microseconds')}","sharding")
+        self.bot.loop.create_task(self.release())
 
-    async def wait(self):
+    async def release(self):
+        for event in self.events.values():
+            event.set()
+            await asyncio.sleep(5)
+
+    async def wait(self,shard_id):
         while (not self.free) and (not sum(task.done() for task in self.tasks) == self.total):
             await asyncio.sleep(0)
         self.finish()
+        await self.events[shard_id].wait()
+        log(f"Shard {shard_id} has been released","sharding")
 
 
 class Blink(commands.AutoShardedBot):
@@ -163,7 +183,7 @@ class Blink(commands.AutoShardedBot):
             self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
-        print(f"Starting - {self.cluster}\n")
+        log(f"Starting - {self.cluster}","boot")
 
     def __repr__(self):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
@@ -175,7 +195,7 @@ class Blink(commands.AutoShardedBot):
     async def before_identify_hook(self, shard_id, *, initial=False):
         if not self._held.free:
             self._held.add(shard_id)
-            await self._held.wait()
+            await self._held.wait(shard_id)
             return
         else:
             await asyncio.sleep(5)
@@ -200,7 +220,7 @@ class Blink(commands.AutoShardedBot):
         await self.create()
 
     async def on_shard_ready(self,id):
-        print(f"Shard {id} ready")
+        log(f"Shard {id} ready","ready")
         self._init_shards.add(id)
 
     async def on_message(self,message):
@@ -214,7 +234,7 @@ class Blink(commands.AutoShardedBot):
             try:
                 self.load_extension(extension)
             except Exception as e:
-                print(f"Unable to load: {extension} Exception was raised: {e}")
+                log(f"Unable to load: {extension} Exception was raised: {e}","boot")
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
     async def warn(self,message,shouldRaise=True):
@@ -228,7 +248,7 @@ class Blink(commands.AutoShardedBot):
         before = time.perf_counter()
         self.cluster.start()
         await self.cluster.wait_until_ready()
-        print(f"\nClusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start")
+        log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")
@@ -249,7 +269,8 @@ class Blink(commands.AutoShardedBot):
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
         self.created = True
-        print(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}\nTotal start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}")
+        log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}",boot)
+        log("Total start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
         self.update_pres.start()
 
     async def get_prefix(self, message):
