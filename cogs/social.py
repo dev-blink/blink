@@ -327,7 +327,6 @@ class Social(blink.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
-    @commands.cooldown(4,5,commands.BucketType.channel)
     @commands.bot_has_permissions(embed_links=True)
     async def hug(self,ctx,*,member:discord.Member):
         """Hug someone"""
@@ -344,7 +343,6 @@ class Social(blink.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="kiss")
-    @commands.cooldown(4,5,commands.BucketType.channel)
     @commands.bot_has_permissions(embed_links=True)
     async def kiss(self,ctx,*,member:discord.Member):
         """Kiss someone"""
