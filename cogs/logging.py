@@ -89,10 +89,11 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         return time, query[1]
 
     async def _newuser(self,id,oldname,oldav,timestamp):
-        name = self._format(timestamp,oldname)
+        name = [self._format(timestamp,oldname)]
         oldav = await self._avurl(oldav,id)
-        avatar = self._format(timestamp,oldav)
-        await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,[name],[avatar]) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
+        avatar = [self._format(timestamp,oldav)]
+        avatar = []
+        await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,name,avatar) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
 
     async def _update_un(self,id,after,tt):
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
@@ -104,6 +105,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET name = $1 WHERE id = $2",previousNames,id)
 
     async def _update_av(self,id,after,tt):
+        return
         query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
         av = await self._avurl(after,id)
         try:
@@ -114,6 +116,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
     async def _avurl(self,url,id):
+        return
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars/"):
             return url
         r = await self.session.get(str(url))
