@@ -180,9 +180,11 @@ class Blink(commands.AutoShardedBot):
         self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.social"]
         self.startingcogs.append("jishaku")
         if not self.beta:
-            self.startingcogs.append("cogs.logging")
+            # self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
+        # Global channel cooldown
+        self._cooldown = commands.CooldownMapping.from_cooldown(5,5.5,commands.BucketType.channel)
         log(f"Starting - {self.cluster}","boot")
 
     def __repr__(self):
@@ -223,11 +225,22 @@ class Blink(commands.AutoShardedBot):
         log(f"Shard {id} ready","ready")
         self._init_shards.add(id)
 
-    async def on_message(self,message):
+    async def on_message(self,message: discord.Message):
         if message.author.bot:
             return
         ctx = await self.get_context(message,cls=Ctx)
-        await self.invoke(ctx)
+        if ctx.valid:
+            bucket = self._cooldown.get_bucket(message)
+            limit = bucket.update_rate_limit()
+            if not limit:
+                await self.invoke(ctx)
+            else:
+                if message.guild and not message.channel.permissions_for(message.guild.me):
+                    return
+                try:
+                    await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
+                except discord.HTTPException:
+                    return
 
     def load_extensions(self):
         for extension in self.startingcogs:
