@@ -33,6 +33,8 @@ class Cluster(object):
         return f"<Identifier={self.identifier}, shards={self.shards}, active={self.active}>"
 
     async def wait_until_ready(self):
+        if TOTAL_CLUSTERS == 1:
+            return
         await self.ws._online.wait()
 
     async def quit(self):
