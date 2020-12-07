@@ -16,6 +16,7 @@ import sys
 import traceback
 import platform
 from io import BytesIO
+from string import ascii_uppercase as alphabet
 
 
 # Custom
@@ -25,16 +26,17 @@ import config
 import secrets
 
 
-# Cluster
-cluster=input("Cluster>")
+# logging
+def logingSetup(cluster):
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+    logger=logging.getLogger('discord')
+    logger.setLevel(logging.INFO)
+    handler=logging.FileHandler(filename=f'logs/{cluster}.log', encoding='utf-8', mode='w')
+    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    logger.addHandler(handler)
 
 
-# Logging
-logger=logging.getLogger('discord')
-logger.setLevel(logging.INFO)
-handler=logging.FileHandler(filename=f'{cluster}.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
 printscope = ""
 
 
@@ -86,63 +88,17 @@ class CogStorage:
         delattr(self,identifer)
 
 
-class ShardHolder(set):
-    def __init__(self, bot):
-        self.free = False
-        self.total = len(bot._shard_ids)
-        self.bot = bot
-        self.tasks = []
-        self.finished = False
-        super().__init__()
-        self.events = {}
-
-    def __repr__(self):
-        return f"<Shard identify holder, free={self.free}, registered={len(self)}>"
-
-    def add(self, shard):
-        if len(self) == 0:
-            self.start = time.perf_counter()
-        self.events[shard] = asyncio.Event()
-        super().add(shard)
-        log(f"Holding shard {shard}","sharding")
-
-        if self.total == len(self):
-            self.free = True
-
-    def finish(self):
-        if self.finished:
-            return
-        self.finished = True
-        self.free = True
-        self.bot._connection.shards_launched.set()
-        log(f"Unlocking {self.total} shards","sharding")
-        log(f"Max hold was {humanize.naturaldelta(time.perf_counter() - self.start, minimum_unit='microseconds')}","sharding")
-        self.bot.loop.create_task(self.release())
-
-    async def release(self):
-        for event in self.events.values():
-            event.set()
-            await asyncio.sleep(5)
-
-    async def wait(self,shard_id):
-        while (not self.free) and (not sum(task.done() for task in self.tasks) == self.total):
-            await asyncio.sleep(0)
-        self.finish()
-        await self.events[shard_id].wait()
-        log(f"Shard {shard_id} has been released","sharding")
-
-
 class Blink(commands.AutoShardedBot):
-    def __init__(self,cluster:str):
+    def __init__(self,cluster:clusters.Cluster):
 
         # Clustering
-        self.cluster = clusters.Cluster(self,cluster)
+        self._post = asyncio.Event()
+        self.cluster = cluster
         shards = self.cluster.shards
 
         # Sharding
         self._init_shards = set()
         self._shard_ids = shards["this"]
-        self._held = ShardHolder(self)
 
         # Main
         super().__init__(
@@ -180,7 +136,7 @@ class Blink(commands.AutoShardedBot):
         self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.social"]
         self.startingcogs.append("jishaku")
         if not self.beta:
-            # self.startingcogs.append("cogs.logging")
+            self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
         # Global channel cooldown
@@ -195,12 +151,7 @@ class Blink(commands.AutoShardedBot):
             super().dispatch(event, *args,**kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
-        if not self._held.free:
-            self._held.add(shard_id)
-            await self._held.wait(shard_id)
-            return
-        else:
-            await asyncio.sleep(5)
+        await asyncio.sleep((not initial) * 5)
 
     async def launch_shards(self):
         gateway = await self.http.get_gateway()
@@ -208,10 +159,13 @@ class Blink(commands.AutoShardedBot):
         self._connection.shard_count = self.shard_count
         self._connection.shard_ids = self.shard_ids
 
+        if not self.cluster.identifier == "A":
+            await self.cluster.wait_cluster(alphabet[alphabet.index(self.cluster.identifier) - 1])
         for shard_id in self.shard_ids:
-            self._held.tasks.append(self.loop.create_task(self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))))
+            await self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))
 
-        await self._connection.shards_launched.wait()
+        await self.cluster.ws.post_identify()
+        self._connection.shards_launched.set()
 
     async def on_ready(self):
         if self._initialized:
@@ -252,14 +206,15 @@ class Blink(commands.AutoShardedBot):
 
     async def warn(self,message,shouldRaise=True):
         time = datetime.datetime.utcnow()
-        message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.name}/WARNING] {message}"
+        message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
         await self.cluster.log_warns(message)
         if shouldRaise:
             raise blink.SilentWarning(message)
 
     async def create(self):
         before = time.perf_counter()
-        self.cluster.start()
+        self._post.set()
+        log("Waiting on clusters","boot")
         await self.cluster.wait_until_ready()
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
@@ -270,7 +225,7 @@ class Blink(commands.AutoShardedBot):
         members=len(list(self.get_all_members()))
         boot=[
             '-' * 79,
-            f"**BOT STARTUP:** {self.cluster.name} started at {datetime.datetime.utcnow()}",
+            f"**BOT STARTUP:** {self.cluster.identifier} started at {datetime.datetime.utcnow()}",
             f"```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)",
             f"GUILDS:{len(self.guilds)}",
             f"SHARDS:{len(self.shards)}```",
@@ -333,5 +288,14 @@ class Blink(commands.AutoShardedBot):
             await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR",file=file)
 
 
-BOT = Blink(cluster)
-BOT.run(secrets.token, bot=True, reconnect=True)
+async def launch(loop):
+    cluster = clusters.Cluster()
+    cluster.start(loop)
+    identifier = await cluster.wait_identifier()
+    bot = Blink(cluster)
+    cluster.reg_bot(bot)
+    logingSetup(identifier)
+    await bot.start(secrets.token, bot=True, reconnect=False)
+
+loop = asyncio.get_event_loop()
+server = loop.run_until_complete(launch(loop))

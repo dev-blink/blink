@@ -14,4 +14,5 @@ close={
     4004:"Authentication Failure",
     4005:"Not Authenticated",
     4006:"No Heartbeat",
+    4007:"Too many clients",
 }
