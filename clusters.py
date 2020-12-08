@@ -183,7 +183,11 @@ class ClusterSocket():
                             await self.reg_dupe(data["data"])
                     except Exception as e:
                         await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}")
-            except websockets.ConnectionClosed:
+            except websockets.ConnectionClosed as e:
+                if e.code == 4007:
+                    print("Exiting - Too many clusters")
+                    await asyncio.sleep(5)
+                    raise SystemExit(1)
                 self.beating=False
 
     async def identify(self,payload):
