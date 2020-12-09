@@ -1,6 +1,6 @@
 from random import Random as RAND
 from discord.ext import commands
-import math
+from math import floor as f
 import functools
 import asyncio
 from aiohttp import ClientSession
@@ -71,7 +71,7 @@ async def searchrole(roles:list,term:str):
 
 def ordinal(n:int):
     """Turns an int into its ordinal (1 -> 1st)"""
-    return f"{n}{'tsnrhtdd'[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]}" # noqa: E226,E228
+    return f"{n}{'tsnrhtdd'[(f(n/10)%10!=1)*(n%10<4)*n%10::4]}" # noqa: E226,E228
 
 
 class Config():
