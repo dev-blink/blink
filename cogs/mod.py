@@ -44,7 +44,9 @@ class Moderation(blink.Cog, name="Moderation"):
             return
         r = await blink.searchrole(channel.guild.roles, "Muted")
         if r:
-            await channel.edit(overwrites={r:discord.PermissionOverwrite(send_messages=False)})
+            overwrites = channel.overwrites
+            overwrites[r] = discord.PermissionOverwrite(send_messages=False)
+            await channel.edit(overwrites=overwrites)
 
     async def privcheck(self,ctx,user):
         if not user:
