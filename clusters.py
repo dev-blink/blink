@@ -8,16 +8,25 @@ import asyncio
 import json
 import secrets
 import uuid
-
-
-TOTAL_CLUSTERS = config.clusters
-PER_CLUSTER = config.shards
-TOTAL_SHARDS = TOTAL_CLUSTERS * PER_CLUSTER
+import sys
 
 
 class Cluster(object):
     def __init__(self):
         self.active=False
+        self._post = asyncio.Event()
+
+    def __str__(self):
+        shards = self.shards["this"]
+        series = self.shards["series"]
+        return f"Cluster {self.identifier} ({series[0]}/{series[1]}), Shards ({shards[0]}-{shards[-1]})"
+
+    def __repr__(self):
+        return f"<Identifier={self.identifier}, shards={self.shards}, active={self.active}>"
+
+    async def crash(self,error,traceback):
+        await self.ws.panic(error,traceback)
+        await self.quit()
 
     def reg_bot(self,bot:AutoShardedBot):
         self.bot = bot
@@ -29,11 +38,8 @@ class Cluster(object):
         self.identifier = self.ws.identifier
         return self.identifier
 
-    def __repr__(self):
-        return f"<Identifier={self.identifier}, shards={self.shards}, active={self.active}>"
-
     async def wait_until_ready(self):
-        if TOTAL_CLUSTERS == 1:
+        if self.ws._total_clusters == 1:
             return
         await self.ws._online.wait()
 
@@ -48,7 +54,7 @@ class Cluster(object):
         return await self.ws.dedupe({"scope":scope,"content":hash},str(uuid.uuid4()))
 
     def start(self,loop):
-        self.ws = ClusterSocket(loop)
+        self.ws = ClusterSocket(loop,self)
         self.ws.start()
         self.active = True
         loop.create_task(self.loop())
@@ -65,14 +71,9 @@ class Cluster(object):
     def music(self):
         return self.ws.query()["music"]
 
-    def __str__(self):
-        shards = self.shards["this"]
-        series = self.shards["series"]
-        return f"Cluster {self.identifier} ({series[0]}/{series[1]}), Shards ({shards[0]}-{shards[-1]})"
-
     async def loop(self):
         await self.wait_identifier()
-        await self.bot._post.wait()
+        await self._post.wait()
         while self.active:
             self.update()
             await self.ws.post_stats() if self.ws.connected else None
@@ -81,15 +82,15 @@ class Cluster(object):
     @property
     def shards(self):
         index = alphabet.index(self.identifier)
-        if index >= TOTAL_CLUSTERS:
+        if index >= self.ws._total_clusters:
             raise RuntimeError("Cluster out of total cluster range")
-        shards = (index + 1) * PER_CLUSTER
-        shards = list(range(shards))[-PER_CLUSTER:]
+        shards = (index + 1) * self.ws._per_cluster
+        shards = list(range(shards))[-self.ws._per_cluster:]
         return {
-            "total":TOTAL_SHARDS,
+            "total":self.ws._total_shards,
             "this": shards,
-            "series": (index + 1,TOTAL_CLUSTERS),
-            "count": PER_CLUSTER,
+            "series": (index + 1,self.ws._total_clusters),
+            "count": self.ws._per_cluster,
         }
 
     def update(self):
@@ -122,12 +123,13 @@ class Cluster(object):
             embed = embed.to_dict()
         return await self.bot.http.send_message(channel,content,tts=tts,embed=embed,nonce=nonce)
 
-    async def wait_cluster(self,cluster:str):
-        await self.ws.wait_for_identify(cluster)
+    async def wait_cluster(self):
+        await self.ws.wait_for_identify()
 
 
 class ClusterSocket():
-    def __init__(self,loop):
+    def __init__(self,loop,cluster):
+        self.cluster = cluster
         self.beating = False
         self._loop = loop
         self.wait = {}
@@ -139,14 +141,24 @@ class ClusterSocket():
         self.connected = False
         self._ready = asyncio.Event()
         self._online = asyncio.Event()
-        self.identify_holds = {}
-        for cluster in range(TOTAL_CLUSTERS):
-            self.identify_holds[alphabet[cluster]] = asyncio.Event()
+        self.identify_hold = asyncio.Event()
+        self.identify_hold_after = asyncio.Event()
 
-    async def quit(self):
-        await self.ws.close(code=1000,reason="Goodbye <3")
+    async def quit(self, code=1000, reason="Goodbye <3"):
+        await self.ws.close(code=code,reason=reason)
         self.active=False
         self.beating=False
+
+    async def panic(self,error,traceback):
+        payload = {
+            "op":7,
+            "data":{
+                "error":str(error),
+                "traceback":traceback,
+            }
+        }
+        await self.ws.send(json.dumps(payload))
+        await self.quit(code=4999, reason=f"Client threw unhandled internal exception {error.__class__.__qualname__}")
 
     def start(self):
         self._loop.create_task(self.loop())
@@ -175,6 +187,8 @@ class ClusterSocket():
                 async for message in self.ws:
                     try:
                         data = json.loads(message)
+                        if hasattr(self.cluster,'bot'):
+                            self.cluster.bot.logger.debug(f"Cluster recived WS message {data}")
                         if data["op"] == 0:
                             await self.identify(data)
                         if data["op"] == 3:
@@ -185,13 +199,13 @@ class ClusterSocket():
                         await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}")
             except websockets.ConnectionClosed as e:
                 if e.code == 4007:
-                    print("Exiting - Too many clusters")
+                    print("Cluster pool overpopulated, exiting without reconnect")
                     await asyncio.sleep(5)
-                    raise SystemExit(1)
+                    sys.exit(2)
                 self.beating=False
 
     async def identify(self,payload):
-        self.identifier = payload["data"]["cluster"]
+        self.hello(payload["data"])
         identify = {
             "op":1,
             "data":{
@@ -202,6 +216,15 @@ class ClusterSocket():
         self._ready.set()
         await self.ws.send(json.dumps(identify))
         self._loop.create_task(self.heartbeat(payload["data"]["heartbeat"]))
+
+    def hello(self,data):
+        self.identifier = data["cluster"]
+        self._total_clusters = data["total"]
+        self._per_cluster = data["shard"]
+        self._total_shards = data["total"] * data["shard"]
+
+        self.before = alphabet[alphabet.index(self.identifier) - 1]
+        self.after = alphabet[alphabet.index(self.identifier) + 1]
 
     async def heartbeat(self,timeout):
         self.beating = True
@@ -233,11 +256,14 @@ class ClusterSocket():
         if data.get("intent") == "DISPATCH":
             await self.bot_dispatch(data)
         if data.get("intent") == "IDENTIFIED":
-            self.identify_holds[data["identifier"]].set()
+            if data.get("identifier") == self.before:
+                self.identify_hold.set()
+            elif data.get("identifier") == self.after:
+                self.identify_hold_after.set()
 
     def load_data(self,identifier,guilds,users,music):
         self.wait[identifier] = (guilds,users,music)
-        if len(self.wait) == TOTAL_CLUSTERS - 1:
+        if len(self.wait) == self._total_clusters - 1:
             if not self._online.is_set():
                 self._online.set()
 
@@ -275,8 +301,8 @@ class ClusterSocket():
                 del self.dupes[req]
                 return res
 
-    async def wait_for_identify(self,cluster):
-        await self.identify_holds[cluster].wait()
+    async def wait_for_identify(self):
+        await self.identify_hold.wait()
 
     async def post_identify(self):
         payload = {
@@ -289,11 +315,11 @@ class ClusterSocket():
             }
         }
         await self.ws.send(json.dumps(payload))
-        if alphabet.index(self.identifier) + 1 == TOTAL_CLUSTERS:
+        if alphabet.index(self.identifier) + 1 == self._total_clusters:
             return
         self._loop.create_task(self.post_identify_loop(payload))
 
     async def post_identify_loop(self,payload):
-        while not self.identify_holds[alphabet[alphabet.index(self.identifier) + 1]].is_set():
+        while not self.identify_hold_after.is_set():
             await asyncio.sleep(5)
             await self.ws.send(json.dumps(payload))
