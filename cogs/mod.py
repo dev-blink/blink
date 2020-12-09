@@ -46,6 +46,8 @@ class Moderation(blink.Cog, name="Moderation"):
         if r:
             overwrites = channel.overwrites
             overwrites[r] = discord.PermissionOverwrite(send_messages=False)
+            print(overwrites)
+            return
             await channel.edit(overwrites=overwrites)
 
     async def privcheck(self,ctx,user):
