@@ -3,7 +3,6 @@ from discord.ext import commands
 import aiohttp
 import box
 import random
-import asyncio
 import blink
 
 
@@ -12,8 +11,20 @@ class Media(blink.Cog,name="Media"):
         super().__init__(*args,**kwargs)
         self.session=aiohttp.ClientSession()
 
-    def __unload(self):
-        asyncio.create_task(self.session.close())
+    async def _do_reddit(self,term):
+        async with self.session.get(f"https://reddit.com/r/{term}.json") as resp:
+            r = await resp.json()
+        try:
+            r["error"]
+        except KeyError:
+            pass
+        else:
+            return discord.Embed(title=f"{r['error']} error...",colour=discord.Colour.red())
+        r=box.Box(r)
+        data=random.choice(r.data.children).data
+        embed=discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
+        embed.set_image(url=data.url)
+        return embed
 
     @commands.command(name="enlarge")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
@@ -30,26 +41,13 @@ class Media(blink.Cog,name="Media"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_memes(self,ctx):
         """Gets a meme from r/memes"""
-        r=await self.session.get("https://reddit.com/r/memes.json")
-        r=await r.json()
-        r=box.Box(r)
-        data=random.choice(r.data.children).data
-        embed=discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
-        embed.set_image(url=data.url)
-        return await ctx.send(embed=embed)
+        return await ctx.send(embed=self._do_reddit("memes"))
 
     @commands.command(name="dankmeme",aliases=["dankmemes"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_dankmemes(self,ctx):
-        """Gets a meme from r/dankmemes"""
-        r=await self.session.get("https://reddit.com/r/dankmemes.json")
-        r=await r.json()
-        r=box.Box(r)
-        data=random.choice(r.data.children).data
-        embed=discord.Embed(title=data.title,url=data.url,colour=self.bot.colour)
-        embed.set_image(url=data.url)
-        return await ctx.send(embed=embed)
+        return await ctx.send(embed=self._do_reddit("dankmemes"))
 
 
 def setup(bot):
