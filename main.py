@@ -16,7 +16,6 @@ import sys
 import traceback
 import platform
 from io import BytesIO
-from string import ascii_uppercase as alphabet
 
 
 # Custom
@@ -27,7 +26,7 @@ import secrets
 
 
 # logging
-def logingSetup(cluster):
+def loggingSetup(cluster):
     if not os.path.exists("logs"):
         os.mkdir("logs")
     logger=logging.getLogger('discord')
@@ -35,6 +34,7 @@ def logingSetup(cluster):
     handler=logging.FileHandler(filename=f'logs/{cluster}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
+    return logger
 
 
 printscope = ""
@@ -89,10 +89,9 @@ class CogStorage:
 
 
 class Blink(commands.AutoShardedBot):
-    def __init__(self,cluster:clusters.Cluster):
+    def __init__(self,cluster:clusters.Cluster, logger:logging.Logger):
 
         # Clustering
-        self._post = asyncio.Event()
         self.cluster = cluster
         shards = self.cluster.shards
 
@@ -128,6 +127,7 @@ class Blink(commands.AutoShardedBot):
         self.beta=config.beta
         self.boottime=datetime.datetime.utcnow()
         self.created = False
+        self.logger = logger
 
         # Cogs
         self._cogs = CogStorage()
@@ -160,7 +160,7 @@ class Blink(commands.AutoShardedBot):
         self._connection.shard_ids = self.shard_ids
 
         if not self.cluster.identifier == "A":
-            await self.cluster.wait_cluster(alphabet[alphabet.index(self.cluster.identifier) - 1])
+            await self.cluster.wait_cluster()
         for shard_id in self.shard_ids:
             await self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))
 
@@ -213,7 +213,7 @@ class Blink(commands.AutoShardedBot):
 
     async def create(self):
         before = time.perf_counter()
-        self._post.set()
+        self.cluster._post.set()
         log("Waiting on clusters","boot")
         await self.cluster.wait_until_ready()
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
@@ -269,7 +269,7 @@ class Blink(commands.AutoShardedBot):
             await self.logout()
             await self.close()
             await self.loop.close()
-            exit()
+            sys.exit(0)
         if payload["event"] == "RELOAD":
             self.reload_extension(payload["cog"])
 
@@ -292,10 +292,22 @@ async def launch(loop):
     cluster = clusters.Cluster()
     cluster.start(loop)
     identifier = await cluster.wait_identifier()
-    bot = Blink(cluster)
+    log = loggingSetup(identifier)
+    bot = Blink(cluster, log)
     cluster.reg_bot(bot)
-    logingSetup(identifier)
-    await bot.start(secrets.token, bot=True, reconnect=False)
+    try:
+        await bot.start(secrets.token, bot=True, reconnect=False)
+    except KeyboardInterrupt:
+        await bot.logout()
+        await cluster.quit()
+        loop.close()
+        sys.exit(1)
+    except Exception as e:
+        await cluster.crash(e, traceback.format_exc())
+        print("Fatal client exception - exiting")
+        await asyncio.sleep(5)
+        loop.close()
+        sys.exit(130)
 
 loop = asyncio.get_event_loop()
 server = loop.run_until_complete(launch(loop))
