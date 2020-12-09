@@ -4,7 +4,7 @@ import uuid
 import platform
 import asyncio
 from async_timeout import timeout
-import config
+import serverconfig as config
 from string import ascii_uppercase as alphabet
 
 tokens = config.gatewayauth
@@ -33,7 +33,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.sequence = 0
         self.authenticated = False
         self.open=False
-        self.ops = [0,1,2,3,4,5,6]
+        self.ops = [0,1,2,3,4,5,6,7]
         self.beating=False
         self.handlers={
             0:self.invalid_opcode,
@@ -43,6 +43,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             4:self.invalid_opcode,
             5:self.broadcast,
             6:self.dedupe,
+            7:self.panicked,
         }
 
     async def broadcast(self,payload):
@@ -80,6 +81,10 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         if payload.get("intent") is None:
             return await self.close(code=4001,error="No intent for event payload")
         print(f"EVENT intent='{payload['intent']}'")
+
+    async def panicked(self,payload):
+        print(payload)
+        await self.close(4999, "Client exception thrown")
 
     async def ack(self,op):
         await self.send(4,{"recieved":op})
