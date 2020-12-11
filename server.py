@@ -83,7 +83,6 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         print(f"EVENT intent='{payload['intent']}'")
 
     async def panicked(self,payload):
-        print(payload)
         await self.close(4999, "Client exception thrown")
 
     async def ack(self,op):
@@ -219,7 +218,6 @@ class Factory(websocket.WebSocketServerFactory):
         return True
 
     async def getCluster(self,client):
-        config.clusters
         if len(self.clients) == config.clusters:
             await client.close(4007,"Too many clusters")
             return
