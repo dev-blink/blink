@@ -38,7 +38,7 @@ class Info(blink.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def info(self,ctx):
         """Shows info about the bot"""
-        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description="Blink is a multipurpose bot designed for simplicity\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://cdn.blinkbot.me/policy)",colour=self.bot.colour)
+        embed=discord.Embed(title="blink!",url="https://blinkbot.me",description="Blink is a multipurpose bot designed for simplicity\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://blinkbot.me/policy.html)",colour=self.bot.colour)
         embed.add_field(name="To start:",value=";help for info on commands")
         embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
