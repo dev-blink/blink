@@ -122,7 +122,7 @@ class Members(blink.Cog,name="Member"):
 
     @commands.command(name="avatar",aliases=["av","pfp"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def av(self, ctx, user: discord.Member=None):
+    async def av(self, ctx, *, user: discord.Member=None):
         """Shows a user's avatar"""
         if not user:
             user=ctx.author
