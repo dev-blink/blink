@@ -306,6 +306,7 @@ async def launch(loop):
         await cluster.crash(e, traceback.format_exc())
         print("Fatal client exception - exiting")
         await asyncio.sleep(5)
+        await cluster.quit()
         loop.close()
         sys.exit(130)
 
