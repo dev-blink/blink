@@ -194,9 +194,18 @@ class Fun(blink.Cog,name="Fun"):
         return await ctx.send(embed=em)
 
     @commands.command(name="mock")
+    @commands.bot_has_permissions(send_messages=True)
     async def mock(self, ctx,*, text:str=None):
         """Mock some text"""
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
+
+    @commands.command(name="christmas")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def countdown(self,ctx):
+        significant = datetime.datetime(2020, 12, 25)
+        now = datetime.datetime.utcnow()
+        delta = significant - now
+        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name}")
 
 
 def setup(bot):
