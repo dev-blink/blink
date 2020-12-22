@@ -65,7 +65,7 @@ if platform.platform().startswith("Windows"):
 
 
 class Ctx(commands.Context):
-    def __init__(self,*args,**kwargs):#
+    def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         if self.guild and hasattr(self.bot,"wavelink"):
             self.player = self.bot.wavelink.players.get(self.guild.id)
