@@ -238,7 +238,7 @@ class Blink(commands.AutoShardedBot):
             await self.cluster.log_startup(self.bootlog)
         self.created = True
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}","boot")
-        log(f"Total start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
+        log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
         self.update_pres.start()
 
     async def get_prefix(self, message):
@@ -289,7 +289,7 @@ class Blink(commands.AutoShardedBot):
 
 
 async def launch(loop):
-    cluster = clusters.Cluster()
+    cluster = clusters.Cluster(config.gateway)
     cluster.start(loop)
     identifier = await cluster.wait_identifier()
     log = loggingSetup(identifier)

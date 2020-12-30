@@ -3,7 +3,6 @@ from discord.ext.commands import AutoShardedBot
 from string import ascii_uppercase as alphabet
 import blink
 import websockets
-import config
 import asyncio
 import json
 import secrets
@@ -12,9 +11,10 @@ import sys
 
 
 class Cluster(object):
-    def __init__(self):
+    def __init__(self, gateway):
         self.active=False
         self._post = asyncio.Event()
+        self.gateway = gateway
 
     def __str__(self):
         shards = self.shards["this"]
@@ -54,7 +54,7 @@ class Cluster(object):
         return await self.ws.dedupe({"scope":scope,"content":hash},str(uuid.uuid4()))
 
     def start(self,loop):
-        self.ws = ClusterSocket(loop,self)
+        self.ws = ClusterSocket(loop,self,self.gateway)
         self.ws.start()
         self.active = True
         loop.create_task(self.loop())
@@ -128,7 +128,7 @@ class Cluster(object):
 
 
 class ClusterSocket():
-    def __init__(self,loop,cluster):
+    def __init__(self,loop,cluster, gateway):
         self.cluster = cluster
         self.beating = False
         self._loop = loop
@@ -143,6 +143,7 @@ class ClusterSocket():
         self._online = asyncio.Event()
         self.identify_hold = asyncio.Event()
         self.identify_hold_after = asyncio.Event()
+        self.gateway = gateway
 
     async def quit(self, code=1000, reason="Goodbye <3"):
         await self.ws.close(code=code,reason=reason)
@@ -181,7 +182,7 @@ class ClusterSocket():
 
     async def loop(self):
         while self.active:
-            self.ws = await websockets.connect(config.gateway)
+            self.ws = await websockets.connect(self.gateway)
             self.connected = True
             try:
                 async for message in self.ws:
