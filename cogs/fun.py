@@ -149,13 +149,13 @@ class Fun(blink.Cog,name="Fun"):
     @commands.command(name="bigtext",aliases=["big"])
     @commands.cooldown(1,5,commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True)
-    async def bigtext(self,ctx,*,text:str=""):
+    async def bigtext(self,ctx,*,text):
         """Convert something into big text"""
-        if len(text) > 30:
-            return await ctx.send("30 characters max please...")
         text=pyfiglet.Figlet('slant').renderText(text)
         if text == "":
             return await ctx.send("No/invalid characters.")
+        if len(text) > 1990:
+            return await ctx.send("Output too large.")
         await ctx.send(f"```{text}```")
 
     @commands.command(name="thot",aliases=["thotrate","howthot"])
