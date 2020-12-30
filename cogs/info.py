@@ -47,7 +47,7 @@ class Info(blink.Cog,name="Info"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def uptime(self,ctx):
         """Bots uptime"""
-        return await ctx.send(embed=discord.Embed(title="Bot uptime:",description=f"Cluster {self.bot.cluster.name} has been online for: {blink.prettydelta((datetime.datetime.utcnow() - self.bot.boottime).total_seconds())}",colour=self.bot.colour))
+        return await ctx.send(embed=discord.Embed(title="Bot uptime:",description=f"Cluster {self.bot.cluster.identifier} has been online for: {blink.prettydelta((datetime.datetime.utcnow() - self.bot.boottime).total_seconds())}",colour=self.bot.colour))
 
     @commands.command(name="hardware",aliases=["system","sys"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
