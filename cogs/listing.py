@@ -37,7 +37,7 @@ class ListingHandler(blink.Cog):
             if not r.status == 200:
                 await self.bot.warn(f"Error in DEL post, response {r.status} ",False)
                 with open("del.html") as f:
-                    f.write(str(discord.http.json_or_text(r))
+                    f.write(str(discord.http.json_or_text(r)))
             await cs.close()
 
 
