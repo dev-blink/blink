@@ -95,7 +95,7 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def unban(self, ctx, *, user:discord.User):
-        """Unbans a user by their id."""
+        """Unbans a user."""
         try:
             await ctx.guild.unban(user)
         except discord.NotFound:
@@ -126,10 +126,7 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     async def mute(self, ctx,user: discord.Member, *, reason:str="unspecified"):
         """Mutes a user."""
-        if not user:
-            return await ctx.send("You must specify a user.")
         await self.privcheck(ctx,user)
-        """Mutes a user."""
         await mute(ctx, user, reason or "being annoying")
 
     @commands.command(name="kick")
@@ -179,12 +176,9 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_channels=True)
-    async def block(self, ctx, *, user: discord.Member=None):
+    async def block(self, ctx, *, user: discord.Member):
         """Blocks a user from chatting in current channel."""
-        if not ctx.guild.owner == ctx.author:
-            if user.top_role >= ctx.author.top_role:
-                return await ctx.send("You are unable to sanction that user. (Check your roles)")
-
+        await self.privcheck()
         await ctx.channel.set_permissions(user, send_messages=False) # sets permissions for current channel
         await ctx.send(f"{user.mention} was blocked.")
 
