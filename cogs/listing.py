@@ -1,3 +1,4 @@
+import discord
 from discord.ext import tasks
 import secrets
 import aiohttp
@@ -28,13 +29,15 @@ class ListingHandler(blink.Cog):
         async with aiohttp.ClientSession() as cs:
             r = await cs.post("https://api.botsdatabase.com/v1/bots/692738917236998154",json={"servers":guilds},headers={"Authorization":self.tokens["bdb"],"Content-Type":"application/json"})
             if not r.status == 200:
-                await self.bot.warn(f"Error in BDB post, response {r.status} `{await r.json()}`",False)
+                await self.bot.warn(f"Error in BDB post, response {r.status}",False)
             await cs.close()
 
         async with aiohttp.ClientSession() as cs:
             r = await cs.post("https://api.discordextremelist.xyz/v2/bot/692738917236998154/stats",json={"guildCount":guilds},headers={"Authorization":self.tokens["del"],"Content-Type":"application/json"})
             if not r.status == 200:
-                await self.bot.warn(f"Error in DEL post, response {r.status} `{await r.json()}`",False)
+                await self.bot.warn(f"Error in DEL post, response {r.status} ",False)
+                with open("del.html") as f:
+                    f.write(str(discord.http.json_or_text(r))
             await cs.close()
 
 
