@@ -178,7 +178,7 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_channels=True)
     async def block(self, ctx, *, user: discord.Member):
         """Blocks a user from chatting in current channel."""
-        await self.privcheck()
+        await self.privcheck(ctx,user)
         await ctx.channel.set_permissions(user, send_messages=False) # sets permissions for current channel
         await ctx.send(f"{user.mention} was blocked.")
 
