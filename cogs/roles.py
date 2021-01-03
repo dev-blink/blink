@@ -40,7 +40,7 @@ class RoleManagement(blink.Cog,name="Role Management"):
             member=ctx.author
 
         roles=""
-        for role in member.roles:
+        for role in reversed(member.roles):
             if len(member.roles) == 1:
                 roles="No roles"
             else:
@@ -48,8 +48,6 @@ class RoleManagement(blink.Cog,name="Role Management"):
 
         embed=discord.Embed(colour=self.bot.colour)
         embed.set_author(icon_url=member.avatar_url_as(static_format='png'), name=str(member))
-
-        # \uFEFF is a Zero-Width Space
         embed.add_field(name=f"Roles for {member.name}#{member.discriminator} in {ctx.guild.name}", value=roles)
 
         await ctx.send(embed=embed)
