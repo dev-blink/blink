@@ -23,7 +23,7 @@ async def mute(ctx, user, reason):
 async def dmattempt(user,action,reason,guild):
     if user.bot:
         return False
-    if not isinstance(user,discord.Member):
+    if user not in guild.members:
         return False
     try:
         await user.send(f"You were {action} in {guild} for {reason}")
@@ -84,7 +84,7 @@ class Moderation(blink.Cog, name="Moderation"):
             await ctx.send("I cant do that. So i will leave instead.")
             return await ctx.guild.leave()
         try:
-            dm = await dmattempt(user,"banned",reason,ctx.guild.name)
+            dm = await dmattempt(user,"banned",reason,ctx.guild)
             await ctx.guild.ban(user,reason=f"Banned by {ctx.author} for {reason}")
             await ctx.send(f"{user.mention} was banned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
@@ -113,7 +113,7 @@ class Moderation(blink.Cog, name="Moderation"):
             return await ctx.send("I cant do that.")
 
         try:
-            dm = await dmattempt(user,"kicked",reason,ctx.guild.name)
+            dm = await dmattempt(user,"kicked",reason,ctx.guild)
             await ctx.guild.ban(user, reason=f"By {ctx.author} for {reason}")
             await ctx.guild.unban(user, reason="Softbanned")
             await ctx.send(f"{user.mention} was softbanned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
@@ -140,7 +140,7 @@ class Moderation(blink.Cog, name="Moderation"):
             return await ctx.guild.leave()
 
         try:
-            dm = await dmattempt(user,"kicked",reason,ctx.guild.name)
+            dm = await dmattempt(user,"kicked",reason,ctx.guild)
             await ctx.guild.kick(user, reason=f"By {ctx.author} for {reason}")
             await ctx.send(f"{user.mention} was kicked for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
