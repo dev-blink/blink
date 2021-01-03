@@ -182,6 +182,8 @@ class Blink(commands.AutoShardedBot):
     async def on_message(self,message: discord.Message):
         if message.author.bot:
             return
+        if not self.created:
+            return
         ctx = await self.get_context(message,cls=Ctx)
         if ctx.valid:
             bucket = self._cooldown.get_bucket(message)
@@ -204,6 +206,13 @@ class Blink(commands.AutoShardedBot):
                 log(f"Unable to load: {extension} Exception was raised: {e}","boot")
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
+    async def invalidate_cache(self, scope:str, from_remote=False):
+        local = self._cache.get(scope)
+        if local:
+            local.invalidate()
+        if not from_remote:
+            await self.cluster.dispatch({"event":"INVALIDATE_CACHE","cache":scope})
+
     async def warn(self,message,shouldRaise=True):
         time = datetime.datetime.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
@@ -218,6 +227,7 @@ class Blink(commands.AutoShardedBot):
         await self.cluster.wait_until_ready()
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
+        self._cache = dict()
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")
         self.load_extensions()
@@ -272,6 +282,9 @@ class Blink(commands.AutoShardedBot):
             sys.exit(0)
         if payload["event"] == "RELOAD":
             self.reload_extension(payload["cog"])
+
+        if payload["event"] == "INVALIDATE_CACHE":
+            self.invalidate_cache(payload.get("cache"),True)
 
     async def on_error(self,event_method,*args,**kwargs):
         exc = sys.exc_info()

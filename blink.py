@@ -5,6 +5,7 @@ import functools
 import asyncio
 from aiohttp import ClientSession
 import time
+from asyncpg.pool import Pool
 
 
 class Timer:
@@ -18,6 +19,38 @@ class Timer:
     @property
     def time(self):
         return time.perf_counter() - self.start
+
+
+class DBCache():
+    def __init__(self, db: Pool, statement: str, values: tuple, transformer=(lambda value: dict(value[0]))):
+        self.db = db
+        self.statement = statement
+        self.values = values
+        self._value = None
+        self._current = False
+        self._f = transformer
+
+    def __repr__(self):
+        return f"<In memory DB cache - {self.statement}, {self.values}>"
+
+    async def _set_value(self):
+        self._value = self._f(await self.db.fetch(self.statement, *self.values))
+        self._current = True
+
+    async def __aenter__(self):
+        if not self._current:
+            await self._set_value()
+        return self
+
+    async def __aexit__(*args):
+        return
+
+    @property
+    def value(self):
+        return self._value
+
+    def invalidate(self):
+        self._current = False
 
 
 def fancytext(name,term,scope:str):
