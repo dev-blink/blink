@@ -42,20 +42,23 @@ class ShipStats:
 
 
 class Ship(object):
-    def __init__(self,uuid:str,db):
+    def __init__(self, uuid:str, db, bot):
         self.id = uuid
         self.db = db
+        self.bot = bot
+        self.cache = self.bot.cache_or_create(f"social-ship-{self.id}","SELECT * FROM ships WHERE id = $1", (self.id,))
 
     async def gen_thumbnail(self):
         return await api(f"/social/images/ship/{self.colour:06}","GET")
 
     async def __aenter__(self):
-        self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
-        if self.res is not None:
-            self.exists = True
-            self.format()
-        else:
-            self.exists = False
+        async with self.cache as cache:
+            if cache.value:
+                self.exists = True
+                self.res = cache.value
+                self.format()
+            else:
+                self.exists = False
         return self
 
     async def __aexit__(self,error,error_type,traceback):
@@ -72,11 +75,13 @@ class Ship(object):
 
     async def create(self,captain:int, partner:int, name:str, description:str="No description", colour:int=16099001, icon:str="https://cdn.blinkbot.me/assets/ship.png"):
         await self.db.execute("INSERT INTO ships VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",self.id, captain, partner, name, description, colour, icon, int(datetime.datetime.utcnow().timestamp()))
-        self.res = await self.db.fetchrow("SELECT * FROM ships WHERE id=$1",self.id)
+        await self.cache.bot_invalidate(self.bot)
+        async with self.cache as cache:
+            self.res = cache.value
         self.format()
 
     async def gen_stats(self) -> ShipStats:
-        async with User(self.captain,self.db) as captain:
+        async with User(self.captain, self.db, self.bot) as captain:
             captain_hugs = (await captain.decompile(scope="hugs",recipient=self.partner))[1]
             captain_kisses = (await captain.decompile(scope="kisses",recipient=self.partner))[1]
 
@@ -85,7 +90,7 @@ class Ship(object):
             if captain_kisses is None:
                 captain_kisses = 0
 
-        async with User(self.partner,self.db) as partner:
+        async with User(self.partner, self.db, self.bot) as partner:
             partner_hugs = (await partner.decompile(scope="hugs",recipient=self.captain))[1]
             partner_kisses = (await partner.decompile(scope="kisses",recipient=self.captain))[1]
 
@@ -118,9 +123,11 @@ class Ship(object):
 
     async def modify(self,scope,data):
         await self.db.execute(f"UPDATE ships SET {scope}=$1 WHERE id=$2",data,self.id)
+        await self.cache.bot_invalidate(self.bot)
 
     async def sink(self):
         await self.db.execute("DELETE FROM ships WHERE id=$1",self.id)
+        await self.cache.bot_invalidate(self.bot)
 
 
 class Action:
@@ -146,9 +153,11 @@ class ElegibilityReason:
 
 
 class User(object):
-    def __init__(self,id:int,db):
+    def __init__(self,id:int, db, bot):
         self.user = id
         self.db = db
+        self.bot = bot
+        self.cache = self.bot.cache_or_create(f"social-user-{self.user}","SELECT * FROM social WHERE id = $1", (self.user,))
 
     def format(self):
         self.hugs = self.res.get("hugs")
@@ -158,12 +167,11 @@ class User(object):
         self.blocked = self.res.get("blocked")
 
     async def __aenter__(self):
-        query = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
-        if str(query) == "SELECT 0" or query is None:
-            await self.setup()
-            self.res = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
-        else:
-            self.res = query
+        async with self.cache as cache:
+            if not cache.value:
+                await self.setup()
+                await cache.update()
+            self.res = cache.value
             self.format()
 
         self.taken = (True if self.relation != 0 else False)
@@ -175,8 +183,7 @@ class User(object):
 
     async def setup(self):
         await self.db.execute("INSERT INTO social VALUES ($1,$2,$3,$4,$5,$6)",self.user,[],[],0,"nul",[]) # id, hugs, kisses, relationship, ship, blocked
-        self.res = await self.db.fetchrow("SELECT * FROM social WHERE id = $1",self.user)
-        self.format()
+        await self.cache.bot_invalidate(self.bot)
 
     async def elegible(self,scope:str,recipient) -> ElegibilityReason:
         if self.relation == recipient.user:
@@ -203,6 +210,7 @@ class User(object):
             return "User already blocked."
         blocked.append(recipient)
         await self.db.execute("UPDATE social SET blocked = $1 WHERE id=$2",blocked,self.user)
+        await self.cache.bot_invalidate(self.bot)
         return "Success"
 
     async def unblock(self,recipient):
@@ -211,6 +219,7 @@ class User(object):
             return "User not blocked."
         blocked.remove(recipient)
         await self.db.execute("UPDATE social SET blocked = $1 WHERE id=$2",blocked,self.user)
+        await self.cache.bot_invalidate(self.bot)
         return "Success"
 
     async def decompile(self,scope:str,recipient:int):
@@ -231,7 +240,7 @@ class User(object):
         return entry, count, index, action
 
     async def hug(self,recipient:int) -> Action:
-        async with User(recipient,self.db) as recp:
+        async with User(recipient, self.db, self.bot) as recp:
             check = await self.elegible(scope="hug",recipient=recp)
             if not check.elegible:
                 return Action(success=False,reason=check.reason)
@@ -243,16 +252,18 @@ class User(object):
 
         if index is None:
             await self.db.execute("UPDATE social SET hugs=$1 WHERE id=$2",hugs + [f"{recipient}:1"],self.user)
+            await self.cache.bot_invalidate(self.bot)
             count = 1
         else:
             count = int(count) + 1
             hugs.pop(index)
             hugs.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET hugs=$1 WHERE id=$2",hugs,self.user)
+            await self.cache.bot_invalidate(self.bot)
         return Action(success=True,count=count + rcount)
 
     async def kiss(self,recipient:int) -> Action:
-        async with User(recipient,self.db) as recp:
+        async with User(recipient, self.db, self.bot) as recp:
             check = await self.elegible(scope="kiss",recipient=recp)
             if not check.elegible:
                 return Action(success=False,reason=check.reason)
@@ -264,21 +275,25 @@ class User(object):
 
         if index is None:
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2",kisses + [f"{recipient}:1"],self.user)
+            await self.cache.bot_invalidate(self.bot)
             count = 1
         else:
             count = int(count) + 1
             kisses.pop(index)
             kisses.append(f"{recipient}:{count}")
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2",kisses,self.user)
+            await self.cache.bot_invalidate(self.bot)
         return Action(success=True,count=count + rcount)
 
     async def set_ship(self,id:str,relation:int):
         await self.db.execute("UPDATE social SET ship = $1 WHERE id=$2",id,self.user)
         await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2",relation,self.user)
+        await self.cache.bot_invalidate(self.bot)
 
     async def sink_ship(self):
         await self.db.execute("UPDATE social SET ship =$1 WHERE id =$2","nul",self.user)
         await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2",0,self.user)
+        await self.cache.bot_invalidate(self.bot)
 
 
 class Social(blink.Cog):
@@ -299,13 +314,13 @@ class Social(blink.Cog):
     @blocked.command(name="add")
     async def block(self,ctx,recipient:discord.User):
         """Block a user from using social commands on you"""
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             return await ctx.send(await user.block(recipient.id))
 
     @blocked.command(name="remove",aliases=["delete"])
     async def unblock(self,ctx,recipient:discord.User):
         """Unblock a user from using social commands on you"""
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             return await ctx.send(await user.unblock(recipient.id))
 
     @blocked.command(name="list",aliases=["show"])
@@ -313,7 +328,7 @@ class Social(blink.Cog):
     async def show_blocked(self,ctx):
         """Show your blocked users"""
         format = []
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             blocked = user.blocked
         for user in blocked:
             name = self.bot.get_user(user)
@@ -332,7 +347,7 @@ class Social(blink.Cog):
         """Hug someone"""
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             res = await user.hug(member.id)
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} hugs {member.display_name}",colour=self.bot.colour)
@@ -348,7 +363,7 @@ class Social(blink.Cog):
         """Kiss someone"""
         if member == ctx.author:
             return await ctx.send("You cant do that :(")
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             res = await user.kiss(member.id)
         if res.success:
             embed = discord.Embed(title=f"{ctx.author.display_name} kisses {member.display_name}",colour=self.bot.colour)
@@ -365,13 +380,13 @@ class Social(blink.Cog):
         """Show and manage your ship"""
         if member and (member == ctx.author or member.bot):
             return await ctx.send("No...")
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             id = user.ship
             if id == "nul":
                 if not member:
                     return await ctx.send("You do not have a ship.")
                 else:
-                    async with User(member.id,self.bot.DB) as memb:
+                    async with User(member.id, self.bot.DB, self.bot) as memb:
                         check = await user.elegible(scope="ship",recipient=memb)
                     if not check.elegible:
                         return await ctx.send(embed=discord.Embed(title=f":x: {Action(success=False,reason=check.reason).translate()}",colour=discord.Colour.red()))
@@ -380,7 +395,7 @@ class Social(blink.Cog):
                     return
             if member:
                 return await ctx.send("You already have a ship.")
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             return await ctx.send(embed=await ship.to_embed())
 
     @ship.command(name="help")
@@ -392,9 +407,9 @@ class Social(blink.Cog):
     @ship.command(name="name")
     async def ship_rename(self,ctx,*,name:str):
         """Rename your ship"""
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             id = user.ship
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="name",data=name)
@@ -403,9 +418,9 @@ class Social(blink.Cog):
     @ship.command(name="description")
     async def ship_change_description(self,ctx,*,text:str):
         """Change your ship's description"""
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             id = user.ship
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="customtext",data=text)
@@ -415,9 +430,9 @@ class Social(blink.Cog):
     @commands.cooldown(1,10,commands.BucketType.user)
     async def ship_recolour(self,ctx,colour:discord.Colour):
         """Change your ship's colour"""
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             id = user.ship
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="colour",data=colour.value)
@@ -427,18 +442,18 @@ class Social(blink.Cog):
     async def ship_change_icon(self,ctx,*,icon:str=None):
         """Change your ship's icon"""
         if not icon:
-            async with User(ctx.author.id,self.bot.DB) as user:
+            async with User(ctx.author.id, self.bot.DB, self.bot) as user:
                 id = user.ship
-            async with Ship(id,self.bot.DB) as ship:
+            async with Ship(id, self.bot.DB, self.bot) as ship:
                 if not ship.exists:
                     return await ctx.send("You do not have a ship")
                 return await ctx.send(embed=discord.Embed(title="This is your ship's icon",colour=self.bot.colour).set_image(url=ship.icon))
 
         if not URLREGEX.match(icon):
             return await ctx.send("That doesnt look like a url to me... \nex (https://example.com/image.png)")
-        async with User(ctx.author.id,self.bot.DB) as user:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as user:
             id = user.ship
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             if not ship.exists:
                 return await ctx.send("You do not have a ship")
             await ship.modify(scope="icon",data=icon)
@@ -449,8 +464,8 @@ class Social(blink.Cog):
     async def ship_debug(self,ctx,*,member:discord.User=None):
         if not member:
             member=ctx.author
-        async with User(member.id,self.bot.DB) as user:
-            async with Ship(user.ship,self.bot.DB) as ship:
+        async with User(member.id, self.bot.DB, self.bot) as user:
+            async with Ship(user.ship, self.bot.DB, self.bot) as ship:
                 embed = discord.Embed(title=ship.id,colour=self.bot.colour)
                 if ship.exists:
                     embed.description = f"Captain : {ship.captain}\nPartner : {ship.partner}\nName : {ship.name}\nDescription : {ship.description}\nColour : {ship.colour}\nIcon : [Link]({ship.icon} \"{ship.icon}\")\nCreated : {ship.created}"
@@ -467,8 +482,8 @@ class Social(blink.Cog):
                 return False
             return user == ctx.author
 
-        async with User(ctx.author.id,self.bot.DB) as c:
-            async with Ship(c.ship,self.bot.DB) as ship:
+        async with User(ctx.author.id, self.bot.DB, self.bot) as c:
+            async with Ship(c.ship, self.bot.DB, self.bot) as ship:
                 if not ship.exists:
                     return await ctx.send("You do not have a ship.")
                 m = await ctx.send("Are you sure?")
@@ -485,7 +500,7 @@ class Social(blink.Cog):
                 await ship.sink()
             await c.sink_ship()
 
-            async with User(c.relation,self.bot.DB) as p:
+            async with User(c.relation, self.bot.DB, self.bot) as p:
                 await p.sink_ship()
             return await ctx.send("Your ship has sunk.")
 
@@ -538,13 +553,13 @@ class Social(blink.Cog):
             return False
 
         id = str(uuid.uuid4())
-        async with Ship(id,self.bot.DB) as ship:
+        async with Ship(id, self.bot.DB, self.bot) as ship:
             await ship.create(captain=captain,partner=partner,name=name,description=description,colour=colour,icon=icon)
 
-        async with User(captain,self.bot.DB) as c:
+        async with User(captain, self.bot.DB, self.bot) as c:
             await c.set_ship(id=id,relation=partner)
 
-        async with User(partner,self.bot.DB) as p:
+        async with User(partner, self.bot.DB, self.bot) as p:
             await p.set_ship(id=id,relation=captain)
         return await ctx.send(embed=await ship.to_embed())
 

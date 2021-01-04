@@ -6,6 +6,7 @@ import asyncio
 from aiohttp import ClientSession
 import time
 from asyncpg.pool import Pool
+from collections import OrderedDict
 
 
 class Timer:
@@ -22,24 +23,24 @@ class Timer:
 
 
 class DBCache():
-    def __init__(self, db: Pool, statement: str, values: tuple, transformer=(lambda value: dict(value[0]))):
+    def __init__(self, db: Pool, identifier: str, statement: str, values: tuple):
         self.db = db
+        self.identifier = identifier
         self.statement = statement
         self.values = values
         self._value = None
         self._current = False
-        self._f = transformer
 
     def __repr__(self):
         return f"<In memory DB cache - {self.statement}, {self.values}>"
 
     async def _set_value(self):
-        self._value = self._f(await self.db.fetch(self.statement, *self.values))
+        self._value = await self.db.fetchrow(self.statement, *self.values)
         self._current = True
 
     async def __aenter__(self):
         if not self._current:
-            await self._set_value()
+            await self.update()
         return self
 
     async def __aexit__(*args):
@@ -51,6 +52,13 @@ class DBCache():
 
     def invalidate(self):
         self._current = False
+
+    async def update(self):
+        self.invalidate()
+        await self._set_value()
+
+    async def bot_invalidate(self,bot):
+        await bot.invalidate_cache(self.identifier)
 
 
 def fancytext(name,term,scope:str):
@@ -173,3 +181,25 @@ class Cog(commands.Cog):
         self.bot._cogs.unregister(self.identifier)
         if hasattr(self,"session") and isinstance(self.session,ClientSession):
             self.bot.loop.create_task(self.session.close())
+
+
+class CacheDict(OrderedDict):
+    'Limit size, evicting the least recently looked-up key when full'
+    # from https://docs.python.org/3/library/collections.html#collections.OrderedDict#OrderedDict
+
+    def __init__(self, maxsize=128, /, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]

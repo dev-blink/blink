@@ -213,6 +213,14 @@ class Blink(commands.AutoShardedBot):
         if not from_remote:
             await self.cluster.dispatch({"event":"INVALIDATE_CACHE","cache":scope})
 
+    def cache_or_create(self, identifier: str, statement: str, values: tuple):
+        local = self._cache.get(identifier)
+        if local:
+            return local
+        cache = blink.DBCache(self.DB, identifier, statement, values)
+        self._cache[identifier] = cache
+        return cache
+
     async def warn(self,message,shouldRaise=True):
         time = datetime.datetime.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
@@ -227,7 +235,7 @@ class Blink(commands.AutoShardedBot):
         await self.cluster.wait_until_ready()
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
-        self._cache = dict()
+        self._cache = blink.CacheDict(1000)
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")
         self.load_extensions()
@@ -284,7 +292,7 @@ class Blink(commands.AutoShardedBot):
             self.reload_extension(payload["cog"])
 
         if payload["event"] == "INVALIDATE_CACHE":
-            self.invalidate_cache(payload.get("cache"),True)
+            await self.invalidate_cache(payload.get("cache"),True)
 
     async def on_error(self,event_method,*args,**kwargs):
         exc = sys.exc_info()
