@@ -187,7 +187,7 @@ class CacheDict(OrderedDict):
     'Limit size, evicting the least recently looked-up key when full'
     # from https://docs.python.org/3/library/collections.html#collections.OrderedDict#OrderedDict
 
-    def __init__(self, maxsize=128, /, *args, **kwds):
+    def __init__(self, maxsize=128, *args, **kwds):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 
