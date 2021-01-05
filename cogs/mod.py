@@ -94,13 +94,22 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def unban(self, ctx, *, user:discord.User):
+    async def unban(self, ctx: commands.Context, *, user:str):
         """Unbans a user."""
         try:
-            await ctx.guild.unban(user)
-        except discord.NotFound:
-            return await ctx.send("User is not banned.")
-        await ctx.send(f"Unbanned {user}")
+            user = int(user)
+        except ValueError:
+            scheme = lambda x: str(x.user) == user # noqa E731
+        else:
+            scheme = lambda x: x.user.id == user # noqa E731
+
+        bans = await ctx.guild.bans()
+        ban = discord.utils.find(scheme, bans)
+        if ban:
+            await ctx.guild.unban(ban.user)
+            await ctx.send(f"Unbanned {ban.user} {f'({ban.reason})' if ban.reason else ''}")
+        else:
+            await ctx.send("User not banned.")
 
     @commands.command(name="softban",aliases=["softbanish"])
     @commands.guild_only()
