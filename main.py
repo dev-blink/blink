@@ -71,7 +71,14 @@ class Ctx(commands.Context):
             self.player = self.bot.wavelink.players.get(self.guild.id)
 
     def __repr__(self):
-        return f"<Blink context, author={self.author}, guild={self.guild}, >"
+        return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
+
+    async def send(self, *args, **kwargs):
+        if self.message.reference:
+            if not kwargs.get("reference"):
+                kwargs["reference"] = self.message.reference
+                kwargs["ping_author"] = False
+        return await super().send(*args, **kwargs)
 
 
 class CogStorage:

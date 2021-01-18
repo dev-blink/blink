@@ -8,3 +8,4 @@ creds.json
 config.py
 server.bat
 serverconfig.py
+*.log

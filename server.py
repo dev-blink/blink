@@ -1,4 +1,5 @@
 from autobahn.asyncio import websocket
+from autobahn.exception import Disconnected
 import json
 import uuid
 import platform
@@ -6,6 +7,7 @@ import asyncio
 from async_timeout import timeout
 import serverconfig as config
 from string import ascii_uppercase as alphabet
+import datetime
 
 tokens = config.gatewayauth
 loop = asyncio.get_event_loop()
@@ -83,6 +85,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         print(f"EVENT intent='{payload['intent']}'")
 
     async def panicked(self,payload):
+        with open(f"Cluster {self.identifier} crash.log","w+") as f:
+            f.write(f"{payload.get('error')}\n{payload.get('traceback')}")
         await self.close(4999, "Client exception thrown")
 
     async def ack(self,op):
@@ -153,7 +157,10 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             return await self.close(code=4005,error="Not authenticated")
         await self.handlers[payload.op](payload.data)
         if self.open:
-            await self.ack(payload.op)
+            try:
+                await self.ack(payload.op)
+            except Disconnected:
+                pass
 
     async def onClose(self,isClean,code,reason):
         self.open=False
