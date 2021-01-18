@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import blink
+from typing import Union
 
 
 class Server(blink.Cog,name="Server"):
@@ -18,15 +19,17 @@ class Server(blink.Cog,name="Server"):
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     @commands.check(memberscheck)
-    async def members(self, ctx, *, term=None):
+    async def members(self, ctx, *, term: Union[int,str]=None):
         """Shows members for a given role (or all)"""
         if not term:
             return await self.users(ctx)
-        role=await blink.searchrole(ctx.guild.roles,term)
+        role = ctx.guild.get_role(term)
+        if not role:
+            role=await blink.searchrole(ctx.guild.roles,str(term))
         if not role:
             return await ctx.send("I could not find that role.")
         if len(role.members) > 35 or len(role.members) == 0:
-            return await ctx.send("There are %s members with the role "% len(role.members) + role.name.replace("@everyone","@" + '\uFEFF' + "everyone"))
+            return await ctx.send(f"There are {len(role.members)} members with the role {role.name}")
         embed=discord.Embed(title=f"{role.name} - {len(role.members)}",colour=0xf5a6b9)
         embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
         await ctx.send(embed=embed)

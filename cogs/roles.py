@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import blink
+from typing import Union
 
 
 class RoleManagement(blink.Cog,name="Role Management"):
@@ -8,13 +9,13 @@ class RoleManagement(blink.Cog,name="Role Management"):
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    async def role(self, ctx,user: discord.Member, *,term):
+    async def role(self, ctx,user: discord.Member, *, term: Union[int,str]):
         """Changes roles for a user."""
         if not ctx.guild.me.guild_permissions.manage_roles:
             return await ctx.send("I do not have permission to manage roles.")
-        if term == "everyone":
-            return
-        role=await blink.searchrole(ctx.guild.roles,term)
+        role = ctx.guild.get_role(term)
+        if not role:
+            role=await blink.searchrole(ctx.guild.roles,str(term))
         if not role:
             return await ctx.send("I could not find that role.")
 
