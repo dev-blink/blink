@@ -77,7 +77,7 @@ class Ctx(commands.Context):
         if self.message.reference:
             if not kwargs.get("reference"):
                 kwargs["reference"] = self.message.reference
-                kwargs["ping_author"] = False
+                kwargs["mention_author"] = False
         return await super().send(*args, **kwargs)
 
 
