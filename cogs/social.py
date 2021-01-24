@@ -441,6 +441,12 @@ class Social(blink.Cog):
     @ship.command(name="icon",aliases=["img","image","picture"])
     async def ship_change_icon(self,ctx,*,icon:str=None):
         """Change your ship's icon"""
+
+        if not icon:
+            if ctx.message.attachments:
+                if ctx.message.attachments[0].height:
+                    icon = ctx.message.attachments[0].url
+
         if not icon:
             async with User(ctx.author.id, self.bot.DB, self.bot) as user:
                 id = user.ship
@@ -493,7 +499,7 @@ class Social(blink.Cog):
                 try:
                     reaction = (await self.bot.wait_for('reaction_add', timeout=10, check=check))[0]
                 except asyncio.TimeoutError:
-                    return await ctx.send("Timed out waiting for response. Sinking cancelled.")
+                    return await ctx.send(f"{ctx.author.mention} Timed out waiting for response. Sinking cancelled.")
                 else:
                     if str(reaction.emoji) != "\U00002714":
                         return await ctx.send("Cancelled")
@@ -520,17 +526,21 @@ class Social(blink.Cog):
             await ctx.send(f"<@{captain}> what should the ship be called?",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
-            name = message.content or "Ship Name"
+            name = message.content or "no name"
 
             await ctx.send(f"<@{captain}> what should the ship description be?",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
-            description = message.content
+            description = message.content or "no description"
 
             await ctx.send(f"<@{captain}> what should the ship icon be? (a link to an image is needed)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
 
-            if URLREGEX.match(message.content):
+            if not message.content:
+                if message.attachments:
+                    if message.attachments[0].height:
+                        icon = message.attachments[0].url
+            elif URLREGEX.match(message.content):
                 icon = message.content
             else:
                 await ctx.send("That doesnt look like a valid url, resorting to default \n ex (https://example.com/image.png)")
@@ -538,13 +548,14 @@ class Social(blink.Cog):
 
             await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
-            content = message.content.replace("#","")
-            if len(content) == 6:
-                try:
-                    colour = (await commands.converter.ColourConverter().convert(None,content)).value
-                except commands.BadArgument:
-                    await ctx.send("unable to determine a colour, using default colour")
-                    colour = 16099001
+            if message.content:
+                content = message.content.replace("#","")
+                if len(content) == 6:
+                    try:
+                        colour = (await commands.converter.ColourConverter().convert(None,content)).value
+                    except commands.BadArgument:
+                        await ctx.send("unable to determine a colour, using default colour")
+                        colour = 16099001
             else:
                 await ctx.send("unable to determine a colour, using default colour")
                 colour = 16099001
