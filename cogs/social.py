@@ -404,7 +404,7 @@ class Social(blink.Cog):
         """Show ship help"""
         return await ctx.send_help(ctx.command.parent)
 
-    @ship.command(name="name")
+    @ship.command(name="name",aliases=["title"])
     async def ship_rename(self,ctx,*,name:str):
         """Rename your ship"""
         async with User(ctx.author.id, self.bot.DB, self.bot) as user:
@@ -415,7 +415,7 @@ class Social(blink.Cog):
             await ship.modify(scope="name",data=name)
         return await ctx.send(f"Your ship is now called `{name}`!")
 
-    @ship.command(name="description")
+    @ship.command(name="description",aliases=["desc","text"])
     async def ship_change_description(self,ctx,*,text:str):
         """Change your ship's description"""
         async with User(ctx.author.id, self.bot.DB, self.bot) as user:
