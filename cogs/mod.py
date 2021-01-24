@@ -61,7 +61,9 @@ class Moderation(blink.Cog, name="Moderation"):
             await ctx.send("You cannot sanction yourself.")
             raise blink.SilentWarning()
 
-        if user not in ctx.guild.members:
+        user = ctx.guild.get_member(user.id)
+
+        if not user:
             return True
 
         if not ctx.guild.owner == ctx.author:
