@@ -15,7 +15,6 @@ import os
 import sys
 import traceback
 import platform
-from io import BytesIO
 
 
 # Custom
@@ -310,12 +309,11 @@ class Blink(commands.AutoShardedBot):
             if len(tb) < 2040:
                 async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
                     data = await gist.json()
-                    embed.description = data["html_url"])
+                    embed.description = data["html_url"]
             else:
                 embed.description = f"```{tb}```"
-                file = None
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
-            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR",file=file)
+            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
 
 async def launch(loop):
