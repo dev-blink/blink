@@ -5,6 +5,7 @@ import blink
 import datetime
 import aiohttp
 import asyncpg
+import secrets
 from wavelink import ZeroConnectedNodes as NoNodes
 
 
@@ -131,9 +132,9 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
         tb = '\n'.join(traceback.format_exception(type(error), error, error.__traceback__))
         embed = discord.Embed(description=f"Guild: {guild}\nChannel: {channel}\nAuthor: {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`**",colour=discord.Colour.red(),timestamp=datetime.datetime.utcnow())
         async with aiohttp.ClientSession() as cs:
-            async with cs.post("https://hastebin.com/documents",data=tb) as haste:
-                data = await haste.json()
-                embed.set_author(name="UNCAUGHT EXCEPTION",url=f"https://hastebin.com/{data['key']}")
+            async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
+                data = await gist.json()
+                embed.set_author(name="UNCAUGHT EXCEPTION",url=data["html_url"])
 
         await self.bot.cluster.log_errors(embed=embed)
 
