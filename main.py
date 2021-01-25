@@ -306,12 +306,14 @@ class Blink(commands.AutoShardedBot):
         tb = traceback.format_exc()
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
         embed.set_author(name=f"Exception in event {event_method}")
-        file = None
         async with aiohttp.ClientSession() as cs:
             if len(tb) < 2040:
-                file = discord.File(BytesIO(tb.encode("utf-8")), filename="tb.txt")
+                async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
+                    data = await gist.json()
+                    embed.description = data["html_url"])
             else:
                 embed.description = f"```{tb}```"
+                file = None
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR",file=file)
 
