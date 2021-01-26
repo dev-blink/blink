@@ -548,6 +548,7 @@ class Social(blink.Cog):
 
             await ctx.send(f"<@{captain}> what should the ship colour be? (send **just** a hex code)",allowed_mentions=_Users())
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
+            colour = 16099001
             if message.content:
                 content = message.content.replace("#","")
                 if len(content) == 6:
@@ -555,10 +556,9 @@ class Social(blink.Cog):
                         colour = (await commands.converter.ColourConverter().convert(None,content)).value
                     except commands.BadArgument:
                         await ctx.send("unable to determine a colour, using default colour")
-                        colour = 16099001
+
             else:
                 await ctx.send("unable to determine a colour, using default colour")
-                colour = 16099001
 
         except asyncio.TimeoutError:
             return False
