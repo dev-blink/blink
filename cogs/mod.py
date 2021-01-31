@@ -46,7 +46,10 @@ class Moderation(blink.Cog, name="Moderation"):
         if r:
             overwrites = channel.overwrites
             overwrites[r] = discord.PermissionOverwrite(send_messages=False)
-            await channel.edit(overwrites=overwrites)
+            try:
+                await channel.edit(overwrites=overwrites)
+            except discord.Forbidden:
+                return
 
     async def privcheck(self,ctx,user):
         if not user:
@@ -85,6 +88,10 @@ class Moderation(blink.Cog, name="Moderation"):
         if user == self.bot.user:
             await ctx.send("I cant do that. So i will leave instead.")
             return await ctx.guild.leave()
+
+        if len(reason) > 1800:
+            reason = reason[:1800]
+
         try:
             dm = await dmattempt(user,"banned",reason,ctx.guild)
             await ctx.guild.ban(user,reason=f"Banned by {ctx.author} for {reason}")
@@ -123,6 +130,9 @@ class Moderation(blink.Cog, name="Moderation"):
         if user == self.bot.user:
             return await ctx.send("I cant do that.")
 
+        if len(reason) > 1800:
+            reason = reason[:1800]
+
         try:
             dm = await dmattempt(user,"kicked",reason,ctx.guild)
             await ctx.guild.ban(user, reason=f"By {ctx.author} for {reason}")
@@ -138,7 +148,11 @@ class Moderation(blink.Cog, name="Moderation"):
     async def mute(self, ctx,user: discord.Member, *, reason:str="unspecified"):
         """Mutes a user."""
         await self.privcheck(ctx,user)
-        await mute(ctx, user, reason or "being annoying")
+
+        if len(reason) > 1800:
+            reason = reason[:1800]
+
+        await mute(ctx, user, reason)
 
     @commands.command(name="kick")
     @commands.has_permissions(kick_members=True)
@@ -149,6 +163,9 @@ class Moderation(blink.Cog, name="Moderation"):
         await self.privcheck(ctx,user)
         if user == self.bot.user:
             return await ctx.guild.leave()
+
+        if len(reason) > 1800:
+            reason = reason[:1800]
 
         try:
             dm = await dmattempt(user,"kicked",reason,ctx.guild)

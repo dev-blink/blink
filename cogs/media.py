@@ -41,13 +41,13 @@ class Media(blink.Cog,name="Media"):
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_memes(self,ctx):
         """Gets a meme from r/memes"""
-        return await ctx.send(embed=self._do_reddit("memes"))
+        return await ctx.send(embed=await self._do_reddit("memes"))
 
     @commands.command(name="dankmeme",aliases=["dankmemes"])
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     @commands.cooldown(1,3,commands.BucketType.member)
     async def r_dankmemes(self,ctx):
-        return await ctx.send(embed=self._do_reddit("dankmemes"))
+        return await ctx.send(embed=await self._do_reddit("dankmemes"))
 
 
 def setup(bot):
