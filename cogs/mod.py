@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import blink
+from typing import Union
 
 
 # Checks if there is a muted role on the server and creates one if there isn't
@@ -103,14 +104,17 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def unban(self, ctx: commands.Context, *, user:str):
+    async def unban(self, ctx: commands.Context, *, user: Union[discord.User, str]):
         """Unbans a user."""
-        try:
-            user = int(user)
-        except ValueError:
-            scheme = lambda x: str(x.user) == user # noqa E731
+        if isinstance(user, str):
+            try:
+                user = int(user)
+            except ValueError:
+                scheme = lambda x: str(x.user) == user # noqa E731
+            else:
+                scheme = lambda x: x.user.id == user # noqa E731
         else:
-            scheme = lambda x: x.user.id == user # noqa E731
+            scheme = lambda x : x.user == user # noqa E731
 
         bans = await ctx.guild.bans()
         ban = discord.utils.find(scheme, bans)
