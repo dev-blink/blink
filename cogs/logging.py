@@ -42,6 +42,10 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         self.message_push.start()
         self.bot.add_cog(self)
 
+    def cog_unload(self):
+        self.message_push.cancel()
+        super().cog_unload()
+
     # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
     async def update(self,before,after):
