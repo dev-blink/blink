@@ -145,7 +145,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             user = ctx.author
         async with self.blacklist:
             if ctx.author.id in self.blacklist.value["snowflakes"]:
-                await ctx.send("This service is unavailable to you")
+                return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1",uid)
         if not result or result["name"] is None:
