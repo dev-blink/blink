@@ -190,6 +190,10 @@ class Blink(commands.AutoShardedBot):
             return
         if not self.created:
             return
+        async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",)) as blacklist:
+            if message.author.id in blacklist.value["snowflakes"]:
+                return
+
         ctx = await self.get_context(message,cls=Ctx)
         if ctx.valid:
             bucket = self._cooldown.get_bucket(message)
@@ -286,8 +290,6 @@ class Blink(commands.AutoShardedBot):
     async def cluster_event(self,payload):
         if payload is None:
             return
-        if payload["event"] == "UPDATE_BLACKLIST":
-            await self.get_cog(self._cogs.dev.blacklist_update_mappings[payload["scope"]]).flush_blacklist()
         if payload["event"] == "SHUTDOWN":
             await self.cluster.quit()
             await self.logout()

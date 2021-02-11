@@ -10,10 +10,7 @@ import blink
 class Owner(blink.Cog, name="Developer"):
     def __init__(self, *args,**kwargs):
         super().__init__(*args,**kwargs)
-        self.blacklist_scopes=["logging"]
-        self.blacklist_update_mappings = {
-            "logging":"Global logging",
-        }
+        self.blacklist_scopes=["logging", "global"]
 
     @commands.command(name="selfpurge",hidden=True)
     @commands.is_owner()
@@ -32,25 +29,26 @@ class Owner(blink.Cog, name="Developer"):
         """Modifiy blacklists"""
         if scope not in self.blacklist_scopes:
             return await ctx.send("Invalid scope")
-        blacklist = (await self.bot.DB.fetchrow("SELECT snowflakes FROM blacklist WHERE scope=$1",scope)).get("snowflakes")
-        if "+" in action:
-            id = int(action.replace("+",""))
-            if id in blacklist:
-                return await ctx.send("Already blacklisted")
+
+        async with self.bot.cache_or_create(f"blacklist-{scope}", "SELECT snowflakes FROM blacklist WHERE scope=$1",(scope,)) as cache:
+            blacklist = cache.value["snowflakes"]
+            if "+" in action:
+                id = int(action.replace("+",""))
+                if id in blacklist:
+                    return await ctx.send("Already blacklisted")
+                else:
+                    blacklist.append(id)
+            elif "-" in action:
+                id = int(action.replace("-",""))
+                try:
+                    blacklist.remove(id)
+                except ValueError:
+                    return await ctx.send("User not in blacklist")
             else:
-                blacklist.append(id)
-        elif "-" in action:
-            id = int(action.replace("-",""))
-            try:
-                blacklist.remove(id)
-            except ValueError:
-                return await ctx.send("User not in blacklist")
-        else:
-            return await ctx.send("invalid action (+ or -)")
-        await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
-        await self.bot.get_cog(self.blacklist_update_mappings[scope]).flush_blacklist()
-        await self.bot.cluster.dispatch({"event":"UPDATE_BLACKLIST","scope":scope})
-        return await ctx.send("Updated")
+                return await ctx.send("invalid action (+ or -)")
+            await self.bot.DB.execute("UPDATE blacklist SET snowflakes=$1 WHERE scope=$2",blacklist,scope)
+            await cache.bot_invalidate(self.bot)
+        return await ctx.send(action)
 
     @commands.command(name="delav",hidden=True)
     @commands.is_owner()

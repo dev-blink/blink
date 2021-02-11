@@ -38,15 +38,9 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         if not self.bot.beta:
             from gcloud.aio.storage import Storage
             self.storage = Storage(service_file='./creds.json',session=self.session)
-        await self.flush_blacklist()
+        self.blacklist = self.bot.cache_or_create("blacklist-logging","SELECT snowflakes FROM blacklist WHERE scope=$1",("logging",))
         self.message_push.start()
         self.bot.add_cog(self)
-
-    def __unload(self):
-        asyncio.create_task(self.session.close())
-
-    async def flush_blacklist(self):
-        self.blacklist = (await self.bot.DB.fetchrow("SELECT snowflakes FROM blacklist WHERE scope=$1","logging")).get("snowflakes")
 
     # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
@@ -55,8 +49,10 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             return
         if before.bot:
             return
-        if before.id in self.blacklist:
-            return
+
+        async with self.blacklist:
+            if before.id in self.blacklist.value["snowflakes"]:
+                return
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
         try:
@@ -129,8 +125,11 @@ class GlobalLogs(blink.Cog,name="Global logging"):
     # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
     async def update_db(self,message):
-        if message.author.bot or not message.guild or not self.active or message.author.id in self.blacklist:
+        if message.author.bot or not message.guild or not self.active:
             return
+        async with self.blacklist:
+            if message.author.id in self.blacklist.value["snowflakes"]:
+                return
         user = message.author.id
         if self.msgcache.get(user) is None:
             self.msgcache[user] = 1
@@ -144,8 +143,9 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         """Show username history"""
         if not user:
             user = ctx.author
-        if ctx.author.id in self.blacklist:
-            return await ctx.send("This service is unavailable to you")
+        async with self.blacklist:
+            if ctx.author.id in self.blacklist.value["snowflakes"]:
+                await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1",uid)
         if not result or result["name"] is None:
@@ -171,8 +171,9 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         """Show avatar history"""
         if not user:
             user = ctx.author
-        if ctx.author.id in self.blacklist:
-            return await ctx.send("This service is unavailable to you")
+        async with self.blacklist:
+            if ctx.author.id in self.blacklist.value["snowflakes"]:
+                return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
         if not result or result["avatar"] is None:
