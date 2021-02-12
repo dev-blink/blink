@@ -90,8 +90,8 @@ class Moderation(blink.Cog, name="Moderation"):
             await ctx.send("I cant do that. So i will leave instead.")
             return await ctx.guild.leave()
 
-        if len(reason) > 1800:
-            reason = reason[:1800]
+        if len(reason) > 400:
+            reason = reason[:400]
 
         try:
             dm = await dmattempt(user,"banned",reason,ctx.guild)
