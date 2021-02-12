@@ -190,23 +190,38 @@ class Blink(commands.AutoShardedBot):
             return
         if not self.created:
             return
+
+        # blacklists
         async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
 
+        # create context
         ctx = await self.get_context(message,cls=Ctx)
-        if ctx.valid:
-            bucket = self._cooldown.get_bucket(message)
-            limit = bucket.update_rate_limit()
-            if not limit:
-                await self.invoke(ctx)
-            else:
-                if message.guild and not message.channel.permissions_for(message.guild.me):
-                    return
-                try:
-                    await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
-                except discord.HTTPException:
-                    return
+        if not ctx.valid:
+            return
+
+        # channel ratelimit
+        bucket = self._cooldown.get_bucket(message)
+        if bucket.update_rate_limit():
+            if message.guild and not message.channel.permissions_for(message.guild.me):
+                pass
+            try:
+                await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
+            except discord.HTTPException:
+                pass
+            return
+
+        # create guild
+        if ctx.guild:
+            data = self.cache_or_create(f"guild-{ctx.guild.id}","SELECT data FROM guilds WHERE id=$1",(ctx.guild.id,))
+            async with data:
+                if not data.value:
+                    await self.DB.execute("INSERT INTO guilds VALUES ($1, $2)", ctx.guild.id, "{}")
+                    await data.bot_invalidate(self)
+            ctx.cache = data
+
+        await self.invoke(ctx)
 
     def load_extensions(self):
         for extension in self.startingcogs:
@@ -224,9 +239,8 @@ class Blink(commands.AutoShardedBot):
             await self.cluster.dispatch({"event":"INVALIDATE_CACHE","cache":scope})
 
     def cache_or_create(self, identifier: str, statement: str, values: tuple):
-        local = self._cache.get(identifier)
-        if local:
-            return local
+        if identifier in self._cache:
+            return self._cache[identifier]
         cache = blink.DBCache(self.DB, identifier, statement, values)
         self._cache[identifier] = cache
         return cache
@@ -241,9 +255,13 @@ class Blink(commands.AutoShardedBot):
     async def create(self):
         before = time.perf_counter()
         self.cluster._post.set()
+
         log("Waiting on clusters","boot")
+
         await self.cluster.wait_until_ready()
+
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
+
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
         self._cache = blink.CacheDict(1000)
         self.session = aiohttp.ClientSession()
@@ -265,8 +283,10 @@ class Blink(commands.AutoShardedBot):
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
         self.created = True
+
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}","boot")
         log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
+
         self.update_pres.start()
 
     async def get_prefix(self, message):
@@ -302,7 +322,7 @@ class Blink(commands.AutoShardedBot):
         if payload["event"] == "INVALIDATE_CACHE":
             await self.invalidate_cache(payload.get("cache"),True)
 
-    async def on_error(self,event_method,*args,**kwargs):
+    async def on_error(self,event_method,*_,**__):
         exc = sys.exc_info()
         tb = traceback.format_exc()
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")

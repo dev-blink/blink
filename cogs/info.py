@@ -30,7 +30,7 @@ class Info(blink.Cog,name="Info"):
         """Shows an invite for the support server."""
         embed=discord.Embed(title="https://discord.gg/d23VBaR", url="https://discord.gg/d23VBaR", description="Just ask for help.",colour=self.bot.colour)
         embed.set_author(name="Join the support server!")
-        embed.set_thumbnail(url=ctx.guild.me.avatar_url_as(static_format='png'))
+        embed.set_thumbnail(url=self.bot.user.avatar_url_as(static_format='png'))
 
         await ctx.send(embed=embed)
 
