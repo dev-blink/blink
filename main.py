@@ -262,7 +262,7 @@ class Blink(commands.AutoShardedBot):
 
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
 
-        self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":"db.blinkbot.me"})
+        self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":config.db})
         self._cache = blink.CacheDict(1000)
         self.session = aiohttp.ClientSession()
         self.unload_extension("cogs.pre-error")
