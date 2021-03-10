@@ -8,9 +8,25 @@ from async_timeout import timeout
 import serverconfig as config
 from string import ascii_uppercase as alphabet
 import datetime
+import aiohttp
 
 tokens = config.gatewayauth
 loop = asyncio.get_event_loop()
+
+
+async def _panic(message:str, cluster:str):
+    data = {
+        "t": "Cluster disconnect",
+        "m": message,
+        "v": True,
+        "i": 2,
+        "c": 0xf5a6b9,
+        "d": "a",
+        "k": config.panic_key
+    }
+    async with aiohttp.ClientSession() as cs:
+        async with cs.post("https://www.pushsafer.com/api", data=data, headers={"content-type":"application/x-www-form-urlencoded"}) as response:
+            print(f"[GATEWAY]PANIC REPORT SENT FOR CLUSTER {cluster} AT {datetime.datetime.utcnow()} UTC NOTIFICATIONS SERVICE RESPONSED WITH HTTP {response.status}")
 
 
 class Message:
@@ -166,6 +182,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.open=False
         self.factory.unregister(self)
         print(f"[GATEWAY]Connection closed {'cleanly' if isClean else 'uncleanly'} with code : {code} reason : [{reason}]")
+        if not isClean:
+            await _panic(f"Cluster {self.identifier} Has closed uncleanly with reason {code} - {reason}", self.identifier)
 
     async def dispatch(self,client:str,event:Intent):
         if client == self.sessionID:
