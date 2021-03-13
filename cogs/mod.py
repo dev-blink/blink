@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands.cooldowns import BucketType
 import blink
 from typing import Union
 
@@ -134,8 +135,8 @@ class Moderation(blink.Cog, name="Moderation"):
         if user == self.bot.user:
             return await ctx.send("I cant do that.")
 
-        if len(reason) > 1800:
-            reason = reason[:1800]
+        if len(reason) > 400:
+            reason = reason[:400]
 
         try:
             dm = await dmattempt(user,"kicked",reason,ctx.guild)
@@ -153,8 +154,8 @@ class Moderation(blink.Cog, name="Moderation"):
         """Mutes a user."""
         await self.privcheck(ctx,user)
 
-        if len(reason) > 1800:
-            reason = reason[:1800]
+        if len(reason) > 400:
+            reason = reason[:400]
 
         await mute(ctx, user, reason)
 
@@ -168,8 +169,8 @@ class Moderation(blink.Cog, name="Moderation"):
         if user == self.bot.user:
             return await ctx.guild.leave()
 
-        if len(reason) > 1800:
-            reason = reason[:1800]
+        if len(reason) > 400:
+            reason = reason[:400]
 
         try:
             dm = await dmattempt(user,"kicked",reason,ctx.guild)
@@ -180,6 +181,7 @@ class Moderation(blink.Cog, name="Moderation"):
 
     @commands.command(name="purge",aliases=["prune"])
     @commands.has_permissions(manage_messages=True)
+    @commands.cooldown(1,3,BucketType.channel)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
     async def purge(self, ctx, limit: int):
@@ -227,6 +229,7 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
+    @commands.cooldown(1,3,BucketType.channel)
     async def clean(self,ctx,user: discord.Member=None,*,count:int =None):
         """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
         if count:
