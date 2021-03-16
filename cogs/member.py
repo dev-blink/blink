@@ -137,7 +137,6 @@ class Members(blink.Cog,name="Member"):
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def status(self, ctx, *, user:discord.Member=None):
         """Shows a user's status"""
-        return await ctx.send("This command no longer works, see <https://blog.discord.com/4e6e050ab52e>")
         if not user:
             user=ctx.author
 
@@ -177,7 +176,6 @@ class Members(blink.Cog,name="Member"):
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def spotifystatus(self,ctx,user: discord.Member=None):
         """Displays a members spotify status"""
-        return await ctx.send("This command no longer works, see <https://blog.discord.com/4e6e050ab52e>")
         if not user:
             user=ctx.author
 

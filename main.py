@@ -119,8 +119,8 @@ class Blink(commands.AutoShardedBot):
             intents=discord.Intents(
                 guilds=True,
                 voice_states=True,
-                messages=True,
-                reactions=True,
+                guild_messages=True,
+                guild_reactions=True,
                 presences=False,
                 members=True,
             ),
@@ -262,12 +262,20 @@ class Blink(commands.AutoShardedBot):
 
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
 
+        # DB
         self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":config.db})
         self._cache = blink.CacheDict(1000)
+        self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",))
+
+        # Misc
         self.session = aiohttp.ClientSession()
+        boottime=datetime.datetime.utcnow() - self.boottime
+
+        # Extensions
         self.unload_extension("cogs.pre-error")
         self.load_extensions()
-        boottime=datetime.datetime.utcnow() - self.boottime
+
+        # Bootlog
         members=len(list(self.get_all_members()))
         boot=[
             '-' * 79,
@@ -282,6 +290,8 @@ class Blink(commands.AutoShardedBot):
         self.bootlog="\n".join(boot)
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
+
+        # Created
         self.created = True
 
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}","boot")
@@ -328,12 +338,9 @@ class Blink(commands.AutoShardedBot):
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
         embed.set_author(name=f"Exception in event {event_method}")
         async with aiohttp.ClientSession() as cs:
-            if len(tb) < 2040:
-                async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
-                    data = await gist.json()
-                    embed.description = data["html_url"]
-            else:
-                embed.description = f"```{tb}```"
+            async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
+                data = await gist.json()
+                embed.description = data["html_url"]
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 

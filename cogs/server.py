@@ -1,3 +1,4 @@
+import json
 import discord
 from discord.ext import commands
 import blink
@@ -83,7 +84,7 @@ class Server(blink.Cog,name="Server"):
         await channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         await ctx.send(f"Unlocked {channel.name} for all members.")
 
-    @commands.command(name="serverinfo",aliases=["si","server"],disabled=True)
+    @commands.command(name="serverinfo",aliases=["si","server"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def serverinfo(self,ctx):
@@ -131,6 +132,116 @@ class Server(blink.Cog,name="Server"):
             other.append(f"{disboard if disboard else ''} {topgg if topgg else ''}")
         embed.add_field(name='**Other**',value="\n".join(other),inline=False)
         return await m.edit(embed=embed)
+
+    @commands.group(name="statusrole",aliases=["srole","sr"],invoke_without_command=True)
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    async def status_role(self, ctx):
+        """Manage status role, gives a user a role for having certain text in their status - eg pic perms for having a vanity in a users status"""
+        async with ctx.cache:
+            server = json.loads(ctx.cache.value["data"])
+
+        if not server.get("status_role_enabled"):
+            await ctx.send("Status role is not enabled")
+
+        else:
+            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'"))
+
+    @status_role.command(name="enable",aliases=["on"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    async def status_enable(self, ctx):
+        """Enable status role"""
+        async with ctx.cache:
+            server = json.loads(ctx.cache.value["data"])
+
+        if server.get("status_role_setup"):
+            if server.get("status_role_enabled"):
+                return await ctx.send("Status role is already enabled.")
+
+            server["status_role_enabled"] = True
+            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
+            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.send("Status role is now enabled.")
+        else:
+            await ctx.send("Status role is not currently set up.")
+
+    @status_role.command(name="disable",aliases=["off"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    async def status_disable(self, ctx):
+        """Disable status role"""
+        async with ctx.cache:
+            server = json.loads(ctx.cache.value["data"])
+
+        if server.get("status_role_setup"):
+            if not server.get("status_role_enabled"):
+                return await ctx.send("Status role is already disabled.")
+            server["status_role_enabled"] = False
+            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
+            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.send("Status role is now disabled.")
+        else:
+            await ctx.send("Status role is not currently set up.")
+
+    @status_role.command(name="setup",aliases=["set","update"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    async def status_setup(self,ctx, role:discord.Role, *, status):
+        """Setup or change status roles"""
+        async with ctx.cache:
+            server = json.loads(ctx.cache.value["data"])
+            server["status_role_string"] = status
+            server["status_role_id"] = role.id
+            server["status_role_setup"] = True
+            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
+            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.send("Configured status role, use `statusrole enable` to enable.")
+
+    @commands.Cog.listener("on_member_update")
+    async def presence_checker(self, before, after:discord.Member):
+        if before.activity == after.activity:
+            return
+        data = self.bot.cache_or_create(f"guild-{before.guild.id}","SELECT data FROM guilds WHERE id=$1",(before.guild.id,))
+        async with data:
+            if not data.value:
+                return
+            server = json.loads(data.value["data"])
+
+        role_valid = True
+        if server.get("status_role_enabled"):
+            role = after.guild.get_role(int(server["status_role_id"]))
+            if not role:
+                role_valid = False
+
+            status_valid = False
+            if isinstance(after.activity, discord.CustomActivity):
+                if after.activity.name:
+                    if server["status_role_string"].lower() in after.activity.name.lower():
+                        status_valid = True
+
+            if status_valid:
+                if role not in after.roles:
+                    try:
+                        await after.add_roles(role,reason="Status role")
+                    except discord.Forbidden:
+                        role_valid = False
+            else:
+                if role in after.roles:
+                    try:
+                        await after.remove_roles(role,reason="Status role is no longer valid")
+                    except discord.Forbidden:
+                        role_valid = False
+
+            if not role_valid:
+                server["status_role_setup"] = False
+                server["status_role_enabled"] = False
+                await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), after.guild.id)
+                await data.bot_invalidate(self.bot)
 
 
 def setup(bot):

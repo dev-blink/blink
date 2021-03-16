@@ -104,6 +104,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         with open(f"Cluster {self.identifier} crash.log","w+") as f:
             f.write(f"{payload.get('error')}\n{payload.get('traceback')}")
         await self.close(4999, "Client exception thrown")
+        await _panic(f"Cluster {self.identifier} Has crashed {payload.get('error')}", self.identifier)
 
     async def ack(self,op):
         await self.send(4,{"recieved":op})
