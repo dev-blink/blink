@@ -33,7 +33,7 @@ class Fun(blink.Cog,name="Fun"):
         snipes.appendleft((message.content,str(message.author),datetime.datetime.utcnow()))
         self.snipes[message.guild.id][message.channel.id] = snipes
 
-    @commands.command(name="snipe")
+    @commands.command(name="snipe",aliases=["s"])
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def snipe(self,ctx):
@@ -71,7 +71,7 @@ class Fun(blink.Cog,name="Fun"):
         snipes.appendleft((f"{before.content} **🠢** {after.content}",str(before.author),datetime.datetime.utcnow()))
         self.esnipes[before.guild.id][before.channel.id] = snipes
 
-    @commands.command(name="esnipe",aliases=["editsnipe"])
+    @commands.command(name="esnipe",aliases=["editsnipe","es"])
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
     async def edit_snipe(self,ctx):
