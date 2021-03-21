@@ -2,10 +2,19 @@ import json
 import discord
 from discord.ext import commands
 import blink
+import aiohttp
+import asyncio
+import contextlib
+from io import BytesIO
 from typing import Union
+import secrets
 
 
 class Server(blink.Cog,name="Server"):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args, **kwargs)
+        self._transform_cooldown = commands.CooldownMapping.from_cooldown(1,30,commands.BucketType.channel)
+
     def memberscheck(self):
         def predicate(self,ctx):
             if ctx.command.endswith("members"):
@@ -48,7 +57,7 @@ class Server(blink.Cog,name="Server"):
             return await ctx.send("There are no currently muted members.")
         embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
         embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
-        if len(embed) > 6000:
+        if len(embed.description) > 2048:
             return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
         await ctx.send(embed=embed)
 
@@ -77,7 +86,7 @@ class Server(blink.Cog,name="Server"):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,manage_channels=True)
-    async def unlocklockchannel(self,ctx,channel:discord.TextChannel=None):
+    async def unlockchannel(self,ctx,channel:discord.TextChannel=None):
         """Unlocks a channel."""
         if not channel:
             channel=ctx.channel
@@ -242,6 +251,64 @@ class Server(blink.Cog,name="Server"):
                 server["status_role_enabled"] = False
                 await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), after.guild.id)
                 await data.bot_invalidate(self.bot)
+
+    @commands.Cog.listener("on_message")
+    async def mov_mp4(self, message: discord.Message):
+        p = message.channel.permissions_for(message.guild.me)
+        if not (p.manage_messages and p.attach_files and p.send_messages and p.add_reactions):
+            return
+
+        if message.attachments:
+            attachment = message.attachments[0]
+            if attachment.filename.endswith(".mov"):
+                if attachment.height:
+                    return
+                bucket = self._transform_cooldown.get_bucket(message)
+                if bucket.update_rate_limit():
+                    with contextlib.supress(discord.Forbidden):
+                        await message.add_reaction("⏳")
+                json = {
+                    "input":[{
+                        "type":"remote",
+                        "source":attachment.url
+                    }],
+                    "conversion":[{
+                        "target":"mp4"
+                    }]
+                }
+                async with aiohttp.ClientSession() as cs:
+                    async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key":secrets.converter},json=json) as req:
+                        if not req.status == 201:
+                            self.bot.warn(f"Error in video convert - http {req.status}")
+                            return
+                        response = await req.json()
+                        id = response["id"]
+
+                    for limiter in range(30):
+                        async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                            json = await req.json()
+
+                        if json["errors"]:
+                            return await self.bot.warn(f"Error in video convert: {json['errors']}", False)
+
+                        if not json["output"]:
+                            if limiter == 9:
+                                return
+                            await asyncio.sleep(1)
+                            continue
+
+                        break
+
+                    if not json["output"]:
+                        return
+
+                    async with cs.get(json["output"][0]["uri"]) as req:
+                        data = BytesIO(await req.read())
+
+                    if len(data.getbuffer()) > 8000000:
+                        return
+                    file = discord.File(data,filename="video.mp4")
+                    await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.",file=file, reference=message)
 
 
 def setup(bot):

@@ -29,7 +29,7 @@ def loggingSetup(cluster):
     if not os.path.exists("logs"):
         os.mkdir("logs")
     logger=logging.getLogger('discord')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG if config.beta else logging.INFO)
     handler=logging.FileHandler(filename=f'logs/{cluster}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
@@ -369,3 +369,4 @@ async def launch(loop):
 
 loop = asyncio.get_event_loop()
 server = loop.run_until_complete(launch(loop))
+input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
