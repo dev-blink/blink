@@ -199,10 +199,10 @@ class Fun(blink.Cog,name="Fun"):
         """Mock some text"""
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
 
-    @commands.command(name="christmas")
+    @commands.command(name="easter")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def countdown(self,ctx):
-        significant = datetime.datetime(2020, 12, 25)
+        significant = datetime.datetime(2021, 4, 4)
         now = datetime.datetime.utcnow()
         delta = significant - now
         await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name}")
