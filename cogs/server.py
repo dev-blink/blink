@@ -267,6 +267,7 @@ class Server(blink.Cog,name="Server"):
                 if bucket.update_rate_limit():
                     with contextlib.supress(discord.Forbidden):
                         await message.add_reaction("⏳")
+                    return
                 json = {
                     "input":[{
                         "type":"remote",
@@ -292,7 +293,7 @@ class Server(blink.Cog,name="Server"):
                             return await self.bot.warn(f"Error in video convert: {json['errors']}", False)
 
                         if not json["output"]:
-                            if limiter == 9:
+                            if limiter == 29:
                                 return
                             await asyncio.sleep(1)
                             continue
@@ -308,7 +309,12 @@ class Server(blink.Cog,name="Server"):
                     if len(data.getbuffer()) > 8000000:
                         return
                     file = discord.File(data,filename="video.mp4")
-                    await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.",file=file, reference=message)
+                    msg = await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.", file=file, reference=message)
+                    await msg.add_reaction("🗑")
+
+                    with contextlib.suppress(asyncio.TimeoutError):
+                        await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
+                        await msg.delete()
 
 
 def setup(bot):
