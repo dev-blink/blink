@@ -305,7 +305,7 @@ class Server(blink.Cog,name="Server"):
                     async with cs.get(json["output"][0]["uri"]) as req:
                         data = BytesIO(await req.read())
 
-                    if len(data.getbuffer()) > 8000000:
+                    if len(data.getbuffer()) > message.guild.filesize_limit:
                         return
                     file = discord.File(data,filename="video.mp4")
                     await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.",file=file, reference=message)
