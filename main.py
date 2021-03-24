@@ -353,7 +353,7 @@ async def launch(loop):
     bot = Blink(cluster, log)
     cluster.reg_bot(bot)
     try:
-        await bot.start(secrets.token, bot=True, reconnect=False)
+        await bot.start(secrets.token, bot=True, reconnect=True)
     except KeyboardInterrupt:
         await bot.logout()
         await cluster.quit()
