@@ -258,7 +258,7 @@ class Server(blink.Cog,name="Server"):
 
         try:
             await self.bot.wait_for("message_delete", check=lambda m: m.id == message)
-        except TimeoutError:
+        except asyncio.TimeoutError:
             task.cancel()
 
     async def mov_mp4(self, message: discord.Message):
@@ -283,13 +283,11 @@ class Server(blink.Cog,name="Server"):
                     await check.add_reaction("✖")
 
                     try:
-                        react = await self.bot.wait_for("raw_reaction_add",check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔","✖"), timeout=7)
-                    except TimeoutError:
-                        self._transform_cooldown.get_bucket(message)._tokens = 1
+                        react = await self.bot.wait_for("raw_reaction_add",check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔","✖"), timeout=10)
+                    except asyncio.TimeoutError:
                         return await check.delete()
                     else:
                         if str(react.emoji) == "✖":
-                            self._transform_cooldown.get_bucket(message)._tokens = 1
                             return await check.delete()
 
                     await check.edit(content="working on it...")
@@ -346,6 +344,9 @@ class Server(blink.Cog,name="Server"):
                         with contextlib.suppress(asyncio.TimeoutError):
                             await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
                             await msg.delete()
+
+    def new_method(self, message):
+        self._transform_cooldown.get_bucket(message)._tokens = 1
 
 
 def setup(bot):
