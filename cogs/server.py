@@ -269,7 +269,7 @@ class Server(blink.Cog,name="Server"):
 
             if message.attachments:
                 attachment = message.attachments[0]
-                if attachment.filename.endswith(".mov"):
+                if attachment.filename.endswith((".mov",".mp4")):
                     if attachment.height:
                         return
                     bucket = self._transform_cooldown.get_bucket(message)
