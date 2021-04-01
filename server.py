@@ -183,7 +183,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.open=False
         self.factory.unregister(self)
         print(f"[GATEWAY]Connection closed {'cleanly' if isClean else 'uncleanly'} with code : {code} reason : [{reason}]")
-        if not isClean:
+        if code not in (1000,) or not isClean:
             await _panic(f"Cluster {self.identifier} Has closed uncleanly with reason {code} - {reason}", self.identifier)
 
     async def dispatch(self,client:str,event:Intent):
