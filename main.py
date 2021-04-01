@@ -124,7 +124,7 @@ class Blink(commands.AutoShardedBot):
                 presences=False,
                 members=True,
             ),
-            chunk_guilds_at_startup=True,
+            chunk_guilds_at_startup=not config.beta,
         )
 
         # Globals
@@ -151,6 +151,27 @@ class Blink(commands.AutoShardedBot):
 
     def __repr__(self):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
+
+    def _trace(self):
+        return {
+            "prod":self.__class__.__qualname__,
+            "beta":self.beta,
+            "cluster": self.cluster.identifier,
+            "config":{
+                "gateway":config.gateway,
+                "cdn":config.cdn,
+                "api":config.api,
+                "db":config.db,
+            },
+            "master": {
+                "total": self.cluster.ws._total_clusters,
+                "sharding": {
+                    "cluster": self.cluster.ws._per_cluster,
+                    "total": self.cluster.ws._total_shards,
+                }
+
+            }
+        }
 
     def dispatch(self, event, *args,**kwargs):
         if self._initialized or "ready" in event:

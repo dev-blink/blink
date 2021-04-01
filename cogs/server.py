@@ -47,7 +47,7 @@ class Server(blink.Cog,name="Server"):
     @commands.command(name="muted",aliases=["mutes","currentmutes"])
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def muted(self, ctx):
         """Shows currently muted members"""
         role=await blink.searchrole(ctx.guild.roles,"muted")
@@ -56,7 +56,7 @@ class Server(blink.Cog,name="Server"):
         if len(role.members) == 0:
             return await ctx.send("There are no currently muted members.")
         embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
-        embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
+        embed.add_field(name="Members:", value=" ".join(str(m) for m in role.members), inline=False)
         if len(embed.description) > 2048:
             return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
         await ctx.send(embed=embed)
@@ -144,7 +144,7 @@ class Server(blink.Cog,name="Server"):
 
     @commands.group(name="statusrole",aliases=["srole","sr"],invoke_without_command=True)
     @commands.guild_only()
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
     async def status_role(self, ctx):
         """Manage status role, gives a user a role for having certain text in their status - eg pic perms for having a vanity in a users status"""
@@ -159,7 +159,7 @@ class Server(blink.Cog,name="Server"):
 
     @status_role.command(name="enable",aliases=["on"])
     @commands.guild_only()
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
     async def status_enable(self, ctx):
         """Enable status role"""
@@ -179,7 +179,7 @@ class Server(blink.Cog,name="Server"):
 
     @status_role.command(name="disable",aliases=["off"])
     @commands.guild_only()
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
     async def status_disable(self, ctx):
         """Disable status role"""
@@ -198,7 +198,7 @@ class Server(blink.Cog,name="Server"):
 
     @status_role.command(name="setup",aliases=["set","update"])
     @commands.guild_only()
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
     async def status_setup(self,ctx, role:discord.Role, *, status):
         """Setup or change status roles"""

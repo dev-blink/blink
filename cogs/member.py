@@ -61,7 +61,7 @@ class Members(blink.Cog,name="Member"):
 
     @commands.command(name='perms', aliases=['permsfor', 'permissions'])
     @commands.guild_only()
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def check_permissions(self, ctx, *, member: discord.Member=None):
         """Checks a members guild permissions"""

@@ -81,7 +81,7 @@ class Moderation(blink.Cog, name="Moderation"):
             raise blink.SilentWarning()
 
     @commands.command(name="ban",aliases=["banish"])
-    @commands.has_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx,user: discord.User,*,reason:str="unspecified"):
@@ -102,7 +102,7 @@ class Moderation(blink.Cog, name="Moderation"):
             return await ctx.send("I am unable to sanction that user. (this probably shouldn't have happened (report it?))")
 
     @commands.command(name="unban",aliases=["unbanish"])
-    @commands.has_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def unban(self, ctx: commands.Context, *, user: Union[discord.User, str]):
@@ -127,7 +127,7 @@ class Moderation(blink.Cog, name="Moderation"):
 
     @commands.command(name="softban",aliases=["softbanish"])
     @commands.guild_only()
-    @commands.has_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
     async def softban(self, ctx, user: discord.Member,*, reason:str="unspecified"):
         """Bans and unbans a member to delete their messages."""
@@ -160,7 +160,7 @@ class Moderation(blink.Cog, name="Moderation"):
         await mute(ctx, user, reason)
 
     @commands.command(name="kick")
-    @commands.has_permissions(kick_members=True)
+    @commands.has_guild_permissions(kick_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, user: discord.Member,*,reason:str="unspecified"):

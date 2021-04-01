@@ -11,9 +11,8 @@ class ListingHandler(blink.Cog):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.tokens={
-            "dbl":secrets.dblapi,
-            "bdb":secrets.bdbapi,
             "del":secrets.delapi,
+            "dlab":secrets.dlabapi
         }
         self.loop.start()
 
@@ -27,9 +26,9 @@ class ListingHandler(blink.Cog):
     async def post(self):
         guilds = self.bot.cluster.guilds
         async with aiohttp.ClientSession() as cs:
-            r = await cs.post("https://api.botsdatabase.com/v1/bots/692738917236998154",json={"servers":guilds},headers={"Authorization":self.tokens["bdb"],"Content-Type":"application/json"})
+            r = await cs.post("https://bots.discordlabs.org/v2/bot/692738917236998154/stats",json={"server_count":guilds},headers={"Authorization":self.tokens["dlab"],"Content-Type":"application/json"})
             if not r.status == 200:
-                await self.bot.warn(f"Error in BDB post, response {r.status}",False)
+                await self.bot.warn(f"Error in dlabs post, response {r.status}",False)
             await cs.close()
 
         async with aiohttp.ClientSession() as cs:

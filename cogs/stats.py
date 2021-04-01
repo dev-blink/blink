@@ -17,6 +17,11 @@ class StatClient(statcord.Client):
     async def on_error(self,e):
         await self.bot.warn(f"Exception in statcord post {e.__class__.__qualname__} - {e}",False)
 
+    def _trace(self):
+        return {
+            "trace": self.bot._trace()
+        }
+
 
 class Stats(blink.Cog,name="Stats"):
     def __init__(self,*args,**kwargs):

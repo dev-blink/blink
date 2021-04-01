@@ -7,7 +7,7 @@ from typing import Union
 class RoleManagement(blink.Cog,name="Role Management"):
     @commands.command(name="role",aliases=["changerole","setrole"])
     @commands.guild_only()
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
     async def role(self, ctx,user: discord.Member, *, term: Union[int,str]):
         """Changes roles for a user."""
@@ -56,7 +56,7 @@ class RoleManagement(blink.Cog,name="Role Management"):
     @commands.command(name="createrole",aliases=["newrole","+role","role+","addrole"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def addrole(self,ctx,*rolename):
         """Creates a new role"""
         if not rolename:
@@ -70,7 +70,7 @@ class RoleManagement(blink.Cog,name="Role Management"):
     @commands.command(name="rolecolour",aliases=["rolecolor"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def rolecolour(self,ctx,role:str,colour: discord.Colour):
         """Sets a role colour from a hex code."""
         role=await blink.searchrole(ctx.guild.roles,role)
