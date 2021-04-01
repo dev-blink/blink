@@ -1,3 +1,4 @@
+from asyncio.exceptions import CancelledError
 import json
 import discord
 from discord.ext import commands
@@ -253,68 +254,99 @@ class Server(blink.Cog,name="Server"):
                 await data.bot_invalidate(self.bot)
 
     @commands.Cog.listener("on_message")
+    async def mov_wrapper(self,message):
+        task = self.bot.loop.create_task(self.mov_mp4(message))
+
+        try:
+            await self.bot.wait_for("message_delete", check=lambda m: m.id == message)
+        except TimeoutError:
+            task.cancel()
+
     async def mov_mp4(self, message: discord.Message):
-        p = message.channel.permissions_for(message.guild.me)
-        if not (p.manage_messages and p.attach_files and p.send_messages and p.add_reactions):
-            return
+        with contextlib.suppress(CancelledError):
+            p = message.channel.permissions_for(message.guild.me)
+            if not (p.manage_messages and p.attach_files and p.send_messages and p.add_reactions):
+                return
 
-        if message.attachments:
-            attachment = message.attachments[0]
-            if attachment.filename.endswith(".mov"):
-                if attachment.height:
-                    return
-                bucket = self._transform_cooldown.get_bucket(message)
-                if bucket.update_rate_limit():
-                    with contextlib.supress(discord.Forbidden):
-                        await message.add_reaction("⏳")
-                    return
-                json = {
-                    "input":[{
-                        "type":"remote",
-                        "source":attachment.url
-                    }],
-                    "conversion":[{
-                        "target":"mp4"
-                    }]
-                }
-                async with aiohttp.ClientSession() as cs:
-                    async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key":secrets.converter},json=json) as req:
-                        if not req.status == 201:
-                            self.bot.warn(f"Error in video convert - http {req.status}")
-                            return
-                        response = await req.json()
-                        id = response["id"]
+            if message.attachments:
+                attachment = message.attachments[0]
+                if attachment.filename.endswith(".mov"):
+                    if attachment.height:
+                        return
+                    bucket = self._transform_cooldown.get_bucket(message)
+                    if bucket.update_rate_limit():
+                        with contextlib.suppress(discord.Forbidden):
+                            await message.add_reaction("⏳")
+                        return
 
-                    for limiter in range(30):
-                        async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
-                            json = await req.json()
+                    check = await message.channel.send(reference=message,content="looks like your video is broken, would you like me to try and fix it for you ?")
+                    await check.add_reaction("✔")
+                    await check.add_reaction("✖")
 
-                        if json["errors"]:
-                            return await self.bot.warn(f"Error in video convert: {json['errors']}", False)
+                    try:
+                        react = await self.bot.wait_for("raw_reaction_add",check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔","✖"), timeout=7)
+                    except TimeoutError:
+                        self._transform_cooldown.get_bucket(message)._tokens = 1
+                        return await check.delete()
+                    else:
+                        if str(react.emoji) == "✖":
+                            self._transform_cooldown.get_bucket(message)._tokens = 1
+                            return await check.delete()
+
+                    await check.edit(content="working on it...")
+                    json = {
+                        "input":[{
+                            "type":"remote",
+                            "source":attachment.url
+                        }],
+                        "conversion":[{
+                            "target":"mp4"
+                        }]
+                    }
+                    async with aiohttp.ClientSession() as cs:
+                        async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key":secrets.converter},json=json) as req:
+                            if not req.status == 201:
+                                self.bot.warn(f"Error in video convert - http {req.status}")
+                                return
+                            response = await req.json()
+                            id = response["id"]
+                        try:
+                            for limiter in range(30):
+                                async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                                    json = await req.json()
+
+                                if json.get("errors"):
+                                    return await self.bot.warn(f"Error {req.status} in video convert: {json}", False)
+
+                                if not json["output"]:
+                                    if limiter == 29:
+                                        async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                                            await self.bot.warn(f"Cancelled job {id} {message} for 30s limit")
+                                    await asyncio.sleep(1)
+                                    continue
+
+                                break
+                        except CancelledError:
+                            async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                                return
 
                         if not json["output"]:
-                            if limiter == 29:
-                                return
-                            await asyncio.sleep(1)
-                            continue
+                            return
 
-                        break
+                        async with cs.get(json["output"][0]["uri"]) as req:
+                            data = BytesIO(await req.read())
 
-                    if not json["output"]:
-                        return
+                        if len(data.getbuffer()) > message.guild.filesize_limit:
+                            await check.delete()
+                            return await message.channel.send("looks like that video was too big for me to upload")
+                        file = discord.File(data,filename="video.mp4")
+                        msg = await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.", file=file, reference=message)
+                        await check.delete()
+                        await msg.add_reaction("🗑")
 
-                    async with cs.get(json["output"][0]["uri"]) as req:
-                        data = BytesIO(await req.read())
-
-                    if len(data.getbuffer()) > message.guild.filesize_limit:
-                        return
-                    file = discord.File(data,filename="video.mp4")
-                    msg = await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.", file=file, reference=message)
-                    await msg.add_reaction("🗑")
-
-                    with contextlib.suppress(asyncio.TimeoutError):
-                        await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
-                        await msg.delete()
+                        with contextlib.suppress(asyncio.TimeoutError):
+                            await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
+                            await msg.delete()
 
 
 def setup(bot):
