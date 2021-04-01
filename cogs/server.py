@@ -1,4 +1,3 @@
-from asyncio.exceptions import CancelledError
 import json
 import discord
 from discord.ext import commands
@@ -263,7 +262,7 @@ class Server(blink.Cog,name="Server"):
             task.cancel()
 
     async def mov_mp4(self, message: discord.Message):
-        with contextlib.suppress(CancelledError):
+        with contextlib.suppress(asyncio.CancelledError):
             p = message.channel.permissions_for(message.guild.me)
             if not (p.manage_messages and p.attach_files and p.send_messages and p.add_reactions):
                 return
@@ -326,7 +325,7 @@ class Server(blink.Cog,name="Server"):
                                     continue
 
                                 break
-                        except CancelledError:
+                        except asyncio.CancelledError:
                             async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
                                 return
 
