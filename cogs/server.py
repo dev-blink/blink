@@ -303,7 +303,7 @@ class Server(blink.Cog,name="Server"):
                     async with aiohttp.ClientSession() as cs:
                         async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key":secrets.converter},json=json) as req:
                             if not req.status == 201:
-                                self.bot.warn(f"Error in video convert - http {req.status}",False)
+                                await self.bot.warn(f"Error in video convert - http {req.status}",False)
                                 return
                             response = await req.json()
                             id = response["id"]
@@ -313,7 +313,7 @@ class Server(blink.Cog,name="Server"):
                                     json = await req.json()
 
                                 if json.get("errors"):
-                                    return await self.bot.warn(f"Error {req.status} in video convert: {json}", False)
+                                    return await self.bot.warn(f"Error {req.status} in video convert: {json['errors']}", False)
 
                                 if not json["output"]:
                                     if limiter == 29:
@@ -344,9 +344,6 @@ class Server(blink.Cog,name="Server"):
                         with contextlib.suppress(asyncio.TimeoutError):
                             await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
                             await msg.delete()
-
-    def new_method(self, message):
-        self._transform_cooldown.get_bucket(message)._tokens = 1
 
 
 def setup(bot):
