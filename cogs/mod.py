@@ -225,7 +225,7 @@ class Moderation(blink.Cog, name="Moderation"):
         await ctx.channel.set_permissions(user, send_messages=None) # gives back send messages permissions
         await ctx.send(f"{user.mention} was unblocked.")
 
-    @commands.command()
+    @commands.command(name="clean",aliases=["clear","unfunny","😐"])
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_messages=True)
