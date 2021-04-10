@@ -254,6 +254,9 @@ class Server(blink.Cog,name="Server"):
 
     @commands.Cog.listener("on_message")
     async def mov_wrapper(self,message):
+        async with self.bot.cache_or_create("blacklist-transform","SELECT snowflakes FROM blacklist WHERE scope=$1",("transform",)) as blacklist:
+            if message.author.id in blacklist.value["snowflakes"]:
+                return
         task = self.bot.loop.create_task(self.mov_mp4(message))
 
         with contextlib.suppress(asyncio.TimeoutError):
