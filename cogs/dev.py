@@ -10,7 +10,7 @@ import blink
 class Owner(blink.Cog, name="Developer"):
     def __init__(self, *args,**kwargs):
         super().__init__(*args,**kwargs)
-        self.blacklist_scopes=["logging", "global"]
+        self.blacklist_scopes=["logging", "global","transform"]
 
     @commands.command(name="selfpurge",hidden=True)
     @commands.is_owner()
