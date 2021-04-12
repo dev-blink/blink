@@ -205,7 +205,7 @@ class Fun(blink.Cog,name="Fun"):
         significant = datetime.datetime(2021, 5, 12, 21, 41)
         now = datetime.datetime.utcnow()
         delta = significant - now
-        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends")
+        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends (sunset in London UK)")
 
 
 def setup(bot):
