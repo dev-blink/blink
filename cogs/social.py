@@ -41,7 +41,7 @@ class ShipStats:
         self.age = age
 
 
-class Ship(object):
+class Ship:
     def __init__(self, uuid:str, db, bot):
         self.id = uuid
         self.db = db
@@ -152,7 +152,7 @@ class ElegibilityReason:
         self.reason = reason
 
 
-class User(object):
+class User:
     def __init__(self,id:int, db, bot):
         self.user = id
         self.db = db

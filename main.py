@@ -334,9 +334,9 @@ class Blink(commands.AutoShardedBot):
     async def update_pres(self):
         for id in self.shards:
             try:
-                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help https://blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
             except Exception as e:
-                await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
+                await self.warn(f"Error occured inaai presence update {type(e)} `{e}`",False)
 
     async def cluster_event(self,payload):
         if payload is None:
@@ -389,5 +389,5 @@ async def launch(loop):
         sys.exit(130)
 
 loop = asyncio.get_event_loop()
-server = loop.run_until_complete(launch(loop))
+loop.run_until_complete(launch(loop))
 input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
