@@ -272,12 +272,12 @@ class Server(blink.Cog,name="Server"):
                         await message.add_reaction("⏳")
                     return
 
-        task = self.bot.loop.create_task(self.mov_mp4(message))
+                task = self.bot.loop.create_task(self.mov_mp4(message))
 
-        with contextlib.suppress(asyncio.TimeoutError):
-            await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id,timeout=60)
-        task.cancel()
-        del task
+                with contextlib.suppress(asyncio.TimeoutError):
+                    await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id,timeout=60)
+                task.cancel()
+                del task
 
     async def mov_mp4(self, message: discord.Message):
         with contextlib.suppress(asyncio.CancelledError):
