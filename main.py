@@ -73,7 +73,7 @@ class Ctx(commands.Context):
         return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
 
     async def send(self, *args, **kwargs):
-        if self.bot._state._get_message(self.message.id) and self.message.reference:
+        if self.bot._connection._get_message(self.message.id) and self.message.reference:
             if not kwargs.get("reference"):
                 kwargs["reference"] = self.message.reference
                 kwargs["mention_author"] = False
