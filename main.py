@@ -334,7 +334,7 @@ class Blink(commands.AutoShardedBot):
     async def update_pres(self):
         for id in self.shards:
             try:
-                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help https://blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
             except Exception as e:
                 await self.warn(f"Error occured inaai presence update {type(e)} `{e}`",False)
 
