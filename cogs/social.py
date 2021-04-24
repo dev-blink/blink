@@ -550,7 +550,7 @@ class Social(blink.Cog):
             message = await self.bot.wait_for('message',check=is_captain,timeout=60)
             colour = 16099001
             if message.content:
-                content = message.content.replace("#","")
+                content = "#" + message.content if not message.content.startswith(("#","0x")) else message.content
                 if len(content) == 6:
                     try:
                         colour = (await commands.converter.ColourConverter().convert(None,content)).value
