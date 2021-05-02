@@ -113,18 +113,29 @@ class Blink(commands.AutoShardedBot):
             shard_ids=shards["this"],
             case_insensitive=True,
             status=discord.Status.dnd,
-            activity=discord.Streaming(name='starting up...', url='https://www.twitch.tv/#'),
-            owner_ids=[171197717559771136,741225148509847642,],
-            allowed_mentions=discord.AllowedMentions(roles=False,everyone=False,users=False),
+            activity=discord.Streaming(
+                name='starting up...',
+                url='https://www.twitch.tv/#'
+            ),
+            owner_ids=[
+                171197717559771136,
+                741225148509847642,
+            ],
+            allowed_mentions=discord.AllowedMentions(
+                roles=False,
+                everyone=False,
+                users=False
+            ),
             intents=discord.Intents(
                 guilds=True,
                 voice_states=True,
                 guild_messages=True,
                 guild_reactions=True,
-                presences=False,
+                presences=config.beta,
                 members=True,
             ),
             chunk_guilds_at_startup=not config.beta,
+            max_messages=5000,
         )
 
         # Globals
@@ -139,7 +150,22 @@ class Blink(commands.AutoShardedBot):
         self._cogs = CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
-        self.startingcogs = ["cogs.help","cogs.member","cogs.dev","cogs.info","cogs.error","cogs.mod","cogs.server","cogs.fun","cogs.roles","cogs.advancedinfo","cogs.media","cogs.listing","cogs.sql","cogs.social"]
+        self.startingcogs = [
+            "cogs.help",
+            "cogs.member",
+            "cogs.dev",
+            "cogs.info",
+            "cogs.error",
+            "cogs.mod",
+            "cogs.server",
+            "cogs.fun",
+            "cogs.roles",
+            "cogs.advancedinfo",
+            "cogs.media",
+            "cogs.listing",
+            "cogs.sql",
+            "cogs.social"
+        ]
         self.startingcogs.append("jishaku")
         if not self.beta:
             self.startingcogs.append("cogs.logging")
@@ -207,9 +233,9 @@ class Blink(commands.AutoShardedBot):
         self._init_shards.add(id)
 
     async def on_message(self,message: discord.Message):
-        if message.author.bot:
-            return
         if not self.created:
+            return
+        if message.author.bot:
             return
 
         # blacklists
