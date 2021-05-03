@@ -73,11 +73,6 @@ class Ctx(commands.Context):
         return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
 
     async def send(self, *args, **kwargs):
-        cached_reference = self.bot._connection._get_message(self.message.reference.message_id)
-        if self.message.reference and cached_reference:
-            if not kwargs.get("reference"):
-                kwargs["reference"] = cached_reference
-                kwargs["mention_author"] = False
         return await super().send(*args, **kwargs)
 
 
