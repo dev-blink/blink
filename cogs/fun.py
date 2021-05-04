@@ -33,6 +33,15 @@ class Fun(blink.Cog,name="Fun"):
         snipes.appendleft((message.content,str(message.author),datetime.datetime.utcnow()))
         self.snipes[message.guild.id][message.channel.id] = snipes
 
+    @commands.command(name="clearsnipes",aliaes=["cs"])
+    @commands.has_permissions(manage_messages=True)
+    async def clear_snipes(self, ctx):
+        if self.snipes.get(ctx.guild.id):
+            del self.snipes[ctx.guild.id]
+        if self.snipes.get(ctx.guild.id):
+            del self.esnipes[ctx.guild.id]
+        await ctx.send("Cleared all guild snipes")
+
     @commands.command(name="snipe",aliases=["s"])
     @commands.guild_only()
     @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
