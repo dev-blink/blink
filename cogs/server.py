@@ -266,6 +266,10 @@ class Server(blink.Cog,name="Server"):
             if attachment.filename.endswith((".mov",".mp4")):
                 if attachment.height:
                     return
+                if attachment.content_type not in ["video/quicktime", "video/mp4"]:
+                    return
+                if attachment.size > 5 * (10**6):
+                    return
                 bucket = self._transform_cooldown.get_bucket(message)
                 if bucket.update_rate_limit():
                     with contextlib.suppress(discord.Forbidden):
