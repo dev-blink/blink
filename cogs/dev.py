@@ -23,6 +23,12 @@ class Owner(blink.Cog, name="Developer"):
                 except discord.errors.NotFound:
                     pass
 
+    @commands.command(name="purgecache",hidden=True)
+    @commands.is_owner()
+    async def purge_cache(self, ctx, *, cache:str):
+        await self.bot.invalidate_cache(cache)
+        await ctx.message.add_reaction("✅")
+
     @commands.command(name="blacklist",hidden=True)
     @commands.is_owner()
     async def blacklist(self,ctx,scope:str,action:str):
