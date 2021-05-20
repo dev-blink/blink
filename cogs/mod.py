@@ -129,7 +129,7 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.guild_only()
     @commands.has_guild_permissions(ban_members=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
-    async def softban(self, ctx, user: discord.Member,*, reason:str="unspecified"):
+    async def softban(self, ctx, user: discord.Member, *, reason:str="unspecified"):
         """Bans and unbans a member to delete their messages."""
         await self.privcheck(ctx,user)
         if user == self.bot.user:
@@ -140,7 +140,7 @@ class Moderation(blink.Cog, name="Moderation"):
 
         try:
             dm = await dmattempt(user,"kicked",reason,ctx.guild)
-            await ctx.guild.ban(user, reason=f"By {ctx.author} for {reason}")
+            await ctx.guild.ban(user, reason=f"By {ctx.author} for {reason}", delete_message_days=7)
             await ctx.guild.unban(user, reason="Softbanned")
             await ctx.send(f"{user.mention} was softbanned for {reason}. {'(I could not dm them about this)' if not dm else ''}")
         except discord.Forbidden:
