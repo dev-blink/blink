@@ -200,11 +200,13 @@ class Blink(commands.AutoShardedBot):
             }
         }
 
-    def dispatch(self, event, *args,**kwargs):
+    def dispatch(self, event, *args, **kwargs):
         if self._initialized or "ready" in event:
             super().dispatch(event, *args,**kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
+        if self.cluster.identifier == 'A':
+            initial = False
         await asyncio.sleep((not initial) * 5)
 
     async def launch_shards(self):
