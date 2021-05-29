@@ -1,3 +1,9 @@
+# Copyright © Aidan Allen - All Rights Reserved
+# Unauthorized copying of this project, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
+
+
 import discord
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType

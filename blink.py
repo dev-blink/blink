@@ -1,3 +1,9 @@
+# Copyright © Aidan Allen - All Rights Reserved
+# Unauthorized copying of this project, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
+
+
 from random import Random as RAND
 from discord.ext import commands
 from math import floor as f
