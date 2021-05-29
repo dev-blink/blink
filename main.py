@@ -136,6 +136,7 @@ class Blink(commands.AutoShardedBot):
                 members=True,
             ),
             chunk_guilds_at_startup=not config.beta,
+            guild_ready_timeout=10,
             max_messages=5000,
         )
 
@@ -205,7 +206,7 @@ class Blink(commands.AutoShardedBot):
             super().dispatch(event, *args,**kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
-        if self.cluster.identifier == 'A':
+        if self.cluster.identifier != 'A':
             initial = False
         await asyncio.sleep((not initial) * 5)
 
