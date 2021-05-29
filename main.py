@@ -206,9 +206,7 @@ class Blink(commands.AutoShardedBot):
             super().dispatch(event, *args,**kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
-        if self.cluster.identifier != 'A':
-            initial = False
-        await asyncio.sleep((not initial) * 5)
+        await asyncio.sleep(5)
 
     async def launch_shards(self):
         gateway = await self.http.get_gateway()
