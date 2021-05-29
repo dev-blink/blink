@@ -418,6 +418,8 @@ async def launch(loop):
         loop.close()
         sys.exit(130)
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(launch(loop))
-input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(launch(loop))
+    input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
