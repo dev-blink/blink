@@ -20,7 +20,7 @@ class StatClient(statcord.Client):
     def users(self):
         return self.bot.cluster.users
 
-    async def on_error(self,e):
+    async def on_error(self, e):
         await self.bot.warn(f"Exception in statcord post {e.__class__.__qualname__} - {e}",False)
 
     def _trace(self):
