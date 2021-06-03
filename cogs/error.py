@@ -64,6 +64,7 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
 
         elif isinstance(error, aiohttp.ClientOSError):
             await sendEmbedError(ctx, "There was a temporary network issue while completing your command, usually this means the command finished, but failed to send a message at the end.")
+            return await self.bot.warn(str(error), False)
 
         elif isinstance(error,commands.BotMissingPermissions):
             try:
