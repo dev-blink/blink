@@ -42,9 +42,6 @@ def loggingSetup(cluster):
     return logger
 
 
-printscope = ""
-
-
 def log(msg:str, scope:str):
     global printscope
     if scope == printscope:
@@ -55,18 +52,21 @@ def log(msg:str, scope:str):
     print(f"{joiner}[{scope.upper()}] {msg}")
 
 
-# Environment
-os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
-os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
-os.environ["JISHAKU_HIDE"] = "True"
-os.environ["JISHAKU_RETAIN"] = "True"
+def setupenv():
+    global printscope
+    printscope = ""
 
+    # Environment
+    os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
+    os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
+    os.environ["JISHAKU_HIDE"] = "True"
+    os.environ["JISHAKU_RETAIN"] = "True"
 
-# Event loop
-if platform.platform().startswith("Windows"):
-    log("Using Windows Selector loop","loop")
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    # Event loop
+    if platform.platform().startswith("Windows"):
+        log("Using Windows Selector loop","loop")
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Ctx(commands.Context):
@@ -424,6 +424,7 @@ async def launch(loop):
 
 
 if __name__ == "__main__":
+    setupenv()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(launch(loop))
     input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
