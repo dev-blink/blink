@@ -77,7 +77,7 @@ class Members(blink.Cog,name="Member"):
 
         perms='\n'.join(perm for perm, value in member.guild_permissions if value)
 
-        embed=discord.Embed(title='Permissions for:', description=ctx.guild.name,colour=0xf5a6b9)
+        embed=discord.Embed(title='Permissions for:', description=ctx.guild.name,colour=self.bot.colour)
         embed.set_author(icon_url=member.avatar_url_as(static_format='png'), name=str(member))
 
         # \uFEFF is a Zero-Width Space
@@ -93,7 +93,7 @@ class Members(blink.Cog,name="Member"):
         if not member:
             member: discord.Member =ctx.author
 
-        embed=discord.Embed(description=' '.join(flags[f] for f in member.public_flags.all()),colour=0xf5a6b9)
+        embed=discord.Embed(description=' '.join(flags[f] for f in member.public_flags.all()),colour=self.bot.colour)
         embed.set_author(name=f"{member}", url=member.avatar_url_as(static_format='png'),icon_url=statuses[member.status])
         embed.set_thumbnail(url=member.avatar_url_as(static_format='png'))
 
@@ -132,7 +132,7 @@ class Members(blink.Cog,name="Member"):
         """Shows a user's avatar"""
         if not user:
             user=ctx.author
-        embed=discord.Embed(colour=0xf5a6b9)
+        embed=discord.Embed(colour=self.bot.colour)
         embed.set_author(name="Link", url=user.avatar_url_as(static_format='png'))
         embed.set_image(url=user.avatar_url_as(static_format='png'))
         await ctx.send(embed=embed)
@@ -164,7 +164,7 @@ class Members(blink.Cog,name="Member"):
             embed.set_author(name=user.name,icon_url=user.avatar_url_as(static_format='png'))
 
         elif isinstance(base, discord.Activity):
-            embed=discord.Embed(colour=0xf5a6b9)
+            embed=discord.Embed(colour=self.bot.colour)
             embed.set_author(name=user.name,icon_url=user.avatar_url_as(static_format='png'))
             embed.add_field(name=base.name, value=base.details, inline=False)
 

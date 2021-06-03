@@ -62,6 +62,9 @@ class CommandErrorHandler(blink.Cog,name="ErrorHandler"):
         elif isinstance(error,menus.CannotAddReactions):
             return await sendEmbedError(ctx,"I am unable to initialize the reaction menu. Please give me permissions to add reactions.")
 
+        elif isinstance(error, aiohttp.ClientOSError):
+            await sendEmbedError(ctx, "There was a temporary network issue while completing your command, usually this means the command finished, but failed to send a message at the end.")
+
         elif isinstance(error,commands.BotMissingPermissions):
             try:
                 return await ctx.send(error)
