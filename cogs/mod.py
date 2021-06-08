@@ -88,7 +88,8 @@ class Moderation(blink.Cog, name="Moderation"):
 
     @commands.command(name="ban",aliases=["banish"])
     @commands.has_guild_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx,user: discord.User,*,reason:str="unspecified"):
         """Bans a user."""
@@ -110,7 +111,8 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.command(name="unban",aliases=["unbanish"])
     @commands.has_guild_permissions(ban_members=True)
     @commands.guild_only()
-    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, *, user: Union[discord.User, str]):
         """Unbans a user."""
         if isinstance(user, str):
@@ -134,7 +136,8 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.command(name="softban",aliases=["softbanish"])
     @commands.guild_only()
     @commands.has_guild_permissions(ban_members=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True,ban_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(ban_members=True)
     async def softban(self, ctx, user: discord.Member, *, reason:str="unspecified"):
         """Bans and unbans a member to delete their messages."""
         await self.privcheck(ctx,user)
@@ -167,7 +170,8 @@ class Moderation(blink.Cog, name="Moderation"):
 
     @commands.command(name="kick")
     @commands.has_guild_permissions(kick_members=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True,kick_members=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, user: discord.Member,*,reason:str="unspecified"):
         """Kicks a user."""
@@ -203,7 +207,8 @@ class Moderation(blink.Cog, name="Moderation"):
     @commands.command(name="unmute")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    @commands.bot_has_permissions(send_messages=True,embed_links=True,manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
     async def unmute(self, ctx, *, user: discord.Member):
         """Unmutes a muted user."""
         role=await blink.searchrole(user.roles,"muted")

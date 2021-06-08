@@ -148,7 +148,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
 
     # USERNAME AND AVATAR
     @commands.command(name="names",aliases=["usernames","un"])
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True, add_reactions=True)
     async def namehistory(self,ctx,user:discord.Member=None):
         """Show username history"""
         if not user:
