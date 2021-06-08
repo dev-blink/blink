@@ -151,7 +151,8 @@ class Server(blink.Cog,name="Server"):
     @commands.group(name="statusrole",aliases=["srole","sr"],invoke_without_command=True)
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_role(self, ctx):
         """Manage status role, gives a user a role for having certain text in their status - eg pic perms for having a vanity in a users status"""
         async with ctx.cache:
@@ -166,7 +167,8 @@ class Server(blink.Cog,name="Server"):
     @status_role.command(name="enable",aliases=["on"])
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_enable(self, ctx):
         """Enable status role"""
         async with ctx.cache:
@@ -187,6 +189,7 @@ class Server(blink.Cog,name="Server"):
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_disable(self, ctx):
         """Disable status role"""
         async with ctx.cache:
@@ -205,7 +208,8 @@ class Server(blink.Cog,name="Server"):
     @status_role.command(name="setup",aliases=["set","update"])
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_setup(self,ctx, role:discord.Role, *, status):
         """Setup or change status roles"""
         async with ctx.cache:
