@@ -11,6 +11,7 @@ import objgraph
 from collections import Counter
 import asyncio
 import blink
+import uuid
 
 
 class Owner(blink.Cog, name="Developer"):
@@ -147,6 +148,13 @@ class Owner(blink.Cog, name="Developer"):
         """Logsout"""
         if not await self.musiccheck(ctx):
             return
+        check = str(uuid.uuid4())
+        await self.bot.warn(f"Shutdown attempted, key is {check}", False)
+        await ctx.send("Please enter a key")
+        try:
+            await self.bot.wait_for("message", check=lambda m: m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content == check, timeout=15)
+        except asyncio.TimeoutError:
+            return await ctx.send("Timeout achieved")
         await self.bot.cluster.dispatch({"event":"SHUTDOWN"})
         await self.bot.cluster.quit()
         await ctx.send("Quitting safely.")
