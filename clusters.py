@@ -4,6 +4,7 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import collections
 import discord # noqa F401
 from discord.ext.commands import AutoShardedBot
 from string import ascii_uppercase as alphabet
@@ -14,6 +15,7 @@ import json
 import secrets
 import uuid
 import sys
+import time
 
 
 class Cluster(object):
@@ -33,6 +35,13 @@ class Cluster(object):
     async def crash(self,error,traceback):
         await self.ws.panic(error,traceback)
         await self.quit()
+
+    @property
+    def latency(self):
+        try:
+            return round(self.ws.latency() * 10**6, 5)
+        except OverflowError:
+            return float('inf')
 
     def reg_bot(self,bot:AutoShardedBot):
         self.bot = bot
@@ -150,6 +159,9 @@ class ClusterSocket():
         self.identify_hold = asyncio.Event()
         self.identify_hold_after = asyncio.Event()
         self.gateway = gateway
+        self.sequence = 0
+        self._latencies_sent = collections.deque([], 50)
+        self._latencies_recieved = blink.CacheDict(50)
 
     async def quit(self, code=1000, reason="Goodbye <3"):
         await self.ws.close(code=code,reason=reason)
@@ -164,8 +176,12 @@ class ClusterSocket():
                 "traceback":traceback,
             }
         }
-        await self.ws.send(json.dumps(payload))
+        await self.send(payload)
         await self.quit(code=4999, reason=f"Client threw unhandled internal exception {error.__class__.__qualname__}")
+
+    async def send(self, payload):
+        self._latencies_sent.append((time.monotonic_ns(), self.sequence + 1))
+        await self.ws.send(json.dumps(payload))
 
     def start(self):
         self._loop.create_task(self.loop())
@@ -184,7 +200,7 @@ class ClusterSocket():
                 "content":data,
             }
         }
-        await self.ws.send(json.dumps(payload))
+        await self.send(payload)
 
     async def loop(self):
         while self.active:
@@ -196,10 +212,13 @@ class ClusterSocket():
                         data = json.loads(message)
                         if hasattr(self.cluster,'bot'):
                             self.cluster.bot.logger.debug(f"Cluster recived WS message {data}")
+                        self.sequence = data["seq"]
                         if data["op"] == 0:
                             await self.identify(data)
                         if data["op"] == 3:
                             await self.intent(data["data"])
+                        if data["op"] == 4:
+                            self._latencies_recieved[data["seq"]] = time.monotonic_ns()
                         if data["op"] == 6:
                             await self.reg_dupe(data["data"])
                     except Exception as e:
@@ -242,6 +261,23 @@ class ClusterSocket():
                 if self.active is False:
                     return
 
+    def latency(self):
+        """socket latency in nanoseconds"""
+        latencies = 0
+
+        def latency_iter():
+            for (sent, key) in self._latencies_sent:
+                recv = self._latencies_recieved.get(key)
+                if recv:
+                    nonlocal latencies
+                    latencies += 1
+                    yield recv - sent
+
+        try:
+            return sum(latency_iter()) / latencies
+        except ZeroDivisionError:
+            return float('inf')
+
     async def post_stats(self):
         payload = {
             "op":5,
@@ -255,7 +291,7 @@ class ClusterSocket():
                 }
             }
         }
-        await self.ws.send(json.dumps(payload))
+        await self.send(payload)
 
     async def intent(self,data):
         if data.get("intent") == "STATS":
@@ -321,7 +357,7 @@ class ClusterSocket():
                 }
             }
         }
-        await self.ws.send(json.dumps(payload))
+        await self.send(payload)
         if alphabet.index(self.identifier) + 1 == self._total_clusters:
             return
         self._loop.create_task(self.post_identify_loop(payload))
@@ -329,4 +365,4 @@ class ClusterSocket():
     async def post_identify_loop(self,payload):
         while not self.identify_hold_after.is_set():
             await asyncio.sleep(5)
-            await self.ws.send(json.dumps(payload))
+            await self.send(payload)

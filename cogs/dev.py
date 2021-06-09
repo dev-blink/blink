@@ -12,6 +12,7 @@ from collections import Counter
 import asyncio
 import blink
 import uuid
+import contextlib
 
 
 class Owner(blink.Cog, name="Developer"):
@@ -166,16 +167,11 @@ class Owner(blink.Cog, name="Developer"):
     @commands.command(name="say",hidden=True)
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True)
-    async def repeat(self,ctx,*term):
+    async def repeat(self,ctx,*, term:str):
         """Repeats a phrase"""
-        if term is None:
-            await ctx.message.add_reaction("\U000026d4")
-        else:
-            await ctx.send(" ".join(term))
-            try:
-                await ctx.message.delete()
-            except Exception:
-                pass
+        await ctx.send(term)
+        with contextlib.suppress(discord.Forbidden):
+            await ctx.message.delete()
 
     @commands.command(name="op",aliases=["su"], hidden=True)
     @commands.is_owner()
