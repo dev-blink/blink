@@ -427,4 +427,3 @@ if __name__ == "__main__":
     setupenv()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(launch(loop))
-    input("HOLDING UNTIL KEYPRESS, READ STDOOUT")
