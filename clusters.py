@@ -180,7 +180,7 @@ class ClusterSocket():
         await self.quit(code=4999, reason=f"Client threw unhandled internal exception {error.__class__.__qualname__}")
 
     async def send(self, payload):
-        self._latencies_sent.append((time.monotonic_ns(), self.sequence + 1))
+        self._latencies_sent.append((time.perf_counter_ns(), self.sequence + 1))
         await self.ws.send(json.dumps(payload))
 
     def start(self):
@@ -218,7 +218,7 @@ class ClusterSocket():
                         if data["op"] == 3:
                             await self.intent(data["data"])
                         if data["op"] == 4:
-                            self._latencies_recieved[data["seq"]] = time.monotonic_ns()
+                            self._latencies_recieved[data["seq"]] = time.perf_counter_ns()
                         if data["op"] == 6:
                             await self.reg_dupe(data["data"])
                     except Exception as e:
