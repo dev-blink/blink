@@ -69,7 +69,7 @@ class Info(blink.Cog,name="Info"):
         before=time.monotonic()
         message=await ctx.send("pong")
         ping=(time.monotonic() - before) * 1000
-        await message.edit(embed=discord.Embed(title="\U0001f3d3 Pong",description=f"HTTP request time: {int(ping)}ms\nWebsocket latency: {round((self.bot.latency * 1000))}ms\nCluster latency: {self.bot.cluster.latency}",colour=self.bot.colour),content=None)
+        await message.edit(embed=discord.Embed(title="\U0001f3d3 Pong",description=f"HTTP request time: {int(ping)}ms\nWebsocket latency: {round((self.bot.latency * 1000))}ms\nCluster latency: {self.bot.cluster.latency}ms",colour=self.bot.colour),content=None)
 
 
 def setup(bot):
