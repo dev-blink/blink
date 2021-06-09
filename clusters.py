@@ -39,7 +39,7 @@ class Cluster(object):
     @property
     def latency(self):
         try:
-            return round(self.ws.latency() * 10**6, 5)
+            return round(self.ws.latency() / 10**6, 5)
         except OverflowError:
             return float('inf')
 
