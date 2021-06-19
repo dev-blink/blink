@@ -123,6 +123,9 @@ class Server(blink.Cog,name="Server"):
         embed.add_field(inline=True,name="**Members**",value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}")
         embed.add_field(inline=True,name="**Staff**",value=f"**Owner** <@{g.owner_id}>\n**Admins** {len(admins)}\n**Mods** {len(mods)}\n**Admin Bots** {len(adminbots)}")
         embed.set_footer(text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}")
+
+        if g.banner:
+            embed.set_image(url=g.banner_url_as(format="png", size=128))
         m = await ctx.send(embed=embed)
 
         if (await self.bot.session.head(f"https://disboard.org/server/{g.id}")).status == 200:
@@ -147,6 +150,15 @@ class Server(blink.Cog,name="Server"):
             other.append(f"{disboard if disboard else ''} {topgg if topgg else ''}")
         embed.add_field(name='**Other**',value="\n".join(other),inline=False)
         return await m.edit(embed=embed)
+
+    @commands.command(name="servericon",aliases=["sicon","icon"])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def server_icon(self, ctx):
+        if ctx.guild.icon is None:
+            return await ctx.send("Guild has no icon.")
+        embed = discord.Embed(title=ctx.guild.name, colour=self.bot.colour)
+        embed.set_image(url=ctx.guild.icon_url_as(static_format="png"))
+        await ctx.send(embed=embed)
 
     @commands.group(name="statusrole",aliases=["srole","sr"],invoke_without_command=True)
     @commands.guild_only()
