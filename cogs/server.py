@@ -111,17 +111,30 @@ class Server(blink.Cog,name="Server"):
 
         cd = g.created_at
         ge = str(g.explicit_content_filter)
-        om = len(list(m for m in g.members if m.status == discord.Status.online))
-        im = len(list(m for m in g.members if m.status == discord.Status.idle))
-        dm = len(list(m for m in g.members if m.status == discord.Status.dnd))
-        ofm = len(list(m for m in g.members if m.status == discord.Status.offline))
-        admins = list(m for m in g.members if m.guild_permissions.administrator and not m.bot)
-        mods = list(m for m in g.members if m.guild_permissions.manage_messages and not m.bot and m not in admins)
-        adminbots = list(m for m in g.members if m.guild_permissions.administrator and m.bot)
+        om, im, dm, ofm, admins, mods, adminbots, bots = 0
+
+        for m in g.members:
+            if m.status == discord.Status.online:
+                om += 1
+            elif m.status == discord.Status.idle:
+                im += 1
+            elif m.status == discord.Status.dnd:
+                dm += 1
+            elif m.status == discord.Status.offline:
+                ofm +=1
+            if m.guild_permissions.administrator:
+                if m.bot:
+                    adminbots += 1
+                else:
+                    admins += 1
+            elif m.guild_permissions.manage_messages and not m.bot:
+                mods += 1
+            if m.bot:
+                bots += 1
 
         embed.add_field(inline=True,name="**Info**",value=f"**Created** {cd.year:04}/{cd.month}/{cd.day:02}\n**Region** {g.region}\n**Emojis** {len(g.emojis)}/{g.emoji_limit*2}\n**Upload Limit** {round(g.filesize_limit * 0.00000095367432)}MB\n**Verification level** {str(g.verification_level).capitalize()}\n**Media filtering** {'No one' if ge == 'Disabled' else 'No role' if ge =='no_role' else 'Everyone'}")
         embed.add_field(inline=True,name="**Members**",value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}")
-        embed.add_field(inline=True,name="**Staff**",value=f"**Owner** <@{g.owner_id}>\n**Admins** {len(admins)}\n**Mods** {len(mods)}\n**Admin Bots** {len(adminbots)}")
+        embed.add_field(inline=True,name="**Staff**",value=f"**Owner** {g.owner}\n**Admins** {admins}\n**Mods** {mods}\n**Admin Bots** {adminbots}\n**Bots** {bots}")
         embed.set_footer(text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}")
 
         if g.banner:
