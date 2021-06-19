@@ -14,6 +14,7 @@ from aiohttp import ClientSession
 import time
 from asyncpg.pool import Pool
 from collections import OrderedDict
+import re
 
 
 class Timer:
@@ -220,6 +221,12 @@ class Ctx(commands.Context):
 
     def __repr__(self):
         return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
+
+    @property
+    def clean_prefix(self):
+        user = self.guild.me if self.guild else self.bot.user
+        pattern = re.compile(r"<@!?%s>" % user.id)
+        return pattern.sub("@%s" % user.display_name.replace('\\', r'\\'), self.prefix)
 
     async def send(self, *args, **kwargs):
         if self.message.reference:

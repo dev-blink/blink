@@ -299,8 +299,8 @@ class Blink(commands.AutoShardedBot):
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
 
         # DB
-        self.DB=await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":config.db})
-        self._cache = blink.CacheDict(1000)
+        self.DB = await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":config.db})
+        self._cache = blink.CacheDict(1024)
         self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",))
 
         # Misc
@@ -312,7 +312,7 @@ class Blink(commands.AutoShardedBot):
         self.load_extensions()
 
         # Bootlog
-        members=len(list(self.get_all_members()))
+        members = sum(1 for _ in self.get_all_members())
         boot=[
             '-' * 79,
             f"**BOT STARTUP:** {self.cluster.identifier} started at {datetime.datetime.utcnow()}",
@@ -338,8 +338,7 @@ class Blink(commands.AutoShardedBot):
     async def get_prefix(self, message):
 
         if self.beta:
-            pass
-            # return ["beta;"]
+            return ["beta;"]
 
         async with self.cache_or_create(f"guild-{message.guild.id}","SELECT data FROM guilds WHERE id=$1",(message.guild.id,)) as cache:
             if cache.value:

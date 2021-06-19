@@ -248,7 +248,9 @@ class Server(blink.Cog,name="Server"):
         """Show guild prefixes"""
         async with ctx.cache:
             prefixes = ctx.cache.value.get("prefixes") or self.bot.default_prefixes
-            embed = discord.Embed(title=f"Prefixes for {ctx.guild}", description="\n".join(prefixes),colour=self.bot.colour)
+            embed = discord.Embed(description="\n".join(prefixes),colour=self.bot.colour)
+        embed.set_author(name=f"Prefixes for {ctx.guild}", icon_url=ctx.guild.icon_url_as(static_format="png"))
+        embed.set_footer(text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes")
         await ctx.send(embed=embed)
 
     @prefixes.command(name="add", aliases=["set"])
