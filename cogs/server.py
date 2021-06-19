@@ -4,7 +4,6 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
-import json
 import discord
 from discord.ext import commands
 import blink
@@ -181,7 +180,7 @@ class Server(blink.Cog,name="Server"):
     async def status_role(self, ctx):
         """Manage status role, gives a user a role for having certain text in their status - eg pic perms for having a vanity in a users status"""
         async with ctx.cache:
-            server = json.loads(ctx.cache.value["data"])
+            server = ctx.cache.value
 
         if not server.get("status_role_enabled"):
             await ctx.send_help(ctx.command)
@@ -197,15 +196,14 @@ class Server(blink.Cog,name="Server"):
     async def status_enable(self, ctx):
         """Enable status role"""
         async with ctx.cache:
-            server = json.loads(ctx.cache.value["data"])
+            server= ctx.cache.value
 
         if server.get("status_role_setup"):
             if server.get("status_role_enabled"):
                 return await ctx.send("Status role is already enabled.")
 
             server["status_role_enabled"] = True
-            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
-            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Status role is now enabled.")
         else:
             await ctx.send("Status role is not currently set up.")
@@ -218,14 +216,13 @@ class Server(blink.Cog,name="Server"):
     async def status_disable(self, ctx):
         """Disable status role"""
         async with ctx.cache:
-            server = json.loads(ctx.cache.value["data"])
+            server = ctx.cache.value
 
         if server.get("status_role_setup"):
             if not server.get("status_role_enabled"):
                 return await ctx.send("Status role is already disabled.")
             server["status_role_enabled"] = False
-            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
-            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Status role is now disabled.")
         else:
             await ctx.send("Status role is not currently set up.")
@@ -238,13 +235,69 @@ class Server(blink.Cog,name="Server"):
     async def status_setup(self,ctx, role:discord.Role, *, status):
         """Setup or change status roles"""
         async with ctx.cache:
-            server = json.loads(ctx.cache.value["data"])
+            server = ctx.cache.value
             server["status_role_string"] = status
             server["status_role_id"] = role.id
             server["status_role_setup"] = True
-            await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), ctx.guild.id)
-            await ctx.cache.bot_invalidate(self.bot)
+            await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Configured status role, use `statusrole enable` to enable.")
+
+    @commands.group(name="prefix", aliases=["prefixes"], invoke_without_command=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def prefixes(self, ctx):
+        """Show guild prefixes"""
+        async with ctx.cache:
+            prefixes = ctx.cache.value.get("prefixes") or self.bot.default_prefixes
+            embed = discord.Embed(title=f"Prefixes for {ctx.guild}", description="\n".join(prefixes),colour=self.bot.colour)
+        await ctx.send(embed=embed)
+
+    @prefixes.command(name="add", aliases=["set"])
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def add_prefix(self, ctx, *, prefix:str):
+        """Add a guild prefix"""
+        prefix = prefix.strip()
+        async with ctx.cache:
+            if not ctx.cache.value.get("prefixes"):
+                ctx.cache.value["prefixes"] = self.bot.default_prefixes
+            if len(ctx.cache.value["prefixes"]) >= 5:
+                await ctx.send("This guild already has the maximum of 5 prefixes, please remove some before adding new ones")
+            elif len(prefix) > 10:
+                await ctx.send("Maximum of 10 characters please.")
+            else:
+                ctx.cache.value["prefixes"].append(prefix)
+                await ctx.send(f"Added the prefix `{prefix}`")
+                return await ctx.cache.save(ctx.guild.id, self.bot)
+            await ctx.cache.bot_invalidate(self.bot)
+
+    @prefixes.command(name="remove", aliases=["delete", "del"])
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def remove_prefix(self, ctx, *, prefix:str):
+        """Remove a guild prefix"""
+        prefix = prefix.strip()
+        async with ctx.cache:
+            if not ctx.cache.value.get("prefixes"):
+                ctx.cache.value["prefixes"] = self.bot.default_prefixes
+            if len(ctx.cache.value["prefixes"]) == 1:
+                await ctx.send("There must be atleast 1 prefix")
+            elif prefix in ctx.cache.value["prefixes"]:
+                ctx.cache.value["prefixes"].remove(prefix)
+                await ctx.send(f"Removed the prefix `{prefix}`")
+                return await ctx.cache.save(ctx.guild.id, self.bot)
+            else:
+                await ctx.send("That is not currently a server prefix")
+            await ctx.cache.bot_invalidate(self.bot)
+
+    @prefixes.command(name="reset", aliases=["default", "clear"])
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def reset_prefix(self,ctx):
+        async with ctx.cache:
+            if ctx.cache.value.get("prefixes"):
+                del ctx.cache.value["prefixes"]
+                await ctx.cache.save(ctx.guild.id, self.bot)
+            await ctx.send("Guild prefixes have been reset to default")
 
     @commands.Cog.listener("on_member_update")
     async def presence_checker(self, before, after:discord.Member):
@@ -254,7 +307,7 @@ class Server(blink.Cog,name="Server"):
         async with data:
             if not data.value:
                 return
-            server = json.loads(data.value["data"])
+            server = data.value
 
         role_valid = True
         if server.get("status_role_enabled"):
@@ -284,8 +337,7 @@ class Server(blink.Cog,name="Server"):
             if not role_valid:
                 server["status_role_setup"] = False
                 server["status_role_enabled"] = False
-                await self.bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(server), after.guild.id)
-                await data.bot_invalidate(self.bot)
+                await data.cache.save(after.guild.id, self.bot)
 
     @commands.Cog.listener("on_message")
     async def mov_wrapper(self,message):

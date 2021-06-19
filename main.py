@@ -69,38 +69,6 @@ def setupenv():
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
-class Ctx(commands.Context):
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        if self.guild and hasattr(self.bot,"wavelink"):
-            self.player = self.bot.wavelink.players.get(self.guild.id)
-
-    def __repr__(self):
-        return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
-
-    async def send(self, *args, **kwargs):
-        if self.message.reference:
-            self.message.reference.fail_if_not_exists = False
-            if not kwargs.get("reference"):
-                kwargs["reference"] = self.message.reference
-                kwargs["mention_author"] = False
-        return await super().send(*args, **kwargs)
-
-
-class CogStorage:
-    def __dir__(self):
-        return sorted([a for a in super().__dir__() if not ((a.startswith("__") and a.endswith("__")) or a in ["register","unregister"])])
-
-    def __len__(self):
-        return len(dir(self))
-
-    def register(self,obj:object,identifier:str):
-        setattr(self,identifier,obj)
-
-    def unregister(self,identifer:str):
-        delattr(self,identifer)
-
-
 class Blink(commands.AutoShardedBot):
     def __init__(self,cluster:clusters.Cluster, logger:logging.Logger):
 
@@ -147,7 +115,6 @@ class Blink(commands.AutoShardedBot):
         )
 
         # Globals
-        self.colour = 0xf5a6b9
         self._initialized = False
         self.beta=config.beta
         self.boottime=datetime.datetime.utcnow()
@@ -155,7 +122,7 @@ class Blink(commands.AutoShardedBot):
         self.logger = logger
 
         # Cogs
-        self._cogs = CogStorage()
+        self._cogs = blink.CogStorage()
         self.load_extension("cogs.pre-error")
         self.loadexceptions = ""
         self.startingcogs = [
@@ -207,6 +174,14 @@ class Blink(commands.AutoShardedBot):
             }
         }
 
+    @property
+    def colour(self):
+        return 0xf5a6b9
+
+    @property
+    def default_prefixes(self):
+        return [";", "b;", "B;", "blink"]
+
     def dispatch(self, event, *args, **kwargs):
         if self._initialized or "ready" in event:
             super().dispatch(event, *args,**kwargs)
@@ -252,26 +227,27 @@ class Blink(commands.AutoShardedBot):
                 return
 
         # create context
-        ctx = await self.get_context(message,cls=Ctx)
+        ctx = await self.get_context(message,cls=blink.Ctx)
         if not ctx.valid:
             return
 
         # channel ratelimit
         bucket = self._cooldown.get_bucket(message)
-        if bucket.update_rate_limit():
-            if message.guild and not message.channel.permissions_for(message.guild.me):
-                pass
-            try:
-                await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
-            except discord.HTTPException:
-                pass
-            return
+        if not message.channel.permissions_for(message.author).manage_messages:
+            if bucket.update_rate_limit():
+                if message.guild and not message.channel.permissions_for(message.guild.me):
+                    pass
+                try:
+                    await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
+                except discord.HTTPException:
+                    pass
+                return
 
         # create guild
         if ctx.guild:
             data = self.cache_or_create(f"guild-{ctx.guild.id}","SELECT data FROM guilds WHERE id=$1",(ctx.guild.id,))
             async with data:
-                if not data.value:
+                if not data.exists:
                     await self.DB.execute("INSERT INTO guilds VALUES ($1, $2)", ctx.guild.id, "{}")
                     await data.bot_invalidate(self)
             ctx.cache = data
@@ -294,9 +270,14 @@ class Blink(commands.AutoShardedBot):
             await self.cluster.dispatch({"event":"INVALIDATE_CACHE","cache":scope})
 
     def cache_or_create(self, identifier: str, statement: str, values: tuple):
+        if identifier.startswith("guild"):
+            cls = blink.ServerCache
+        else:
+            cls = blink.DBCache
+
         if identifier in self._cache:
             return self._cache[identifier]
-        cache = blink.DBCache(self.DB, identifier, statement, values)
+        cache = cls(self.DB, identifier, statement, values)
         self._cache[identifier] = cache
         return cache
 
@@ -355,12 +336,23 @@ class Blink(commands.AutoShardedBot):
         self.update_pres.start()
 
     async def get_prefix(self, message):
-        prefixes=[';','b;','B;','blink ']
 
         if self.beta:
-            return ["beta;"]
-        if message.guild and message.guild.id in [336642139381301249,264445053596991498,265828729970753537,568567800910839811]:
-            prefixes.remove(";")
+            pass
+            # return ["beta;"]
+
+        async with self.cache_or_create(f"guild-{message.guild.id}","SELECT data FROM guilds WHERE id=$1",(message.guild.id,)) as cache:
+            if cache.value:
+                prefixes = cache.value.get("prefixes") or self.default_prefixes
+            else:
+                prefixes = self.default_prefixes
+
+        whitespace_prefixes = []
+
+        for prefix in prefixes:
+            whitespace_prefixes.append(prefix + " ")
+
+        prefixes = whitespace_prefixes + prefixes
 
         return commands.when_mentioned_or(*prefixes)(self,message)
 
@@ -370,7 +362,7 @@ class Blink(commands.AutoShardedBot):
             try:
                 await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
             except Exception as e:
-                await self.warn(f"Error occured inaai presence update {type(e)} `{e}`",False)
+                await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
     async def cluster_event(self,payload):
         if payload is None:

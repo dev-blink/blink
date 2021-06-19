@@ -14,12 +14,6 @@ import time
 
 
 class Info(blink.Cog,name="Info"):
-    @commands.command(name="prefix")
-    @commands.bot_has_permissions(send_messages=True)
-    async def prefix(self, ctx):
-        """Shows the bot's prefix."""
-        await ctx.send("The bot prefix is ';' you can also use 'b;' or a ping.")
-
     @commands.command(name="invite")
     @commands.bot_has_permissions(send_messages=True,embed_links=True)
     async def invite(self, ctx):

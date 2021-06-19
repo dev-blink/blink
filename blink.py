@@ -4,6 +4,7 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import json
 from random import Random as RAND
 from discord.ext import commands
 from math import floor as f
@@ -178,7 +179,7 @@ class SilentWarning(Exception):
 
 
 class Cog(commands.Cog):
-    def __init__(self,bot:commands.Bot,identifier:str):
+    def __init__(self,bot, identifier:str):
         self.bot = bot
         self.identifier = identifier
         bot._cogs.register(self,self.identifier)
@@ -209,3 +210,62 @@ class CacheDict(OrderedDict):
         if len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
+
+
+class Ctx(commands.Context):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        if self.guild and hasattr(self.bot,"wavelink"):
+            self.player = self.bot.wavelink.players.get(self.guild.id)
+
+    def __repr__(self):
+        return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
+
+    async def send(self, *args, **kwargs):
+        if self.message.reference:
+            self.message.reference.fail_if_not_exists = False
+            if not kwargs.get("reference"):
+                kwargs["reference"] = self.message.reference
+                kwargs["mention_author"] = False
+        return await super().send(*args, **kwargs)
+
+
+class CogStorage:
+    def __dir__(self):
+        return sorted([a for a in super().__dir__() if not ((a.startswith("__") and a.endswith("__")) or a in ["register","unregister"])])
+
+    def __len__(self):
+        return len(dir(self))
+
+    def register(self,obj:object,identifier:str):
+        setattr(self,identifier,obj)
+
+    def unregister(self,identifer:str):
+        delattr(self,identifer)
+
+
+class ServerCache(DBCache):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.exists = False
+
+    async def _set_value(self):
+        await super()._set_value()
+        if self._value:
+            self._value = json.loads(self._value['data'])
+            self.exists = True
+        else:
+            self.exists = False
+            self.value = {}
+
+    async def save(self, guild_id:int, bot):
+        await bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(self.value), guild_id)
+        await self.bot_invalidate(bot)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, other):
+        self._value = other
