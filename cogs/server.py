@@ -111,7 +111,7 @@ class Server(blink.Cog,name="Server"):
 
         cd = g.created_at
         ge = str(g.explicit_content_filter)
-        om, im, dm, ofm, admins, mods, adminbots, bots = 0
+        om = im = dm = ofm = admins = mods = adminbots = bots = 0
 
         for m in g.members:
             if m.status == discord.Status.online:
