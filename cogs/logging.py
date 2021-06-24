@@ -127,7 +127,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
         await self.storage.upload(config.cdn,path,img_data)
-        return f"https://cdn.blinkbot.me/{path}"
+        return f"https://{config.cdn}/{path}"
 
     # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
@@ -183,7 +183,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
                 return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
-        if not result or result["avatar"] is None or len(result) == 0:
+        if not result or result["avatar"] is None or len(result["avatar"]) == 0:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
         result = sorted(result,key=lambda x:float(x.split(":",1)[0]),reverse=True)
