@@ -74,8 +74,8 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
-        beforeav = str(before.avatar_url_as(static_format="png", size=self.size))
-        afterav = str(after.avatar_url_as(static_format="png", size=self.size))
+        beforeav = str(before.avatar_url_as(static_format="jpg", size=self.size))
+        afterav = str(after.avatar_url_as(static_format="jpg", size=self.size))
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1",uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid,str(before),beforeav,tt)
@@ -102,7 +102,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,name,avatar) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
 
     async def _update_un(self,id,after,tt):
-        query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
+        query = await self.bot.DB.fetch("SELECT name FROM userlog WHERE id = $1",id)
         try:
             previousNames=query[0]["name"]
         except IndexError:
@@ -111,8 +111,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET name = $1 WHERE id = $2",previousNames,id)
 
     async def _update_av(self,id,after,tt):
-        return
-        query = await self.bot.DB.fetch("SELECT * FROM userlog WHERE id = $1",id)
+        query = await self.bot.DB.fetch("SELECT avatar FROM userlog WHERE id = $1",id)
         av = await self._avurl(after,id)
         try:
             previousAvatars=query[0]["avatar"]
@@ -122,7 +121,6 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
     async def _avurl(self,url,id):
-        return
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars/"):
             return url
         r = await self.session.get(str(url))
