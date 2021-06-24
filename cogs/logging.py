@@ -98,7 +98,6 @@ class GlobalLogs(blink.Cog,name="Global logging"):
         name = [self._format(timestamp,oldname)]
         oldav = await self._avurl(oldav,id)
         avatar = [self._format(timestamp,oldav)]
-        avatar = []
         await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)",id,name,avatar) # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
 
     async def _update_un(self,id,after,tt):
