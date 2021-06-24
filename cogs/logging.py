@@ -183,7 +183,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
                 return await ctx.send("This service is unavailable to you")
         uid = user.id
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1",uid)
-        if not result or result["avatar"] is None:
+        if not result or result["avatar"] is None or len(result) == 0:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
         result = sorted(result,key=lambda x:float(x.split(":",1)[0]),reverse=True)
