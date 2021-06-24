@@ -116,6 +116,7 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             previousAvatars=query[0]["avatar"]
         except IndexError:
             previousAvatars = []
+        previousAvatars = [av for av in previousAvatars if (datetime.datetime.utcnow() - self._unformat(av)[0]).days < config.av_max_age] # remove all avatars older than av_max_age because they will be purged from the cdn anyways
         previousAvatars.append(self._format(tt,av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
@@ -192,10 +193,8 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             unformatted = self._unformat(entry)
             dt = unformatted[0]
             avatar = unformatted[1]
-            timestamp = f"{dt.day}/{dt.month}/{dt.year} @ {dt.hour:02}:{dt.minute:02}"
-            embed = discord.Embed(title=timestamp,description=f"[Link]({avatar})",colour=self.bot.colour)
+            embed = discord.Embed(description=f"[Link]({avatar})",colour=self.bot.colour, timestamp=dt)
             embed.set_image(url=avatar)
-            embed.set_author(name="This service is being discontinued, click this for support/info or to request your data.",url="https://discord.gg/d23VBaR")
             embed.set_footer(text=f"{result.index(entry)}/{len(result)-1}")
             embeds.append(embed)
         if len(embeds) == 1:
