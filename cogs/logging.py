@@ -116,7 +116,12 @@ class GlobalLogs(blink.Cog,name="Global logging"):
             previousAvatars=query[0]["avatar"]
         except IndexError:
             previousAvatars = []
-        previousAvatars = [av for av in previousAvatars if (datetime.datetime.utcnow() - self._unformat(av)[0]).days < config.av_max_age] # remove all avatars older than av_max_age because they will be purged from the cdn anyways
+        # remove all avatars older than av_max_age because they will be purged from the cdn anyways
+        previousAvatars = sorted([av for av in previousAvatars if (datetime.datetime.utcnow() - self._unformat(av)[0]).days < config.av_max_age],key=lambda x:float(x.split(":",1)[0]),reverse=True)
+        excessAvatars = previousAvatars[100:]
+        for excess in excessAvatars:
+            await self.storage.delete(config.cdn)
+        previousAvatars = previousAvatars[:100]
         previousAvatars.append(self._format(tt,av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2",previousAvatars,id)
 
