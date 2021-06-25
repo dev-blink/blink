@@ -34,15 +34,17 @@ import secrets
 def loggingSetup(cluster):
     if not os.path.exists("logs"):
         os.mkdir("logs")
-    logger=logging.getLogger('discord')
+    logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG if config.beta else logging.INFO)
-    handler=logging.FileHandler(filename=f'logs/{cluster}.log', encoding='utf-8', mode='w')
-    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    handler = logging.FileHandler(
+        filename=f'logs/{cluster}.log', encoding='utf-8', mode='w')
+    handler.setFormatter(logging.Formatter(
+        '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
     return logger
 
 
-def log(msg:str, scope:str):
+def log(msg: str, scope: str):
     global printscope
     if scope == printscope:
         joiner = ""
@@ -64,13 +66,13 @@ def setupenv():
 
     # Event loop
     if platform.platform().startswith("Windows"):
-        log("Using Windows Selector loop","loop")
+        log("Using Windows Selector loop", "loop")
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Blink(commands.AutoShardedBot):
-    def __init__(self,cluster:clusters.Cluster, logger:logging.Logger):
+    def __init__(self, cluster: clusters.Cluster, logger: logging.Logger):
 
         # Clustering
         self.cluster = cluster
@@ -116,8 +118,8 @@ class Blink(commands.AutoShardedBot):
 
         # Globals
         self._initialized = False
-        self.beta=config.beta
-        self.boottime=datetime.datetime.utcnow()
+        self.beta = config.beta
+        self.boottime = datetime.datetime.utcnow()
         self.created = False
         self.logger = logger
 
@@ -147,22 +149,23 @@ class Blink(commands.AutoShardedBot):
             self.startingcogs.append("cogs.stats")
 
         # Global channel cooldown
-        self._cooldown = commands.CooldownMapping.from_cooldown(5,5.5,commands.BucketType.channel)
-        log(f"Starting - {self.cluster}","boot")
+        self._cooldown = commands.CooldownMapping.from_cooldown(
+            5, 5.5, commands.BucketType.channel)
+        log(f"Starting - {self.cluster}", "boot")
 
     def __repr__(self):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
     def _trace(self):
         return {
-            "prod":self.__class__.__qualname__,
-            "beta":self.beta,
+            "prod": self.__class__.__qualname__,
+            "beta": self.beta,
             "cluster": self.cluster.identifier,
-            "config":{
-                "gateway":config.gateway,
-                "cdn":config.cdn,
-                "api":config.api,
-                "db":config.db,
+            "config": {
+                "gateway": config.gateway,
+                "cdn": config.cdn,
+                "api": config.api,
+                "db": config.db,
             },
             "master": {
                 "total": self.cluster.ws._total_clusters,
@@ -184,7 +187,7 @@ class Blink(commands.AutoShardedBot):
 
     def dispatch(self, event, *args, **kwargs):
         if self._initialized or "ready" in event:
-            super().dispatch(event, *args,**kwargs)
+            super().dispatch(event, *args, **kwargs)
 
     async def before_identify_hook(self, shard_id, *, initial=False):
         await asyncio.sleep(5)
@@ -206,32 +209,32 @@ class Blink(commands.AutoShardedBot):
     async def on_ready(self):
         if self._initialized:
             return
-        self._initialized=True
+        self._initialized = True
         while len(self._init_shards) != len(self._shard_ids):
             await asyncio.sleep(1)
         await self.create()
 
-    async def on_shard_ready(self,id):
-        log(f"Shard {id} ready","ready")
+    async def on_shard_ready(self, id):
+        log(f"Shard {id} ready", "ready")
         self._init_shards.add(id)
 
     async def on_shard_resume(self, id):
         if self._initialized:
-            await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+            await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
-    async def on_message(self,message: discord.Message):
+    async def on_message(self, message: discord.Message):
         if not self.created:
             return
         if message.author.bot:
             return
 
         # blacklists
-        async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",)) as blacklist:
+        async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
 
         # create context
-        ctx = await self.get_context(message,cls=blink.Ctx)
+        ctx = await self.get_context(message, cls=blink.Ctx)
         if not ctx.valid:
             return
 
@@ -249,7 +252,8 @@ class Blink(commands.AutoShardedBot):
 
         # create guild
         if ctx.guild:
-            data = self.cache_or_create(f"guild-{ctx.guild.id}","SELECT data FROM guilds WHERE id=$1",(ctx.guild.id,))
+            data = self.cache_or_create(
+                f"guild-{ctx.guild.id}", "SELECT data FROM guilds WHERE id=$1", (ctx.guild.id,))
             async with data:
                 if not data.exists:
                     await self.DB.execute("INSERT INTO guilds VALUES ($1, $2)", ctx.guild.id, "{}")
@@ -263,15 +267,15 @@ class Blink(commands.AutoShardedBot):
             try:
                 self.load_extension(extension)
             except Exception as e:
-                log(f"Unable to load: {extension} Exception was raised: {e}","boot")
+                log(f"Unable to load: {extension} Exception was raised: {e}", "boot")
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
-    async def invalidate_cache(self, scope:str, from_remote=False):
+    async def invalidate_cache(self, scope: str, from_remote=False):
         local = self._cache.get(scope)
         if local:
             local.invalidate()
         if not from_remote:
-            await self.cluster.dispatch({"event":"INVALIDATE_CACHE","cache":scope})
+            await self.cluster.dispatch({"event": "INVALIDATE_CACHE", "cache": scope})
 
     def cache_or_create(self, identifier: str, statement: str, values: tuple):
         if identifier.startswith("guild"):
@@ -285,7 +289,7 @@ class Blink(commands.AutoShardedBot):
         self._cache[identifier] = cache
         return cache
 
-    async def warn(self,message,shouldRaise=True):
+    async def warn(self, message, shouldRaise=True):
         time = datetime.datetime.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
         await self.cluster.log_warns(message)
@@ -296,20 +300,21 @@ class Blink(commands.AutoShardedBot):
         before = time.perf_counter()
         self.cluster._post.set()
 
-        log("Waiting on clusters","boot")
+        log("Waiting on clusters", "boot")
 
         await self.cluster.wait_until_ready()
 
-        log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start","boot")
+        log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start", "boot")
 
         # DB
-        self.DB = await asyncpg.create_pool(**{"user":"blink","password":secrets.db,"database":"main","host":config.db})
+        self.DB = await asyncpg.create_pool(**{"user": "blink", "password": secrets.db, "database": "main", "host": config.db})
         self._cache = blink.CacheDict(1024)
-        self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1",("global",))
+        self.cache_or_create(
+            "blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",))
 
         # Misc
         self.session = aiohttp.ClientSession()
-        boottime=datetime.datetime.utcnow() - self.boottime
+        boottime = datetime.datetime.utcnow() - self.boottime
 
         # Extensions
         self.unload_extension("cogs.pre-error")
@@ -317,7 +322,7 @@ class Blink(commands.AutoShardedBot):
 
         # Bootlog
         members = sum(1 for _ in self.get_all_members())
-        boot=[
+        boot = [
             '-' * 79,
             f"**BOT STARTUP:** {self.cluster.identifier} started at {datetime.datetime.utcnow()}",
             f"```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)",
@@ -327,25 +332,25 @@ class Blink(commands.AutoShardedBot):
         if not self.loadexceptions == "":
             boot.append("@everyone ***BOOT ERRORS***\n" + self.loadexceptions)
 
-        self.bootlog="\n".join(boot)
+        self.bootlog = "\n".join(boot)
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
 
         # Created
         self.created = True
 
-        log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}","boot")
-        log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
+        log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}", "boot")
+        log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}", "boot")
 
         for id in self.shards:
-            await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+            await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
     async def get_prefix(self, message):
 
         if self.beta:
             return ["beta;"]
 
-        async with self.cache_or_create(f"guild-{message.guild.id}","SELECT data FROM guilds WHERE id=$1",(message.guild.id,)) as cache:
+        async with self.cache_or_create(f"guild-{message.guild.id}", "SELECT data FROM guilds WHERE id=$1", (message.guild.id,)) as cache:
             if cache.value:
                 prefixes = cache.value.get("prefixes") or self.default_prefixes
             else:
@@ -358,9 +363,9 @@ class Blink(commands.AutoShardedBot):
 
         prefixes = whitespace_prefixes + prefixes
 
-        return commands.when_mentioned_or(*prefixes)(self,message)
+        return commands.when_mentioned_or(*prefixes)(self, message)
 
-    async def cluster_event(self,payload):
+    async def cluster_event(self, payload):
         if payload is None:
             return
         if payload["event"] == "SHUTDOWN":
@@ -373,19 +378,21 @@ class Blink(commands.AutoShardedBot):
             self.reload_extension(payload["cog"])
 
         if payload["event"] == "INVALIDATE_CACHE":
-            await self.invalidate_cache(payload.get("cache"),True)
+            await self.invalidate_cache(payload.get("cache"), True)
 
-    async def on_error(self,event_method,*_,**__):
+    async def on_error(self, event_method, *_, **__):
         exc = sys.exc_info()
         tb = traceback.format_exc()
-        embed = discord.Embed(colour=discord.Colour.red(),title=f"{exc[0].__qualname__} - {exc[1]}")
+        embed = discord.Embed(colour=discord.Colour.red(),
+                              title=f"{exc[0].__qualname__} - {exc[1]}")
         embed.set_author(name=f"Exception in event {event_method}")
         async with aiohttp.ClientSession() as cs:
-            async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
+            async with cs.post("https://api.github.com/gists", headers={"Authorization": "token " + secrets.gist}, json={"public": False, "files": {"traceback.txt": {"content": tb}}}) as gist:
                 data = await gist.json()
                 embed.description = data["html_url"]
-            hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
-            await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
+            hook = discord.Webhook(
+                secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
+            await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
 
 async def launch(loop):

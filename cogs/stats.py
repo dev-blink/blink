@@ -21,7 +21,7 @@ class StatClient(statcord.Client):
         return self.bot.cluster.users
 
     async def on_error(self, e):
-        await self.bot.warn(f"Exception in statcord post {e.__class__.__qualname__} - {e}",False)
+        await self.bot.warn(f"Exception in statcord post {e.__class__.__qualname__} - {e}", False)
 
     def _trace(self):
         return {
@@ -29,23 +29,25 @@ class StatClient(statcord.Client):
         }
 
 
-class Stats(blink.Cog,name="Stats"):
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
+class Stats(blink.Cog, name="Stats"):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if self.bot.beta:
             return
-        self.statcord = StatClient(self.bot,secrets.statcord,custom1=self.logging,custom2=self.music)
-        self.bot.add_listener(self.statcord_push,"on_command")
+        self.statcord = StatClient(
+            self.bot, secrets.statcord, custom1=self.logging, custom2=self.music)
+        self.bot.add_listener(self.statcord_push, "on_command")
         self.statcord.start_loop()
 
     @commands.command(name="stats")
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def stats(self,ctx):
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def stats(self, ctx):
         """Shows stats about the bot"""
-        embed=discord.Embed(title="Bot statistics!",colour=self.bot.colour,description=f"```Servers: {self.bot.cluster.guilds}\nUnique users: {self.bot.cluster.users}```")
+        embed = discord.Embed(title="Bot statistics!", colour=self.bot.colour,
+                              description=f"```Servers: {self.bot.cluster.guilds}\nUnique users: {self.bot.cluster.users}```")
         return await ctx.send(embed=embed)
 
-    async def statcord_push(self,ctx):
+    async def statcord_push(self, ctx):
         self.statcord.command_run(ctx)
 
     async def logging(self):
@@ -65,4 +67,4 @@ class Stats(blink.Cog,name="Stats"):
 
 
 def setup(bot):
-    bot.add_cog(Stats(bot,"stats"))
+    bot.add_cog(Stats(bot, "stats"))

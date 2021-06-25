@@ -15,13 +15,14 @@ from typing import Union
 import secrets
 
 
-class Server(blink.Cog,name="Server"):
-    def __init__(self,*args,**kwargs):
+class Server(blink.Cog, name="Server"):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._transform_cooldown = commands.CooldownMapping.from_cooldown(1,30,commands.BucketType.channel)
+        self._transform_cooldown = commands.CooldownMapping.from_cooldown(
+            1, 30, commands.BucketType.channel)
 
     def memberscheck(self):
-        def predicate(self,ctx):
+        def predicate(self, ctx):
             if ctx.command.endswith("members"):
                 return True
             elif ctx.author.guild_permissions.manage_roles:
@@ -32,81 +33,87 @@ class Server(blink.Cog,name="Server"):
 
     @commands.command(name="members")
     @commands.guild_only()
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
     @commands.check(memberscheck)
-    async def members(self, ctx, *, term: Union[int,str]=None):
+    async def members(self, ctx, *, term: Union[int, str] = None):
         """Shows members for a given role (or all)"""
         if not term:
             return await self.users(ctx)
         role = ctx.guild.get_role(term)
         if not role:
-            role=await blink.searchrole(ctx.guild.roles,str(term))
+            role = await blink.searchrole(ctx.guild.roles, str(term))
         if not role:
             return await ctx.send("I could not find that role.")
         if len(role.members) > 35 or len(role.members) == 0:
             return await ctx.send(f"There are {len(role.members)} members with the role {role.name}")
-        embed=discord.Embed(title=f"{role.name} - {len(role.members)}",colour=0xf5a6b9)
-        embed.add_field(name="Members:", value=" ".join(m.mention for m in role.members), inline=False)
+        embed = discord.Embed(
+            title=f"{role.name} - {len(role.members)}", colour=0xf5a6b9)
+        embed.add_field(name="Members:", value=" ".join(
+            m.mention for m in role.members), inline=False)
         await ctx.send(embed=embed)
 
-    @commands.command(name="muted",aliases=["mutes","currentmutes"])
+    @commands.command(name="muted", aliases=["mutes", "currentmutes"])
     @commands.guild_only()
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
     @commands.has_guild_permissions(manage_roles=True)
     async def muted(self, ctx):
         """Shows currently muted members"""
-        role=await blink.searchrole(ctx.guild.roles,"muted")
+        role = await blink.searchrole(ctx.guild.roles, "muted")
         if not role:
             return await ctx.send("I could not find the muted.")
         if len(role.members) == 0:
             return await ctx.send("There are no currently muted members.")
-        embed=discord.Embed(title="Current mutes",colour=self.bot.colour)
-        embed.add_field(name="Members:", value=" ".join(str(m) for m in role.members), inline=False)
+        embed = discord.Embed(title="Current mutes", colour=self.bot.colour)
+        embed.add_field(name="Members:", value=" ".join(str(m)
+                        for m in role.members), inline=False)
         if len(embed.description) > 2048:
             return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
         await ctx.send(embed=embed)
 
-    @commands.command(name="users",aliases=["membercount"])
+    @commands.command(name="users", aliases=["membercount"])
     @commands.guild_only()
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True)
-    async def users(self,ctx):
+    @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
+    async def users(self, ctx):
         """Shows the user count for the guild."""
-        embed=discord.Embed(title=(ctx.guild.name + ":"),colour=self.bot.colour)
+        embed = discord.Embed(title=(ctx.guild.name + ":"),
+                              colour=self.bot.colour)
         embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(name="Guild Members:", value=ctx.guild.member_count, inline=False)
+        embed.add_field(name="Guild Members:",
+                        value=ctx.guild.member_count, inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="lock")
     @commands.guild_only()
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,manage_channels=True)
+    @commands.bot_has_guild_permissions(send_messages=True, embed_links=True, manage_channels=True)
     @commands.has_permissions(manage_channels=True)
-    async def lockchannel(self,ctx,channel:discord.TextChannel=None):
+    async def lockchannel(self, ctx, channel: discord.TextChannel = None):
         """Locks a channel."""
         if not channel:
-            channel=ctx.channel
+            channel = ctx.channel
         await channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
         await ctx.send(f"Locked {channel.name} for all members.")
 
     @commands.command(name="unlock")
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
-    @commands.bot_has_guild_permissions(send_messages=True,embed_links=True,manage_channels=True)
-    async def unlockchannel(self,ctx,channel:discord.TextChannel=None):
+    @commands.bot_has_guild_permissions(send_messages=True, embed_links=True, manage_channels=True)
+    async def unlockchannel(self, ctx, channel: discord.TextChannel = None):
         """Unlocks a channel."""
         if not channel:
-            channel=ctx.channel
+            channel = ctx.channel
         await channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         await ctx.send(f"Unlocked {channel.name} for all members.")
 
-    @commands.command(name="serverinfo",aliases=["si","server"])
+    @commands.command(name="serverinfo", aliases=["si", "server"])
     @commands.guild_only()
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
-    async def serverinfo(self,ctx):
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def serverinfo(self, ctx):
         """Shows info about a server"""
         g = ctx.guild
 
-        embed=discord.Embed(colour=self.bot.colour)
-        embed.set_author(name=g.name,icon_url=g.icon_url_as(static_format="png"))
+        embed = discord.Embed(colour=self.bot.colour)
+        embed.set_author(
+            name=g.name, icon_url=g.icon_url_as(static_format="png"))
 
         cd = g.created_at
         ge = str(g.explicit_content_filter)
@@ -120,7 +127,7 @@ class Server(blink.Cog,name="Server"):
             elif m.status == discord.Status.dnd:
                 dm += 1
             elif m.status == discord.Status.offline:
-                ofm +=1
+                ofm += 1
             if m.guild_permissions.administrator:
                 if m.bot:
                     adminbots += 1
@@ -131,10 +138,14 @@ class Server(blink.Cog,name="Server"):
             if m.bot:
                 bots += 1
 
-        embed.add_field(inline=True,name="**Info**",value=f"**Created** {cd.year:04}/{cd.month}/{cd.day:02}\n**Region** {g.region}\n**Emojis** {len(g.emojis)}/{g.emoji_limit*2}\n**Upload Limit** {round(g.filesize_limit * 0.00000095367432)}MB\n**Verification level** {str(g.verification_level).capitalize()}\n**Media filtering** {'No one' if ge == 'Disabled' else 'No role' if ge =='no_role' else 'Everyone'}")
-        embed.add_field(inline=True,name="**Members**",value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}")
-        embed.add_field(inline=True,name="**Staff**",value=f"**Owner** {g.owner}\n**Admins** {admins}\n**Mods** {mods}\n**Admin Bots** {adminbots}\n**Bots** {bots}")
-        embed.set_footer(text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}")
+        embed.add_field(inline=True, name="**Info**",
+                        value=f"**Created** {cd.year:04}/{cd.month}/{cd.day:02}\n**Region** {g.region}\n**Emojis** {len(g.emojis)}/{g.emoji_limit*2}\n**Upload Limit** {round(g.filesize_limit * 0.00000095367432)}MB\n**Verification level** {str(g.verification_level).capitalize()}\n**Media filtering** {'No one' if ge == 'Disabled' else 'No role' if ge =='no_role' else 'Everyone'}")
+        embed.add_field(inline=True, name="**Members**",
+                        value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}")
+        embed.add_field(inline=True, name="**Staff**",
+                        value=f"**Owner** {g.owner}\n**Admins** {admins}\n**Mods** {mods}\n**Admin Bots** {adminbots}\n**Bots** {bots}")
+        embed.set_footer(
+            text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}")
 
         if g.banner:
             embed.set_image(url=g.banner_url_as(format="png", size=128))
@@ -149,7 +160,8 @@ class Server(blink.Cog,name="Server"):
             topgg = f"[Top.gg](https://top.gg/servers/{g.id})"
         else:
             topgg = None
-        features = ' | '.join(m.replace('_',' ').lower().capitalize() for m in (f for f in g.features if f != 'MORE_EMOJI'))
+        features = ' | '.join(m.replace('_', ' ').lower().capitalize()
+                              for m in (f for f in g.features if f != 'MORE_EMOJI'))
         other = [
             f"**Unlocked Features** : {features if not features == '' else 'None'}",
             f"**Boosts** {g.premium_subscription_count} | **Boosters** {len(g.premium_subscribers)}",
@@ -159,11 +171,12 @@ class Server(blink.Cog,name="Server"):
         if g.me.guild_permissions.ban_members:
             other.append('**Bans** ' + str(len(await g.bans())))
         if disboard or topgg:
-            other.append(f"{disboard if disboard else ''} {topgg if topgg else ''}")
-        embed.add_field(name='**Other**',value="\n".join(other),inline=False)
+            other.append(
+                f"{disboard if disboard else ''} {topgg if topgg else ''}")
+        embed.add_field(name='**Other**', value="\n".join(other), inline=False)
         return await m.edit(embed=embed)
 
-    @commands.command(name="servericon",aliases=["sicon","icon"])
+    @commands.command(name="servericon", aliases=["sicon", "icon"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def server_icon(self, ctx):
         if ctx.guild.icon is None:
@@ -172,10 +185,10 @@ class Server(blink.Cog,name="Server"):
         embed.set_image(url=ctx.guild.icon_url_as(static_format="png"))
         await ctx.send(embed=embed)
 
-    @commands.group(name="statusrole",aliases=["srole","sr"],invoke_without_command=True)
+    @commands.group(name="statusrole", aliases=["srole", "sr"], invoke_without_command=True)
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_role(self, ctx):
         """Manage status role, gives a user a role for having certain text in their status - eg pic perms for having a vanity in a users status"""
@@ -186,17 +199,17 @@ class Server(blink.Cog,name="Server"):
             await ctx.send_help(ctx.command)
 
         else:
-            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'",colour=self.bot.colour).set_footer(text="use statusrole help for info"))
+            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'", colour=self.bot.colour).set_footer(text="use statusrole help for info"))
 
-    @status_role.command(name="enable",aliases=["on"])
+    @status_role.command(name="enable", aliases=["on"])
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_enable(self, ctx):
         """Enable status role"""
         async with ctx.cache:
-            server= ctx.cache.value
+            server = ctx.cache.value
 
         if server.get("status_role_setup"):
             if server.get("status_role_enabled"):
@@ -208,10 +221,10 @@ class Server(blink.Cog,name="Server"):
         else:
             await ctx.send("Status role is not currently set up.")
 
-    @status_role.command(name="disable",aliases=["off"])
+    @status_role.command(name="disable", aliases=["off"])
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, manage_roles=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
     async def status_disable(self, ctx):
         """Disable status role"""
@@ -227,12 +240,12 @@ class Server(blink.Cog,name="Server"):
         else:
             await ctx.send("Status role is not currently set up.")
 
-    @status_role.command(name="setup",aliases=["set","update"])
+    @status_role.command(name="setup", aliases=["set", "update"])
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    @commands.bot_has_permissions(send_messages=True,embed_links=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
-    async def status_setup(self,ctx, role:discord.Role, *, status):
+    async def status_setup(self, ctx, role: discord.Role, *, status):
         """Setup or change status roles"""
         async with ctx.cache:
             server = ctx.cache.value
@@ -247,16 +260,20 @@ class Server(blink.Cog,name="Server"):
     async def prefixes(self, ctx):
         """Show guild prefixes"""
         async with ctx.cache:
-            prefixes = ctx.cache.value.get("prefixes") or self.bot.default_prefixes
-            embed = discord.Embed(description="\n".join(prefixes),colour=self.bot.colour)
-        embed.set_author(name=f"Prefixes for {ctx.guild}", icon_url=ctx.guild.icon_url_as(static_format="png"))
-        embed.set_footer(text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes")
+            prefixes = ctx.cache.value.get(
+                "prefixes") or self.bot.default_prefixes
+            embed = discord.Embed(description="\n".join(
+                prefixes), colour=self.bot.colour)
+        embed.set_author(name=f"Prefixes for {ctx.guild}", icon_url=ctx.guild.icon_url_as(
+            static_format="png"))
+        embed.set_footer(
+            text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes")
         await ctx.send(embed=embed)
 
     @prefixes.command(name="add", aliases=["set"])
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_guild=True)
-    async def add_prefix(self, ctx, *, prefix:str):
+    async def add_prefix(self, ctx, *, prefix: str):
         """Add a guild prefix"""
         prefix = prefix.strip()
         async with ctx.cache:
@@ -275,7 +292,7 @@ class Server(blink.Cog,name="Server"):
     @prefixes.command(name="remove", aliases=["delete", "del"])
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_guild=True)
-    async def remove_prefix(self, ctx, *, prefix:str):
+    async def remove_prefix(self, ctx, *, prefix: str):
         """Remove a guild prefix"""
         prefix = prefix.strip()
         async with ctx.cache:
@@ -294,7 +311,7 @@ class Server(blink.Cog,name="Server"):
     @prefixes.command(name="reset", aliases=["default", "clear"])
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_guild=True)
-    async def reset_prefix(self,ctx):
+    async def reset_prefix(self, ctx):
         async with ctx.cache:
             if ctx.cache.value.get("prefixes"):
                 del ctx.cache.value["prefixes"]
@@ -302,10 +319,11 @@ class Server(blink.Cog,name="Server"):
             await ctx.send("Guild prefixes have been reset to default")
 
     @commands.Cog.listener("on_member_update")
-    async def presence_checker(self, before, after:discord.Member):
+    async def presence_checker(self, before, after: discord.Member):
         if before.activity == after.activity:
             return
-        data = self.bot.cache_or_create(f"guild-{before.guild.id}","SELECT data FROM guilds WHERE id=$1",(before.guild.id,))
+        data = self.bot.cache_or_create(
+            f"guild-{before.guild.id}", "SELECT data FROM guilds WHERE id=$1", (before.guild.id,))
         async with data:
             if not data.value:
                 return
@@ -326,13 +344,13 @@ class Server(blink.Cog,name="Server"):
             if status_valid:
                 if role not in after.roles:
                     try:
-                        await after.add_roles(role,reason="Status role")
+                        await after.add_roles(role, reason="Status role")
                     except discord.Forbidden:
                         role_valid = False
             else:
                 if role in after.roles:
                     try:
-                        await after.remove_roles(role,reason="Status role is no longer valid")
+                        await after.remove_roles(role, reason="Status role is no longer valid")
                     except discord.Forbidden:
                         role_valid = False
 
@@ -342,8 +360,8 @@ class Server(blink.Cog,name="Server"):
                 await data.cache.save(after.guild.id, self.bot)
 
     @commands.Cog.listener("on_message")
-    async def mov_wrapper(self,message):
-        async with self.bot.cache_or_create("blacklist-transform","SELECT snowflakes FROM blacklist WHERE scope=$1",("transform",)) as blacklist:
+    async def mov_wrapper(self, message):
+        async with self.bot.cache_or_create("blacklist-transform", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("transform",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
         p = message.channel.permissions_for(message.guild.me)
@@ -352,7 +370,7 @@ class Server(blink.Cog,name="Server"):
 
         if message.attachments:
             attachment = message.attachments[0]
-            if attachment.filename.endswith((".mov",".mp4")):
+            if attachment.filename.endswith((".mov", ".mp4")):
                 if attachment.height:
                     return
                 if attachment.content_type not in ["video/quicktime", "video/mp4"]:
@@ -368,7 +386,7 @@ class Server(blink.Cog,name="Server"):
                 task = self.bot.loop.create_task(self.mov_mp4(message))
 
                 with contextlib.suppress(asyncio.TimeoutError):
-                    await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id,timeout=60)
+                    await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id, timeout=60)
                 task.cancel()
                 del task
 
@@ -376,12 +394,12 @@ class Server(blink.Cog,name="Server"):
         with contextlib.suppress(asyncio.CancelledError):
             attachment = message.attachments[0]
 
-            check = await message.channel.send(reference=message,content="looks like your video is broken, would you like me to try and fix it for you ?")
+            check = await message.channel.send(reference=message, content="looks like your video is broken, would you like me to try and fix it for you ?")
             await check.add_reaction("✔")
             await check.add_reaction("✖")
 
             try:
-                react = await self.bot.wait_for("raw_reaction_add",check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔","✖"), timeout=10)
+                react = await self.bot.wait_for("raw_reaction_add", check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔", "✖"), timeout=10)
             except asyncio.TimeoutError:
                 return await check.delete()
             else:
@@ -390,24 +408,24 @@ class Server(blink.Cog,name="Server"):
 
             await check.edit(content="working on it...")
             json = {
-                "input":[{
-                    "type":"remote",
-                    "source":attachment.url
+                "input": [{
+                    "type": "remote",
+                    "source": attachment.url
                 }],
-                "conversion":[{
-                    "target":"mp4"
+                "conversion": [{
+                    "target": "mp4"
                 }]
             }
             async with aiohttp.ClientSession() as cs:
-                async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key":secrets.converter},json=json) as req:
+                async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key": secrets.converter}, json=json) as req:
                     if not req.status == 201:
-                        await self.bot.warn(f"Error in video convert - http {req.status}",False)
+                        await self.bot.warn(f"Error in video convert - http {req.status}", False)
                         return await check.edit(content="This service is temporarily unavailable. [HTTP]")
                     response = await req.json()
                     id = response["id"]
                 try:
                     for limiter in range(30):
-                        async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                        async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                             json = await req.json()
 
                         if json.get("errors"):
@@ -416,15 +434,15 @@ class Server(blink.Cog,name="Server"):
 
                         if not json["output"]:
                             if limiter == 29:
-                                async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
-                                    await self.bot.warn(f"Cancelled job {id} {message} for 30s limit",False)
+                                async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
+                                    await self.bot.warn(f"Cancelled job {id} {message} for 30s limit", False)
                                     return await check.edit(content="This service is temporarily unavailable. [TIMEOUT]")
                             await asyncio.sleep(1)
                             continue
 
                         break
                 except asyncio.CancelledError:
-                    async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key":secrets.converter}) as req:
+                    async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                         return
 
                 if not json["output"]:
@@ -436,15 +454,15 @@ class Server(blink.Cog,name="Server"):
                 if len(data.getbuffer()) > message.guild.filesize_limit:
                     await check.delete()
                     return await message.channel.send("looks like that video was too big for me to upload")
-                file = discord.File(data,filename="video.mp4")
+                file = discord.File(data, filename="video.mp4")
                 msg = await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.", file=file, reference=message)
                 await check.delete()
                 await msg.add_reaction("🗑")
 
                 with contextlib.suppress(asyncio.TimeoutError):
-                    await self.bot.wait_for("raw_reaction_add",check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
+                    await self.bot.wait_for("raw_reaction_add", check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
                     await msg.delete()
 
 
 def setup(bot):
-    bot.add_cog(Server(bot,"server"))
+    bot.add_cog(Server(bot, "server"))

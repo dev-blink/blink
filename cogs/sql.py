@@ -13,7 +13,7 @@ class SQL(blink.Cog):
             return "\n".join(content.split("\n")[1:-1])
         return content.strip("` \n")
 
-    @commands.command(name="sql",hidden=True)
+    @commands.command(name="sql", hidden=True)
     @commands.is_owner()
     async def sql(self, ctx, *, query: str):
         """Run some SQL."""
@@ -114,4 +114,4 @@ class plural:
 
 
 def setup(bot):
-    bot.add_cog(SQL(bot,"sql"))
+    bot.add_cog(SQL(bot, "sql"))
