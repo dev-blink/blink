@@ -136,11 +136,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         try:
             r = await self.session.get(url)
         except OSError as error:
-            if error.errorno != 104:
-                raise
-            else:
-                self.session = aiohttp.ClientSession()
-                r = await self.session.get(url)
+            self.session = aiohttp.ClientSession()
+            r = await self.session.get(url)
         ext = str(url).replace(f"?size={self.size}", "").split(".")[-1]
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
