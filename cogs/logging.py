@@ -44,7 +44,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         if not self.bot.beta:
             from gcloud.aio.storage import Storage
             self.storage = Storage(
-                service_file='./creds.json', session=self.session)
+                service_file='./creds.json')
         self.blacklist = self.bot.cache_or_create(
             "blacklist-logging", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("logging",))
         self.message_push.start()
@@ -133,7 +133,14 @@ class GlobalLogs(blink.Cog, name="Global logging"):
     async def _avurl(self, url, id):
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars/"):
             return url
-        r = await self.session.get(str(url))
+        try:
+            r = await self.session.get(url)
+        except OSError as error:
+            if error.errorno != 104:
+                raise
+            else:
+                self.session = aiohttp.ClientSession()
+                r = await self.session.get(url)
         ext = str(url).replace(f"?size={self.size}", "").split(".")[-1]
         img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
