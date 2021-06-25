@@ -6,7 +6,7 @@
 
 # External
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import asyncpg
 import aiohttp
 import humanize
@@ -215,6 +215,10 @@ class Blink(commands.AutoShardedBot):
         log(f"Shard {id} ready","ready")
         self._init_shards.add(id)
 
+    async def on_shard_resume(self, id):
+        if self._initialized:
+            await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+
     async def on_message(self,message: discord.Message):
         if not self.created:
             return
@@ -333,7 +337,8 @@ class Blink(commands.AutoShardedBot):
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}","boot")
         log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}","boot")
 
-        self.update_pres.start()
+        for id in self.shards:
+            await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
     async def get_prefix(self, message):
 
@@ -354,14 +359,6 @@ class Blink(commands.AutoShardedBot):
         prefixes = whitespace_prefixes + prefixes
 
         return commands.when_mentioned_or(*prefixes)(self,message)
-
-    @tasks.loop(hours=1)
-    async def update_pres(self):
-        for id in self.shards:
-            try:
-                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
-            except Exception as e:
-                await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
     async def cluster_event(self,payload):
         if payload is None:
