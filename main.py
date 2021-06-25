@@ -383,7 +383,7 @@ class Blink(commands.AutoShardedBot):
         async with aiohttp.ClientSession() as cs:
             async with cs.post("https://api.github.com/gists", headers={"Authorization":"token "+ secrets.gist}, json={"public":False, "files":{"traceback.txt":{"content":tb}}}) as gist:
                 data = await gist.json()
-                embed.description = data
+                embed.description = data["html_url"]
             hook = discord.Webhook(secrets.errorhook,adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed,username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
