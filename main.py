@@ -5,6 +5,7 @@
 
 
 # External
+from typing import Dict, List
 import discord
 from discord.ext import commands
 import asyncpg
@@ -31,7 +32,7 @@ import secrets
 
 
 # logging
-def loggingSetup(cluster):
+def loggingSetup(cluster) -> logging.Logger:
     """Creates a log file named after the cluster given"""
     if not os.path.exists("logs"):
         os.mkdir("logs")
@@ -159,10 +160,10 @@ class Blink(commands.AutoShardedBot):
             5, 5.5, commands.BucketType.channel)
         log(f"Starting - {self.cluster}", "boot")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
-    def _trace(self):
+    def _trace(self) -> Dict[str, str]:
         """Debug information about the bot"""
         return {
             "prod": self.__class__.__qualname__,
@@ -186,14 +187,14 @@ class Blink(commands.AutoShardedBot):
 
     # These are properties as they are static
     @property
-    def colour(self):
+    def colour(self) -> int:
         return 0xf5a6b9
 
     @property
-    def default_prefixes(self):
+    def default_prefixes(self) -> List[str]:
         return [";", "b;", "B;", "blink"]
 
-    def dispatch(self, event, *args, **kwargs):
+    def dispatch(self, event: str, *args, **kwargs):
         """Overriding this stops events being sent to handlers before the bot is ready"""
         if self._initialized or "ready" in event:
             super().dispatch(event, *args, **kwargs)
@@ -235,7 +236,7 @@ class Blink(commands.AutoShardedBot):
         log(f"Shard {id} ready", "ready")
         self._init_shards.add(id)
 
-    async def on_shard_resume(self, id):
+    async def on_shard_resume(self, id: int):
         """
         Change presence to the presence to the correct startup presence
         Presences are set to the presence set in __init__ when the bot 
@@ -300,7 +301,7 @@ class Blink(commands.AutoShardedBot):
                 log(f"Unable to load: {extension} Exception was raised: {e}", "boot")
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
-    async def invalidate_cache(self, scope: str, from_remote=False):
+    async def invalidate_cache(self, scope: str, from_remote: bool = False):
         """
         Invalidate the local cache of a database entry
         Optionally tell other clusters to invalidate
@@ -313,7 +314,7 @@ class Blink(commands.AutoShardedBot):
         if not from_remote:
             await self.cluster.dispatch({"event": "INVALIDATE_CACHE", "cache": scope})
 
-    def cache_or_create(self, identifier: str, statement: str, values: tuple):
+    def cache_or_create(self, identifier: str, statement: str, values: tuple) -> blink.DBCache:
         """Fetch a cached database entry or create a cache if not already cached"""
         if identifier.startswith("guild"):  # Guilds have custom classes because a guild value will always be a dict
             cls = blink.ServerCache
@@ -393,7 +394,7 @@ class Blink(commands.AutoShardedBot):
         for id in self.shards:  # Set initial shar specific presence - this is different from the starting up presence set in __init__
             await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
-    async def get_prefix(self, message):
+    async def get_prefix(self, message: discord.Message) -> List[str]:
         """Custom prefixes"""
         if self.beta:  # Beta only beta prefix
             return ["beta;"]
@@ -416,7 +417,7 @@ class Blink(commands.AutoShardedBot):
 
         return commands.when_mentioned_or(*prefixes)(self, message)
 
-    async def cluster_event(self, payload):
+    async def cluster_event(self, payload: dict):
         """Handles messages coming from other clusters"""
         if payload is None:  # Ignore blank messages - this should be unreachable
             return
@@ -435,7 +436,7 @@ class Blink(commands.AutoShardedBot):
             # Purge local cache if remote invalidated it
             await self.invalidate_cache(payload.get("cache"), True)
 
-    async def on_error(self, event_method, *_, **__):
+    async def on_error(self, event_method: str, *_, **__):
         """Event error handler sends events to github gist"""
         exc = sys.exc_info()
         tb = traceback.format_exc()
@@ -451,7 +452,7 @@ class Blink(commands.AutoShardedBot):
             await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
 
 
-async def launch(loop):
+async def launch(loop: asyncio.BaseEventLoop):
     """
     The main function to start the bot
     This is needed in an async environment to get the bot information from the cluster server
