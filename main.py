@@ -32,6 +32,7 @@ import secrets
 
 # logging
 def loggingSetup(cluster):
+    """Creates a log file named after the cluster given"""
     if not os.path.exists("logs"):
         os.mkdir("logs")
     logger = logging.getLogger('discord')
@@ -45,6 +46,7 @@ def loggingSetup(cluster):
 
 
 def log(msg: str, scope: str):
+    """Separate print statements by what category of information they are (scope)"""
     global printscope
     if scope == printscope:
         joiner = ""
@@ -55,12 +57,13 @@ def log(msg: str, scope: str):
 
 
 def setupenv():
+    """Set environment variables and change event loop on windows"""
     global printscope
     printscope = ""
 
     # Environment
     os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
-    os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
+    os.environ["JISHAKU_NO_DM_TRACEBACK"] = str(not config.beta)
     os.environ["JISHAKU_HIDE"] = "True"
     os.environ["JISHAKU_RETAIN"] = "True"
 
@@ -72,6 +75,8 @@ def setupenv():
 
 
 class Blink(commands.AutoShardedBot):
+    """Main bot class for blink bot"""
+
     def __init__(self, cluster: clusters.Cluster, logger: logging.Logger):
 
         # Clustering
@@ -126,6 +131,7 @@ class Blink(commands.AutoShardedBot):
         # Cogs
         self._cogs = blink.CogStorage()
         self.load_extension("cogs.pre-error")
+        # This is originally blank so it can be appended to, TODO: make an array
         self.loadexceptions = ""
         self.startingcogs = [
             "cogs.help",
@@ -144,11 +150,11 @@ class Blink(commands.AutoShardedBot):
             "cogs.social"
         ]
         self.startingcogs.append("jishaku")
-        if not self.beta:
+        if not self.beta:  # Dont load these on beta as they will conflict with the live bot
             self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
-        # Global channel cooldown
+        # Global channel cooldown - to avoid spamming commands
         self._cooldown = commands.CooldownMapping.from_cooldown(
             5, 5.5, commands.BucketType.channel)
         log(f"Starting - {self.cluster}", "boot")
@@ -157,6 +163,7 @@ class Blink(commands.AutoShardedBot):
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
     def _trace(self):
+        """Debug information about the bot"""
         return {
             "prod": self.__class__.__qualname__,
             "beta": self.beta,
@@ -177,6 +184,7 @@ class Blink(commands.AutoShardedBot):
             }
         }
 
+    # These are properties as they are static
     @property
     def colour(self):
         return 0xf5a6b9
@@ -186,6 +194,7 @@ class Blink(commands.AutoShardedBot):
         return [";", "b;", "B;", "blink"]
 
     def dispatch(self, event, *args, **kwargs):
+        """Overriding this stops events being sent to handlers before the bot is ready"""
         if self._initialized or "ready" in event:
             super().dispatch(event, *args, **kwargs)
 
@@ -193,25 +202,33 @@ class Blink(commands.AutoShardedBot):
         await asyncio.sleep(5)
 
     async def launch_shards(self):
+        """
+        Overriding this to stop shards launching and stepping on eachother
+        This is necessary to abide by the 1 identify per 5s rate limit imposed by discord
+        This is essentially a copy/paste of the library default but with clustering support
+        """
         gateway = await self.http.get_gateway()
 
         self._connection.shard_count = self.shard_count
         self._connection.shard_ids = self.shard_ids
 
+        # A is the first cluster and will not need to wait for the previous one to identify
         if not self.cluster.identifier == "A":
             await self.cluster.wait_cluster()
         for shard_id in self.shard_ids:
             await self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))
 
+        # Tell other clusters that we have identified
         await self.cluster.ws.post_identify()
         self._connection.shards_launched.set()
 
     async def on_ready(self):
+        """Creates the bot if the bot is ready for the first time"""
         if self._initialized:
             return
         self._initialized = True
         while len(self._init_shards) != len(self._shard_ids):
-            await asyncio.sleep(1)
+            await asyncio.sleep(1)  # Wait for all shards to be ready too...
         await self.create()
 
     async def on_shard_ready(self, id):
@@ -219,50 +236,63 @@ class Blink(commands.AutoShardedBot):
         self._init_shards.add(id)
 
     async def on_shard_resume(self, id):
+        """
+        Change presence to the presence to the correct startup presence
+        Presences are set to the presence set in __init__ when the bot 
+        reconencts a shard, so here after reconnecting we must change
+        back to the shard specific status
+        """
         if self._initialized:
             await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
     async def on_message(self, message: discord.Message):
-        if not self.created:
+        if not self.created:  # Events can be called after initialization but before creation
             return
-        if message.author.bot:
+        if message.author.bot:  # Bots dont execute commands
             return
 
         # blacklists
         async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
-                return
+                return  # Ignore all messages from users that are globally banned
 
         # create context
+        # Cls is required for the custom context
         ctx = await self.get_context(message, cls=blink.Ctx)
         if not ctx.valid:
-            return
+            return  # Return on invalid commands
 
         # channel ratelimit
+        # Per channel cooldown to stop spamming of commands
         bucket = self._cooldown.get_bucket(message)
+        # Tick the bucket only if the user is not a mod
         if not message.channel.permissions_for(message.author).manage_messages:
             if bucket.update_rate_limit():
-                if message.guild and not message.channel.permissions_for(message.guild.me):
-                    pass
-                try:
-                    await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
-                except discord.HTTPException:
-                    pass
-                return
+                # React if permissions to do so or in (dms?)
+                if not message.guild or message.channel.permissions_for(message.guild.me):
+                    try:
+                        await message.add_reaction("<:CHANNEL_COOLDOWN:785184949723594782>")
+                    except discord.HTTPException:
+                        pass
+                return  # Dont invoke the command
 
-        # create guild
+        # Attaching guild data cache to context,
+        # This is not done in the custom context definition because it needs to be run asynchronously
         if ctx.guild:
             data = self.cache_or_create(
                 f"guild-{ctx.guild.id}", "SELECT data FROM guilds WHERE id=$1", (ctx.guild.id,))
             async with data:
                 if not data.exists:
+                    # Create a blank data entry for the guild
                     await self.DB.execute("INSERT INTO guilds VALUES ($1, $2)", ctx.guild.id, "{}")
                     await data.bot_invalidate(self)
             ctx.cache = data
 
+        # Invoke the context, passing it back to the internal handler
         await self.invoke(ctx)
 
     def load_extensions(self):
+        """Load all extensions to the bot, catching and logging any errors"""
         for extension in self.startingcogs:
             try:
                 self.load_extension(extension)
@@ -271,25 +301,38 @@ class Blink(commands.AutoShardedBot):
                 self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
 
     async def invalidate_cache(self, scope: str, from_remote=False):
+        """
+        Invalidate the local cache of a database entry
+        Optionally tell other clusters to invalidate
+        their cache if this cluster modified it
+        """
         local = self._cache.get(scope)
         if local:
+            # Cache will be fetched from database next time it is accessed on this cluster.
             local.invalidate()
         if not from_remote:
             await self.cluster.dispatch({"event": "INVALIDATE_CACHE", "cache": scope})
 
     def cache_or_create(self, identifier: str, statement: str, values: tuple):
-        if identifier.startswith("guild"):
+        """Fetch a cached database entry or create a cache if not already cached"""
+        if identifier.startswith("guild"):  # Guilds have custom classes because a guild value will always be a dict
             cls = blink.ServerCache
         else:
             cls = blink.DBCache
 
         if identifier in self._cache:
-            return self._cache[identifier]
+            return self._cache[identifier]  # Return local cache
+
+        # Create new cache and add to local store
         cache = cls(self.DB, identifier, statement, values)
         self._cache[identifier] = cache
         return cache
 
     async def warn(self, message, shouldRaise=True):
+        """
+        Log a warning to the warnings discord channel
+        Can raise an exception to back out of things if failure occurs
+        """
         time = datetime.datetime.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
         await self.cluster.log_warns(message)
@@ -297,12 +340,14 @@ class Blink(commands.AutoShardedBot):
             raise blink.SilentWarning(message)
 
     async def create(self):
-        before = time.perf_counter()
+        """Do the initial setup of the bot after ready is called, this is only to be called once"""
+        before = time.perf_counter()  # Performance metrics
+        # Indicate to the cluster that the cache is ready and allow sending of statistics
         self.cluster._post.set()
 
         log("Waiting on clusters", "boot")
 
-        await self.cluster.wait_until_ready()
+        await self.cluster.wait_until_ready()  # Wait on the other clusters to be ready
 
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start", "boot")
 
@@ -313,14 +358,17 @@ class Blink(commands.AutoShardedBot):
             "blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",))
 
         # Misc
-        self.session = aiohttp.ClientSession()
-        boottime = datetime.datetime.utcnow() - self.boottime
+        self.session = aiohttp.ClientSession()  # TODO: localise sessions to cogs
 
         # Extensions
         self.unload_extension("cogs.pre-error")
         self.load_extensions()
 
-        # Bootlog
+        # Time taken for bot to be able to server users
+        boottime = datetime.datetime.utcnow() - self.boottime
+
+        # Log boot metrics to the discord channel
+        # TODO: this is ugly lol
         members = sum(1 for _ in self.get_all_members())
         boot = [
             '-' * 79,
@@ -336,38 +384,43 @@ class Blink(commands.AutoShardedBot):
         if not self.beta:
             await self.cluster.log_startup(self.bootlog)
 
-        # Created
+        # Signal that this function is done
         self.created = True
 
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}", "boot")
         log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}", "boot")
 
-        for id in self.shards:
+        for id in self.shards:  # Set initial shar specific presence - this is different from the starting up presence set in __init__
             await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
 
     async def get_prefix(self, message):
-
-        if self.beta:
+        """Custom prefixes"""
+        if self.beta:  # Beta only beta prefix
             return ["beta;"]
 
+        # Fetch the guild data from the cache
         async with self.cache_or_create(f"guild-{message.guild.id}", "SELECT data FROM guilds WHERE id=$1", (message.guild.id,)) as cache:
             if cache.value:
                 prefixes = cache.value.get("prefixes") or self.default_prefixes
             else:
                 prefixes = self.default_prefixes
 
+        # Another array is required here to stop modifying the prefix array while iterating over it
         whitespace_prefixes = []
 
         for prefix in prefixes:
             whitespace_prefixes.append(prefix + " ")
 
+        # It is important that whitespace prefixes come first due to a quirk in the library prefix code
         prefixes = whitespace_prefixes + prefixes
 
         return commands.when_mentioned_or(*prefixes)(self, message)
 
     async def cluster_event(self, payload):
-        if payload is None:
+        """Handles messages coming from other clusters"""
+        if payload is None:  # Ignore blank messages - this should be unreachable
             return
+        # Close everthing possible and quit, this returns after stopping the loop because it raises an exception
         if payload["event"] == "SHUTDOWN":
             await self.cluster.quit()
             await self.logout()
@@ -375,12 +428,15 @@ class Blink(commands.AutoShardedBot):
             await self.loop.close()
             sys.exit(0)
         if payload["event"] == "RELOAD":
+            # Reload cogs - sent by the dev reload command
             self.reload_extension(payload["cog"])
 
         if payload["event"] == "INVALIDATE_CACHE":
+            # Purge local cache if remote invalidated it
             await self.invalidate_cache(payload.get("cache"), True)
 
     async def on_error(self, event_method, *_, **__):
+        """Event error handler sends events to github gist"""
         exc = sys.exc_info()
         tb = traceback.format_exc()
         embed = discord.Embed(colour=discord.Colour.red(),
@@ -396,23 +452,32 @@ class Blink(commands.AutoShardedBot):
 
 
 async def launch(loop):
-    cluster = clusters.Cluster(config.gateway)
+    """
+    The main function to start the bot
+    This is needed in an async environment to get the bot information from the cluster server
+    This handles things like setting up logging, clustering, starting, and handling exceptions
+    """
+    cluster = clusters.Cluster(
+        config.gateway)  # Create a cluster object from the prescribed gateway
+    # Start the internal loop of the cluster - connects to the master server
     cluster.start(loop)
+    # wait for an identifier to be recieved from the gateway, the gateway will close if all clusters are active
     identifier = await cluster.wait_identifier()
+    # Create logger based on the identifier for this cluster
     log = loggingSetup(identifier)
     bot = Blink(cluster, log)
-    cluster.reg_bot(bot)
+    cluster.reg_bot(bot)  # Cluster requires a bot object to function
     try:
         await bot.start(secrets.token, bot=True, reconnect=True)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt:  # close the bot on CTRL+C, it is proper practice to shutdown via the dev command
         await bot.logout()
         await cluster.quit()
         loop.close()
         sys.exit(1)
     except Exception as e:
+        # Bot will report a crash to the master
         await cluster.crash(e, traceback.format_exc())
         print("Fatal client exception - exiting")
-        await asyncio.sleep(5)
         await cluster.quit()
         loop.close()
         sys.exit(130)
