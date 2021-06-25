@@ -22,16 +22,16 @@ loop = asyncio.get_event_loop()
 
 async def _panic(message: str, cluster: str):
     data = {
-        "t": "Cluster disconnect",
-        "m": message,
-        "v": True,
-        "i": 2,
-        "c": 0xf5a6b9,
-        "d": "a",
-        "k": config.panic_key
+        "app_key": config.panic_app_key,
+        "app_secret": config.panic_app_secret,
+        "access_token": config.panic_access_token,
+        "content": message,
+        "target_type": "user",
+
+
     }
     async with aiohttp.ClientSession() as cs:
-        async with cs.post("https://www.pushsafer.com/api", data=data, headers={"content-type": "application/x-www-form-urlencoded"}) as response:
+        async with cs.post("https://api.pushed.co/1/push", data=data, headers={"content-type": "application/x-www-form-urlencoded"}) as response:
             print(
                 f"[GATEWAY]PANIC REPORT SENT FOR CLUSTER {cluster} AT {datetime.datetime.utcnow()} UTC NOTIFICATIONS SERVICE RESPONSED WITH HTTP {response.status}")
 
