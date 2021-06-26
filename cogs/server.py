@@ -279,7 +279,7 @@ class Server(blink.Cog, name="Server"):
         async with ctx.cache:
             if not ctx.cache.value.get("prefixes"):
                 ctx.cache.value["prefixes"] = self.bot.default_prefixes
-            if len(ctx.cache.value["prefixes"]) >= 5:
+            if len(ctx.cache.value["prefixes"]) >= 7:
                 await ctx.send("This guild already has the maximum of 5 prefixes, please remove some before adding new ones")
             elif len(prefix) > 10:
                 await ctx.send("Maximum of 10 characters please.")
