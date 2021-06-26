@@ -7,7 +7,7 @@
 # External
 from typing import Dict, List
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncpg
 import aiohttp
 import humanize
@@ -391,8 +391,11 @@ class Blink(commands.AutoShardedBot):
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}", "boot")
         log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}", "boot")
 
-        for id in self.shards:  # Set initial shar specific presence - this is different from the starting up presence set in __init__
+        for id in self.shards:  # Set initial shard specific presence - this is different from the starting up presence set in __init__
             await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+
+        self.update_pres.start() # This is still needed because idk ?????
+
 
     async def get_prefix(self, message: discord.Message) -> List[str]:
         """Custom prefixes"""
@@ -416,6 +419,14 @@ class Blink(commands.AutoShardedBot):
         prefixes = whitespace_prefixes + prefixes
 
         return commands.when_mentioned_or(*prefixes)(self, message)
+
+    @tasks.loop(hours=1)
+    async def update_pres(self):
+        for id in self.shards:
+            try:
+                await self.change_presence(shard_id=id,status=discord.Status.online,activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+            except Exception as e:
+                await self.warn(f"Error occured in presence update {type(e)} `{e}`",False)
 
     async def cluster_event(self, payload: dict):
         """Handles messages coming from other clusters"""
