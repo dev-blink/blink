@@ -139,11 +139,12 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             return url
         try:
             r = await self.session.get(url)
+            img_data = BytesIO(await r.read())
         except Exception:
             self.session = aiohttp.ClientSession()
             r = await self.session.get(url)
+            img_data = BytesIO(await r.read())
         ext = str(url).replace(f"?size={self.size}", "").split(".")[-1]
-        img_data = BytesIO(await r.read())
         path = f"avs/{id}/{uuid.uuid4()}.{ext}"
         await self.storage.upload(config.cdn, path, img_data)
         return f"https://{config.cdn}/{path}"
