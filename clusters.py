@@ -161,7 +161,7 @@ class ClusterSocket():
         self.gateway = gateway
         self.sequence = 0
         self._latencies_sent = collections.deque([], 50)
-        self._latencies_recieved = blink.CacheDict(50)
+        self._latencies_recieved = collections.deque([], 50)
 
     async def quit(self, code=1000, reason="Goodbye <3"):
         await self.ws.close(code=code, reason=reason)
@@ -181,7 +181,7 @@ class ClusterSocket():
 
     async def send(self, payload):
         self._latencies_sent.appendleft(
-            (time.perf_counter_ns(), self.sequence + 1))
+            (self.sequence + 1, time.perf_counter_ns()))
         await self.ws.send(json.dumps(payload))
 
     def start(self):
@@ -220,17 +220,20 @@ class ClusterSocket():
                         if data["op"] == 3:
                             await self.intent(data["data"])
                         if data["op"] == 4:
-                            self._latencies_recieved[data["seq"]
-                                                     ] = time.perf_counter_ns()
+                            self._latencies_recieved.appendleft(
+                                (
+                                    data["seq"], time.perf_counter_ns()))
                         if data["op"] == 6:
                             await self.reg_dupe(data["data"])
                     except Exception as e:
-                        await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}")
+                        await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}", False)
             except websockets.ConnectionClosed as e:
                 if e.code == 4007:
                     print("Cluster pool overpopulated, exiting without reconnect")
                     await asyncio.sleep(5)
                     sys.exit(2)
+                elif e.code == 4999:
+                    return
                 self.beating = False
 
     async def identify(self, payload):
@@ -269,9 +272,10 @@ class ClusterSocket():
         latencies = 0
 
         def latency_iter():
-            for (sent, key) in self._latencies_sent:
-                recv = self._latencies_recieved.get(key)
-                if recv:
+            map = dict(self._latencies_sent)
+            for (key, recv) in self._latencies_recieved:
+                sent = map.get(key)
+                if sent:
                     nonlocal latencies
                     latencies += 1
                     yield recv - sent

@@ -239,7 +239,7 @@ class Blink(commands.AutoShardedBot):
     async def on_shard_resume(self, id: int):
         """
         Change presence to the presence to the correct startup presence
-        Presences are set to the presence set in __init__ when the bot 
+        Presences are set to the presence set in __init__ when the bot
         reconencts a shard, so here after reconnecting we must change
         back to the shard specific status
         """
