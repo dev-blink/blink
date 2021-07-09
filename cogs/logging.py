@@ -128,8 +128,11 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             path = self._unformat(excess)[1]
             if path.lower().startswith("https://cdn.discordapp.com/embed/avatars"):
                 continue
-
-            await self.storage.delete(config.cdn, path.replace(f"https://{config.cdn}/avs/", ""))
+            path = path.replace(f"https://{config.cdn}/", "")
+            try:
+                await self.storage.delete(config.cdn, path)
+            except Exception as e:
+                await self.bot.warn(f"Failed to delete av: {}, {e}", False)
         previousAvatars = previousAvatars[:config.av_max_length]
         previousAvatars.append(self._format(tt, av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2", previousAvatars, id)

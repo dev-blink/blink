@@ -192,6 +192,8 @@ class Blink(commands.AutoShardedBot):
 
     @property
     def default_prefixes(self) -> List[str]:
+        # This is required to be a property because a standard attribute
+        # would need to be copied to allow independent editing
         return [";", "b;", "B;", "blink"]
 
     def dispatch(self, event: str, *args, **kwargs):
@@ -244,7 +246,14 @@ class Blink(commands.AutoShardedBot):
         back to the shard specific status
         """
         if self._initialized:
-            await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+            await self.change_presence(
+                shard_id=id,
+                status=discord.Status.online,
+                activity=discord.Streaming(
+                    name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]',
+                    url='https://www.twitch.tv/#'
+                )
+            )
 
     async def on_message(self, message: discord.Message):
         if not self.created:  # Events can be called after initialization but before creation
@@ -365,7 +374,7 @@ class Blink(commands.AutoShardedBot):
         self.unload_extension("cogs.pre-error")
         self.load_extensions()
 
-        # Time taken for bot to be able to server users
+        # Time taken for bot to be able to serve users
         boottime = datetime.datetime.utcnow() - self.boottime
 
         # Log boot metrics to the discord channel
@@ -392,7 +401,14 @@ class Blink(commands.AutoShardedBot):
         log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}", "boot")
 
         for id in self.shards:  # Set initial shard specific presence - this is different from the starting up presence set in __init__
-            await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+            await self.change_presence(
+                shard_id=id,
+                status=discord.Status.online,
+                activity=discord.Streaming(
+                    name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]',
+                    url='https://www.twitch.tv/#'
+                )
+            )
 
         self.update_pres.start()  # This is still needed because idk ?????
 
@@ -423,7 +439,14 @@ class Blink(commands.AutoShardedBot):
     async def update_pres(self):
         for id in self.shards:
             try:
-                await self.change_presence(shard_id=id, status=discord.Status.online, activity=discord.Streaming(name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]', url='https://www.twitch.tv/#'))
+                await self.change_presence(
+                    shard_id=id,
+                    status=discord.Status.online,
+                    activity=discord.Streaming(
+                        name=f'b;help blinkbot.me [{self.cluster.identifier}{id}]',
+                        url='https://www.twitch.tv/#'
+                    )
+                )
             except Exception as e:
                 await self.warn(f"Error occured in presence update {type(e)} `{e}`", False)
 

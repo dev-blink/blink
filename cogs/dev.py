@@ -141,7 +141,8 @@ class Owner(blink.Cog, name="Developer"):
     async def query_cog(self, ctx):
         """Displays loaded cogs"""
         embed = discord.Embed(title="Loaded Cogs", description='\n'.join(
-            self.bot.cogs), colour=0xf5a6b9)
+            "\n".join([getattr(self.bot._cogs, c).__class__.__qualname__ for c in dir(self.bot._cogs)])
+            ), colour=0xf5a6b9)
         await ctx.send(embed=embed)
 
     @commands.command(name='close-bot', aliases=["killbot", "closebot"], hidden=True)

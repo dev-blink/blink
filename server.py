@@ -4,6 +4,7 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+# TODO: rewrite this in rust
 from autobahn.asyncio import websocket
 from autobahn.exception import Disconnected
 import json
