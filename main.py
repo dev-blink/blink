@@ -474,7 +474,7 @@ class Blink(commands.AutoShardedBot):
         exc = sys.exc_info()
         tb = traceback.format_exc()
         embed = discord.Embed(colour=discord.Colour.red(),
-                              title=f"{exc[0].__qualname__} - {exc[1]}")
+                              title=f"{exc[0].__qualname__}")
         embed.set_author(name=f"Exception in event {event_method}")
         async with aiohttp.ClientSession() as cs:
             async with cs.post("https://api.github.com/gists", headers={"Authorization": "token " + secrets.gist}, json={"public": False, "files": {"traceback.txt": {"content": tb}}}) as gist:

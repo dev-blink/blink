@@ -229,14 +229,19 @@ class Fun(blink.Cog, name="Fun"):
         """Mock some text"""
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
 
-    @commands.command(name="ramadan")
+    @commands.command(name="countdown")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def countdown(self, ctx):
-        return await ctx.send("Ramadan ends on the 12th May, check local times for exact endings")
+        return await ctx.send("no countdown active")
         significant = datetime.datetime(2021, 5, 12, 21, 41)
         now = datetime.datetime.utcnow()
         delta = significant - now
         await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name}")
+
+    @commands.command(name="nuke", hidden=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def nuke(self, ctx):
+        await ctx.send("nuking <a:bloading:705202826946674718>")
 
 
 def setup(bot):
