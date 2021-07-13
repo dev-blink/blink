@@ -131,8 +131,9 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             path = path.replace(f"https://{config.cdn}/", "")
             try:
                 await self.storage.delete(config.cdn, path)
-            except Exception as e:
-                await self.bot.warn(f"Failed to delete av: {path}, {e}", False)
+            except aiohttp.ClientResponseError as e:
+                if not e.status == 404:
+                    await self.bot.warn(f"Failed to delete av: {path}, {e}", False)
         previousAvatars = previousAvatars[:config.av_max_length]
         previousAvatars.append(self._format(tt, av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2", previousAvatars, id)

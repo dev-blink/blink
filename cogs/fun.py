@@ -121,10 +121,9 @@ class Fun(blink.Cog, name="Fun"):
         if not role:
             return await ctx.send("I could not find that role.")
 
-        rand = random.randint(1, len(role.members)) - 1
-        member = role.members[rand]
+        member = random.choice(role.members)
         embed = discord.Embed(title="Random member with role " +
-                              role.name, description=member.mention, colour=0xf5a6b9)
+                              role.name, description=str(member), colour=0xf5a6b9)
         embed.set_author(name=ctx.author.name + "#" + str(ctx.author.discriminator),
                          icon_url=ctx.author.avatar_url_as(static_format='png'))
         embed.set_footer(text="Chance : 1/" + str(len(role.members)))
@@ -136,8 +135,7 @@ class Fun(blink.Cog, name="Fun"):
         """Shakes an 8ball"""
         responses = ['● It is certain.', '● It is decidedly so.', '● Without a doubt.', '● Yes - definitely.', '● You may rely on it.', '● As I see it, yes.', '● Most likely.', '● Outlook good.', '● Yes.', '● Signs point to yes.', '● Reply hazy, try again.',
                      '● Ask again later.', '● Better not tell you now.', '● Cannot predict now.', '● Concentrate and ask again.', "● Don't count on it.", '● My reply is no.', '● My sources say no.', '● Outlook not so good.', '● Very doubtful.']
-        response = responses[random.randint(
-            1, len(responses)) - 1].replace("●", "\U0001f3b1")
+        response = random.choice(responses).replace("●", "\U0001f3b1")
         if question:
             if not question.endswith("?"):
                 question = question + "?"
@@ -153,10 +151,8 @@ class Fun(blink.Cog, name="Fun"):
     @commands.command(name="shipname")
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True)
-    async def ship(self, ctx, member1: discord.Member = None, member2: discord.Member = None):
+    async def ship(self, ctx, member1: discord.Member, member2: discord.Member = None):
         """Creates a ship name between 2 members"""
-        if not member1:
-            return await ctx.send("Ship with who?")
         if not member2:
             member2 = ctx.author
         if not member1.nick:

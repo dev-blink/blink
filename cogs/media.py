@@ -35,10 +35,8 @@ class Media(blink.Cog, name="Media"):
 
     @commands.command(name="enlarge")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def enlarge_emoji(self, ctx, emoji: discord.PartialEmoji = None):
+    async def enlarge_emoji(self, ctx, emoji: discord.PartialEmoji):
         """Enlarges a custom emoji"""
-        if not emoji:
-            return await ctx.send("Please send an emoji.")
         embed = discord.Embed(
             description=f"**{emoji.name}**", colour=self.bot.colour)
         embed.set_image(url=f"{emoji.url}?size=1024")
