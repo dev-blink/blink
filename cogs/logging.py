@@ -72,7 +72,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
                 if await self.bot.cluster.dedupe("logging", transaction):
                     return
         except asyncio.TimeoutError:
-            return await self.bot.warn(f"Timeout waiting for dedupe ({transaction})")
+            return await self.bot.warn(f"Timeout waiting for dedupe ({transaction})", False)
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
@@ -266,7 +266,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         try:
             await self.batch()
         except Exception as e:
-            await self.bot.warn(f"Exception in message cache, ({type(e)}) {e}")
+            await self.bot.warn(f"Exception in message cache, ({type(e)}) {e}", False)
 
 
 def setup(bot):
