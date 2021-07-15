@@ -275,12 +275,13 @@ class Server(blink.Cog, name="Server"):
     @commands.has_guild_permissions(manage_guild=True)
     async def add_prefix(self, ctx, *, prefix: str):
         """Add a guild prefix"""
+        maxlen = 7
         prefix = prefix.strip()
         async with ctx.cache:
             if not ctx.cache.value.get("prefixes"):
                 ctx.cache.value["prefixes"] = self.bot.default_prefixes
-            if len(ctx.cache.value["prefixes"]) >= 7:
-                await ctx.send("This guild already has the maximum of 5 prefixes, please remove some before adding new ones")
+            if len(ctx.cache.value["prefixes"]) >= maxlen:
+                await ctx.send(f"This guild already has the maximum of {maxlen} prefixes, please remove some before adding new ones")
             elif len(prefix) > 10:
                 await ctx.send("Maximum of 10 characters please.")
             else:
@@ -312,6 +313,7 @@ class Server(blink.Cog, name="Server"):
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_guild=True)
     async def reset_prefix(self, ctx):
+        """Reset prefixes to the default prefixes"""
         async with ctx.cache:
             if ctx.cache.value.get("prefixes"):
                 del ctx.cache.value["prefixes"]
