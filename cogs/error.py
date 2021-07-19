@@ -11,7 +11,7 @@ import blink
 import datetime
 import aiohttp
 import asyncpg
-import secrets
+import blinksecrets as secrets
 from wavelink import ZeroConnectedNodes as NoNodes
 
 
