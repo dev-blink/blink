@@ -120,9 +120,15 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             previousAvatars = query[0]["avatar"]
         except IndexError:
             previousAvatars = []
+        previousAvatars.append(self._format(tt, av))
+
         # remove all avatars older than av_max_age because they will be purged from the cdn anyways
-        previousAvatars = sorted([av for av in previousAvatars if (datetime.datetime.utcnow(
-        ) - self._unformat(av)[0]).days < config.av_max_age], key=lambda x: float(x.split(":", 1)[0]), reverse=True)
+        now = datetime.datetime.utcnow()
+        previousAvatars = [av for av in previousAvatars if (now - self._unformat(av)[0]).days > config.av_max_age]
+
+        previousAvatars.sort(key=lambda x: float(x.split(":",1)[0]), reverse=True)
+
+
         excessAvatars = previousAvatars[config.av_max_length:]
         for excess in excessAvatars:
             path = self._unformat(excess)[1]
@@ -135,9 +141,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
                 if not e.status == 404:
                     await self.bot.warn(f"Failed to delete av: {path}, {e}", False)
                 else:
-                    raise
+                    await self.bot.warn(f"404 delete {path} - {self._unformat(excess)}")
         previousAvatars = previousAvatars[:config.av_max_length]
-        previousAvatars.append(self._format(tt, av))
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2", previousAvatars, id)
 
     async def _avurl(self, url, id):
