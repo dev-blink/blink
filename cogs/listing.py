@@ -6,7 +6,7 @@
 
 import discord
 from discord.ext import tasks
-import secrets
+import blinksecrets as secrets
 import aiohttp
 import blink
 
