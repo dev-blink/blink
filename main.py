@@ -276,7 +276,7 @@ class Blink(commands.AutoShardedBot):
         await self.invoke(ctx)
     
     async def get_context(self, message, *, cls=commands.Context):
-        ctx = super().get_context(message, cls=cls)
+        ctx = await super().get_context(message, cls=cls)
                 # channel ratelimit
         # Per channel cooldown to stop spamming of commands
         bucket = self._cooldown.get_bucket(message)
