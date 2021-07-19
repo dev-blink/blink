@@ -28,7 +28,7 @@ import platform
 import blink
 import clusters
 import config
-import secrets
+import blinksecrets as secrets
 
 
 # logging
@@ -272,7 +272,12 @@ class Blink(commands.AutoShardedBot):
         if not ctx.valid:
             return  # Return on invalid commands
 
-        # channel ratelimit
+        # Invoke the context, passing it back to the internal handler
+        await self.invoke(ctx)
+    
+    async def get_context(self, message, *, cls=commands.Context):
+        ctx = super().get_context(message, cls)
+                # channel ratelimit
         # Per channel cooldown to stop spamming of commands
         bucket = self._cooldown.get_bucket(message)
         # Tick the bucket only if the user is not a mod
@@ -298,8 +303,7 @@ class Blink(commands.AutoShardedBot):
                     await data.bot_invalidate(self)
             ctx.cache = data
 
-        # Invoke the context, passing it back to the internal handler
-        await self.invoke(ctx)
+        return ctx
 
     def load_extensions(self):
         """Load all extensions to the bot, catching and logging any errors"""

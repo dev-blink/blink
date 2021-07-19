@@ -1,7 +1,7 @@
 __pycache__
 .gitattributes
 cogs/__pycache__
-secrets.py
+blinksecrets.py
 logs/
 cogs/OLD HELP.py
 creds.json

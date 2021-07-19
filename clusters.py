@@ -12,7 +12,7 @@ import blink
 import websockets
 import asyncio
 import json
-import secrets
+import blinksecrets as secrets
 import uuid
 import sys
 import time

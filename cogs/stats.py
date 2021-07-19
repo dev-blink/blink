@@ -7,7 +7,7 @@
 import discord
 from discord.ext import commands
 import statcord
-import secrets
+import blinksecrets as secrets
 import blink
 
 
