@@ -269,7 +269,7 @@ class Blink(commands.AutoShardedBot):
         # create context
         # Cls is required for the custom context
         ctx = await self.get_context(message, cls=blink.Ctx)
-        if not ctx.valid:
+        if not ctx:
             return  # Return on invalid commands
 
         # Invoke the context, passing it back to the internal handler
@@ -303,7 +303,7 @@ class Blink(commands.AutoShardedBot):
                     await data.bot_invalidate(self)
             ctx.cache = data
 
-        return ctx
+        return ctx if ctx.valid else None
 
     def load_extensions(self):
         """Load all extensions to the bot, catching and logging any errors"""
