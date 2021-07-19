@@ -13,7 +13,7 @@ import datetime
 import uuid
 import asyncio
 import re
-import secrets
+import blinksecrets as secrets
 from async_timeout import timeout
 import config
 # CREATE TABLE social (id bigint PRIMARY KEY, hugs TEXT ARRAY, kisses TEXT ARRAY, relation bigint, ship TEXT, blocked bigint ARRAY)
