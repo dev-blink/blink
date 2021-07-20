@@ -275,11 +275,12 @@ class Blink(commands.AutoShardedBot):
         # Invoke the context, passing it back to the internal handler
         await self.invoke(ctx)
     
-    async def get_context(self, message, *, cls=commands.Context):
+    async def get_context(self, message: discord.Message, *, cls=commands.Context):
         ctx = await super().get_context(message, cls=cls)
-                # channel ratelimit
+        if not ctx.valid:
+            return
         # Per channel cooldown to stop spamming of commands
-        bucket = self._cooldown.get_bucket(message)
+        bucket = self._cooldown.get_bucket(message) # channel ratelimit
         # Tick the bucket only if the user is not a mod
         if not message.channel.permissions_for(message.author).manage_messages:
             if bucket.update_rate_limit():
@@ -303,7 +304,7 @@ class Blink(commands.AutoShardedBot):
                     await data.bot_invalidate(self)
             ctx.cache = data
 
-        return ctx if ctx.valid else None
+        return ctx
 
     def load_extensions(self):
         """Load all extensions to the bot, catching and logging any errors"""
