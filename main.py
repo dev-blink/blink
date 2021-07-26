@@ -5,7 +5,7 @@
 
 
 # External
-from typing import Dict, List
+from typing import Dict, List, Union
 import discord
 from discord.ext import commands, tasks
 import asyncpg
@@ -81,11 +81,11 @@ class Blink(commands.AutoShardedBot):
     def __init__(self, cluster: clusters.Cluster, logger: logging.Logger):
 
         # Clustering
-        self.cluster = cluster
+        self.cluster: clusters.Cluster = cluster
         shards = self.cluster.shards
 
         # Sharding
-        self._init_shards = set()
+        self._init_shards: set(int) = set()
         self._shard_ids = shards["this"]
 
         # Main
@@ -123,14 +123,14 @@ class Blink(commands.AutoShardedBot):
         )
 
         # Globals
-        self._initialized = False
-        self.beta = config.beta
-        self.boottime = datetime.datetime.utcnow()
-        self.created = False
-        self.logger = logger
+        self._initialized: bool = False
+        self.beta: bool = config.beta
+        self.boottime: datetime.datetime = datetime.datetime.utcnow()
+        self.created: bool = False
+        self.logger: logging.Logger = logger
 
         # Cogs
-        self._cogs = blink.CogStorage()
+        self._cogs: blink.CogStorage = blink.CogStorage()
         self.load_extension("cogs.pre-error")
         # This is originally blank so it can be appended to, TODO: make an array
         self.loadexceptions = ""
@@ -156,14 +156,14 @@ class Blink(commands.AutoShardedBot):
             self.startingcogs.append("cogs.stats")
 
         # Global channel cooldown - to avoid spamming commands
-        self._cooldown = commands.CooldownMapping.from_cooldown(
+        self._cooldown:commands.CooldownMapping = commands.CooldownMapping.from_cooldown(
             5, 5.5, commands.BucketType.channel)
         log(f"Starting - {self.cluster}", "boot")
 
     def __repr__(self) -> str:
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
-    def _trace(self) -> Dict[str, str]:
+    def _trace(self) -> Dict[str, Union[str, int]]:
         """Debug information about the bot"""
         return {
             "prod": self.__class__.__qualname__,
@@ -461,11 +461,7 @@ class Blink(commands.AutoShardedBot):
             return
         # Close everthing possible and quit, this returns after stopping the loop because it raises an exception
         if payload["event"] == "SHUTDOWN":
-            await self.cluster.quit()
-            await self.logout()
-            await self.close()
-            await self.loop.close()
-            sys.exit(0)
+            await self.stop()
         if payload["event"] == "RELOAD":
             # Reload cogs - sent by the dev reload command
             self.reload_extension(payload["cog"])
@@ -488,6 +484,13 @@ class Blink(commands.AutoShardedBot):
             hook = discord.Webhook(
                 secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
+    
+    async def stop(self):
+        await self.cluster.quit()
+        await self.logout()
+        await self.close()
+        await self.loop.close()
+        sys.exit(0)
 
 
 async def launch(loop: asyncio.BaseEventLoop):
@@ -496,8 +499,7 @@ async def launch(loop: asyncio.BaseEventLoop):
     This is needed in an async environment to get the bot information from the cluster server
     This handles things like setting up logging, clustering, starting, and handling exceptions
     """
-    cluster = clusters.Cluster(
-        config.gateway)  # Create a cluster object from the prescribed gateway
+    cluster = clusters.Cluster(config.gateway) # Create a cluster object from the prescribed gateway
     # Start the internal loop of the cluster - connects to the master server
     cluster.start(loop)
     # wait for an identifier to be recieved from the gateway, the gateway will close if all clusters are active
@@ -505,10 +507,10 @@ async def launch(loop: asyncio.BaseEventLoop):
     # Create logger based on the identifier for this cluster
     log = loggingSetup(identifier)
     bot = Blink(cluster, log)
-    cluster.reg_bot(bot)  # Cluster requires a bot object to function
+    cluster.reg_bot(bot) # Cluster requires a bot object to function
     try:
         await bot.start(secrets.token, bot=True, reconnect=True)
-    except KeyboardInterrupt:  # close the bot on CTRL+C, it is proper practice to shutdown via the dev command
+    except KeyboardInterrupt: # close the bot on CTRL+C, it is proper practice to shutdown via the dev command
         await bot.logout()
         await cluster.quit()
         loop.close()

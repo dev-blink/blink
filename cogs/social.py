@@ -533,15 +533,16 @@ class Social(blink.Cog):
     async def _new_ship(self, captain: int, partner: int, ctx: commands.Context):
         try:
             def is_captain(m):
-                return m.author.id == captain
+                return m.author.id == captain and m.channel == ctx.channel
 
             def is_partner(m):
-                return m.author.id == partner
+                return m.author.id == partner and m.channel == ctx.channel
 
             await ctx.send(f"<@{partner}> would you like to create a ship with <@{captain}> ? (type yes or no)", allowed_mentions=_Users())
             message = await self.bot.wait_for('message', check=is_partner, timeout=60)
             if not any(m in message.content.lower() for m in ['yes', 'yea', 'ok', 'yeah', 'sure']):
-                return
+                await message.delete()
+                return False
 
             await ctx.send(f"<@{captain}> what should the ship be called?", allowed_mentions=_Users())
             message = await self.bot.wait_for('message', check=is_captain, timeout=60)

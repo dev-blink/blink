@@ -159,11 +159,8 @@ class Owner(blink.Cog, name="Developer"):
         except asyncio.TimeoutError:
             return await ctx.send("Timeout achieved")
         await self.bot.cluster.dispatch({"event": "SHUTDOWN"})
-        await self.bot.cluster.quit()
         await ctx.send("Quitting safely.")
-        await self.bot.logout()
-        await self.bot.close()
-        await self.bot.loop.close()
+        await self.bot.stop()
         exit()
 
     @commands.command(name="say", hidden=True)

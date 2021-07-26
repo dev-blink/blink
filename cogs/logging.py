@@ -124,7 +124,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
         # remove all avatars older than av_max_age because they will be purged from the cdn anyways
         now = datetime.datetime.utcnow()
-        previousAvatars = [av for av in previousAvatars if (now - self._unformat(av)[0]).days > config.av_max_age]
+        previousAvatars = [av for av in previousAvatars if (now - self._unformat(av)[0]).days < config.av_max_age]
 
         previousAvatars.sort(key=lambda x: float(x.split(":",1)[0]), reverse=True)
 

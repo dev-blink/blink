@@ -18,7 +18,7 @@ class Info(blink.Cog, name="Info"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def invite(self, ctx):
         """A bot invite"""
-        embed = discord.Embed(title="Click here.", url="https://invite.blinkbot.me",
+        embed = discord.Embed(title="Click here.", url="https://discord.com/oauth2/authorize?client_id=692738917236998154&scope=bot&permissions=8",
                               description="Invite the bot to your server", colour=self.bot.colour)
         embed.set_author(name="Invite me!")
         embed.set_thumbnail(
@@ -43,10 +43,10 @@ class Info(blink.Cog, name="Info"):
     async def info(self, ctx):
         """Shows info about the bot"""
         embed = discord.Embed(title="blink!", url="https://blinkbot.me",
-                              description="Blink is a multipurpose bot designed for simplicity\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://blinkbot.me/policy.html)", colour=self.bot.colour)
+                              description="Blink is a multipurpose bot designed for simplicity\n [Click for support](https://discord.gg/pCVhrMF) | [Privacy Policy](https://blinkbot.me/policy.html) | [Invite](https://invite.blinkbot.me)", colour=self.bot.colour)
         embed.add_field(name="To start:", value=";help for info on commands")
         embed.set_thumbnail(
-            url=ctx.guild.me.avatar_url_as(static_format="png"))
+            url=self.bot.user.avatar_url_as(static_format='png'))
         return await ctx.send(embed=embed)
 
     @commands.command(name="uptime")
