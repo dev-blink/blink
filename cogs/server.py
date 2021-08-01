@@ -12,7 +12,7 @@ import asyncio
 import contextlib
 from io import BytesIO
 from typing import Union
-import secrets
+import blinksecrets as secrets
 
 
 class Server(blink.Cog, name="Server"):
@@ -445,7 +445,7 @@ class Server(blink.Cog, name="Server"):
                         break
                 except asyncio.CancelledError:
                     async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
-                        return
+                        return await self.bot.warn("Convert task cancelled due to timeout", False)
 
                 if not json["output"]:
                     return
