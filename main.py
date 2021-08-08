@@ -114,7 +114,7 @@ class Blink(commands.AutoShardedBot):
                 voice_states=True,
                 guild_messages=True,
                 guild_reactions=True,
-                presences=config.beta,
+                presences=True,
                 members=True,
             ),
             chunk_guilds_at_startup=not config.beta,
