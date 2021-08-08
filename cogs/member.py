@@ -180,7 +180,7 @@ class Members(blink.Cog, name="Member"):
             embed = discord.Embed(colour=self.bot.colour)
             embed.set_author(
                 name=user.name, icon_url=user.avatar_url_as(static_format='png'))
-            embed.add_field(name="Playing " + base.name, value=base.details or blink.prettydelta((datetime.datetime.utcnow() -  base.created_at).timestamp()) if base.created_at else "No timing available", inline=False)
+            embed.add_field(name="Playing " + base.name, value=base.details or blink.prettydelta((datetime.datetime.utcnow() -  base.created_at).total_seconds()) if base.created_at else "No timing available", inline=False)
 
         elif isinstance(base, discord.Streaming):
             embed = discord.Embed(
