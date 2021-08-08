@@ -359,7 +359,7 @@ class Server(blink.Cog, name="Server"):
             if not role_valid:
                 server["status_role_setup"] = False
                 server["status_role_enabled"] = False
-                await data.cache.save(after.guild.id, self.bot)
+                await data.save(after.guild.id, self.bot)
 
     @commands.Cog.listener("on_message")
     async def mov_wrapper(self, message):

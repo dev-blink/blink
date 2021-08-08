@@ -5,6 +5,7 @@
 
 
 import discord
+from discord.embeds import EmptyEmbed
 from discord.ext import commands
 import datetime
 import blink
@@ -179,11 +180,11 @@ class Members(blink.Cog, name="Member"):
             embed = discord.Embed(colour=self.bot.colour)
             embed.set_author(
                 name=user.name, icon_url=user.avatar_url_as(static_format='png'))
-            embed.add_field(name=base.name, value=base.details, inline=False)
+            embed.add_field(name=base.name, value=base.details or EmptyEmbed, inline=False)
 
         elif isinstance(base, discord.Streaming):
             embed = discord.Embed(
-                title="Streaming", url=base.url, description=base.name, colour=0x593695)
+                title="Streaming", url=base.url, description=base.name or EmptyEmbed, colour=0x593695)
         else:
             embed = False
         if embed:
