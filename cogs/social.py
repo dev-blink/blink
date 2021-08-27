@@ -561,6 +561,10 @@ class Social(blink.Cog):
                 if message.attachments:
                     if message.attachments[0].height:
                         icon = message.attachments[0].url
+                    else:
+                        icon = "https://cdn.blinkbot.me/assets/ship.png"
+                else:
+                    icon = "https://cdn.blinkbot.me/assets/ship.png"
             elif URLREGEX.match(message.content):
                 icon = message.content
             else:
