@@ -49,7 +49,7 @@ class Server(blink.Cog, name="Server"):
         embed = discord.Embed(
             title=f"{role.name} - {len(role.members)}", colour=0xf5a6b9)
         embed.add_field(name="Members:", value=" ".join(
-            m.mention for m in role.members), inline=False)
+            str(m) + " " for m in role.members), inline=False)
         await ctx.send(embed=embed)
 
     @commands.command(name="muted", aliases=["mutes", "currentmutes"])
