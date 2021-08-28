@@ -18,7 +18,7 @@ class Info(blink.Cog, name="Info"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def invite(self, ctx):
         """A bot invite"""
-        embed = discord.Embed(title="Click here.", url="https://discord.com/oauth2/authorize?client_id=692738917236998154&scope=bot&permissions=8",
+        embed = discord.Embed(title="Click here.", url="https://discord.com/oauth2/authorize?client_id=692738917236998154&scope=bot+applications.commands&permissions=8",
                               description="Invite the bot to your server", colour=self.bot.colour)
         embed.set_author(name="Invite me!")
         embed.set_thumbnail(
