@@ -126,23 +126,6 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         now = datetime.datetime.utcnow()
         previousAvatars = [av for av in previousAvatars if (now - self._unformat(av)[0]).days < config.av_max_age]
 
-        previousAvatars.sort(key=lambda x: float(x.split(":",1)[0]), reverse=True)
-
-
-        excessAvatars = previousAvatars[config.av_max_length:]
-        for excess in excessAvatars:
-            path = self._unformat(excess)[1]
-            if path.lower().startswith("https://cdn.discordapp.com/embed/avatars"):
-                continue
-            path = path.replace(f"https://{config.cdn}/", "")
-            try:
-                await self.storage.delete(config.cdn, path)
-            except aiohttp.ClientResponseError as e:
-                if not e.status == 404:
-                    await self.bot.warn(f"Failed to delete av: {path}, {e}", False)
-                else:
-                    await self.bot.warn(f"404 delete {path} - {self._unformat(excess)}")
-        previousAvatars = previousAvatars[:config.av_max_length]
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2", previousAvatars, id)
 
     async def _avurl(self, url, id):
