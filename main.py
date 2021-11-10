@@ -146,7 +146,7 @@ class Blink(commands.AutoShardedBot):
             "cogs.roles",
             "cogs.advancedinfo",
             "cogs.media",
-            "cogs.listing",
+            # "cogs.listing", why r lists so useless
             "cogs.sql",
             "cogs.social"
         ]
@@ -274,7 +274,7 @@ class Blink(commands.AutoShardedBot):
 
         # Invoke the context, passing it back to the internal handler
         await self.invoke(ctx)
-    
+
     async def get_context(self, message: discord.Message, *, cls=commands.Context):
         ctx = await super().get_context(message, cls=cls)
         if not ctx.valid:
