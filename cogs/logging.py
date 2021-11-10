@@ -72,7 +72,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
                 if await self.bot.cluster.dedupe("logging", transaction):
                     return
         except asyncio.TimeoutError:
-            return await self.bot.warn(f"Timeout waiting for dedupe ({transaction})", False)
+            return await self.bot.warn(f"Timeout waiting for dedupe ({uuid})", False)
         self.bot.logActions += 1
         tt = datetime.datetime.utcnow().timestamp()
         uid = before.id
