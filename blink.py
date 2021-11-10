@@ -6,6 +6,7 @@
 
 import json
 from random import Random as RAND
+from discord.errors import InvalidArgument
 from discord.ext import commands
 from math import floor as f
 import functools
@@ -15,6 +16,9 @@ import time
 from asyncpg.pool import Pool
 from collections import OrderedDict
 import re
+
+
+urlregex = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
 
 class Timer:
@@ -281,3 +285,15 @@ class ServerCache(DBCache):
     @value.setter
     def value(self, other):
         self._value = other
+
+
+class UrlConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        if urlregex.match(argument):
+            if len(argument) > 1000:
+                raise InvalidArgument("Urls must be at most 1000 characters")
+            return argument
+        else:
+            if ctx.message.attachments:
+                return ctx.message.attachments[0].url
+            raise InvalidArgument("String could not be interpereted as a url")
