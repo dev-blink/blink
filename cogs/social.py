@@ -12,13 +12,12 @@ import humanize
 import datetime
 import uuid
 import asyncio
-import re
 import blinksecrets as secrets
 from async_timeout import timeout
 import config
 # CREATE TABLE social (id bigint PRIMARY KEY, hugs TEXT ARRAY, kisses TEXT ARRAY, relation bigint, ship TEXT, blocked bigint ARRAY)
 # CREATE TABLE ships (id TEXT PRIMARY KEY,captain bigint, partner bigint,name TEXT,customtext TEXT,colour bigint,icon TEXT,timestamp bigint)
-URLREGEX = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
+URLREGEX = blink.urlregex
 
 
 async def api(route, method):
@@ -114,8 +113,7 @@ class Ship:
             self.created.timestamp()
         days = datetime.timedelta(seconds=timestamp).days
         age = humanize.naturaldelta(timestamp)
-        xp = humanize.intword(int((days ** 2) * 50) +
-                              (total_hugs + total_kisses) * 37)
+        xp = humanize.intword(int((days ** 2) * 50) + (total_hugs + total_kisses) * 37)
 
         return ShipStats(hugs=total_hugs, kisses=total_kisses, xp=xp, age=age)
 
