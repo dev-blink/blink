@@ -484,7 +484,7 @@ class Blink(commands.AutoShardedBot):
             hook = discord.Webhook(
                 secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
-    
+
     async def stop(self):
         await self.cluster.quit()
         await self.logout()
