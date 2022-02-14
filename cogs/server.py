@@ -15,6 +15,29 @@ from typing import Union
 import blinksecrets as secrets
 
 
+EMBED_LIMITS = {
+    "title": 256,
+    "description": 4096,
+    "fields": 25,
+    "field.name": 256,
+    "field.value": 1024,
+    "footer.text": 2048,
+    "author.name": 256,
+}
+
+
+async def too_long(value, scope, ctx):
+    if value is None:
+        return False
+    if len(value) > EMBED_LIMITS[scope]:
+        await ctx.send(f"{scope} must be maximum of {EMBED_LIMITS[scope]} characters")
+        return True
+    if len(value) == 0:
+        await ctx.send("value must not be 0 characters")
+        return True
+    return False
+
+
 class Server(blink.Cog, name="Server"):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -199,7 +222,7 @@ class Server(blink.Cog, name="Server"):
             await ctx.send_help(ctx.command)
 
         else:
-            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'", colour=self.bot.colour).set_footer(text="use statusrole help for info"))
+            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'", colour=self.bot.colour).set_footer(text="use help status for info"))
 
     @status_role.command(name="enable", aliases=["on"])
     @commands.guild_only()
@@ -320,6 +343,242 @@ class Server(blink.Cog, name="Server"):
                 await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Guild prefixes have been reset to default")
 
+    @commands.group(name="welcome", invoke_without_command=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome(self, ctx):
+        """Commands for using welcome messages"""
+        async with ctx.cache:
+            server = ctx.cache.value
+            if server.get("welcome_enabled"):
+                return await ctx.send(f"Welcome screen is enabled, use {ctx.clean_prefix}welcome test to to view the message.")
+            elif server.get("welcome_setup"):
+                await ctx.send(f"Welcome is setup, use {ctx.clean_prefix}welcome enable #channel to enable welcome messages.")
+            else:
+                await ctx.send_help(ctx.command)
+
+    @welcome.command(name="enable")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_enable(self, ctx, channel:discord.TextChannel):
+        """Enable welcome messages and set a channel"""
+        if not channel.permissions_for(ctx.guild.me).manage_webhooks:
+            return await ctx.send(f"I do not have permission to manage webhooks (integrations) for {channel.mention}")
+        async with ctx.cache:
+            server = ctx.cache.value
+            if not server.get("welcome_setup"):
+                return await ctx.send(f"Welcome messages are not setup, use {ctx.clean_prefix}welcome setup to set them up")
+            hook = await channel.create_webhook(name="blink welcome messages")
+            hook = {
+                "id": hook.id,
+                "token": hook.token,
+            }
+            server["welcome_webhook"] = hook
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        await ctx.send(f"Welcome messages are enabled, use {ctx.clean_prefix}welcome test to view the message")
+
+    # WELCOME EMBED CONFIGURATION
+    @welcome.group(name="setup", invoke_without_command=True)
+    @commands.bot_has_guild_permissions(manage_webhooks=True)
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup(self, ctx):
+        """Manage the content of the welcome embed"""
+        await ctx.send_help(ctx.command)
+
+    @welcome_setup.command(name="title")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_title(self, ctx, *, title:str=None):
+        """Set the title of the embed"""
+        if await too_long(title, "title", ctx):
+            return
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            embed["title"] = title
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if title is None:
+            await ctx.send("Title has been reset")
+        else:
+            await ctx.send("Title has been updated")
+
+    @welcome_setup.command(name="description")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_description(self, ctx, *, description:str=None):
+        """Set the main description of the welcome embed"""
+        if await too_long(description, "description", ctx):
+            return
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            embed["description"] = description
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if description is None:
+            await ctx.send("Description has been removed")
+        else:
+            await ctx.send("Description has been updated")
+
+    @welcome_setup.command(name="colour", aliases=["color"])
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_colour(self, ctx, *, colour: discord.Colour=None):
+        """Set the side colour of the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            embed["color"] = colour.value if colour else None
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if colour is None:
+            await ctx.send("Colour has been reset")
+        else:
+            await ctx.send("Colour has been updated")
+
+    # WELCOME EMBED AUTHOR
+    @welcome_setup.group(name="author", invoke_without_command=True)
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_author(self, ctx):
+        """Set the author of the welcome embed"""
+        await ctx.send_help(ctx.command)
+
+    @welcome_setup_author.command(name="name")
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_author_name(self, ctx, name:str):
+        """Set the author name of the welcome embed"""
+        if await too_long(name, "author.name", ctx):
+            return
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            if name:
+                if not embed.get("author"):
+                    embed["author"] = {"name":name}
+                else:
+                    embed["author"]["name"] = name
+                await ctx.send("Author name has been updated")
+            else:
+                if embed.get("author"):
+                    del embed["author"]
+                await ctx.send("Author has been removed")
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+
+    @welcome_setup_author.command(name="icon")
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_author_icon(self, ctx, icon_url: blink.UrlConverter):
+        """Set the author icon image for the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed")
+            if embed.get("author"):
+                if embed["author"].get("name"):
+                    embed["author"]["icon_url"] = icon_url
+                else:
+                    return await ctx.send("Embed icon fields must have a name before any other attributes")
+            else:
+                return await ctx.send("Embed icon fields must have a name before any other attributes")
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+            await ctx.send("Updated embed author icon")
+
+    @welcome_setup_author.command(name="url")
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_author_url(self, ctx, url: blink.UrlConverter):
+        """Set the author url of the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed")
+            if embed.get("author"):
+                if embed["author"].get("name"):
+                    embed["author"]["url"] = url
+                else:
+                    return await ctx.send("Embed author fields must have a name before any other attributes")
+            else:
+                return await ctx.send("Embed author fields must have a name before any other attributes")
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+            await ctx.send("Updated embed author url")
+
+    # WELCOME EMBED FOOTER
+    @welcome_setup.group(name="footer", invoke_without_command=True)
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_footer(self, ctx):
+        """Set the footer of the welcome embed"""
+        await ctx.send_help(ctx.command)
+
+    @welcome_setup_footer.command(name="text")
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_footer_text(self, ctx, text:str):
+        """Set the footer text of the welcome embed"""
+        if await too_long(text, "footer.text", ctx):
+            return
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            if text:
+                if not embed.get("footer"):
+                    embed["footer"] = {"text":text}
+                else:
+                    embed["footer"]["text"] = text
+                await ctx.send("Footer text has been updated")
+            else:
+                if embed.get("footer"):
+                    del embed["footer"]
+                await ctx.send("Footer has been removed")
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+
+    @welcome_setup_footer.command(name="icon")
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def welcome_setup_footer_icon(self, ctx, icon_url: blink.UrlConverter):
+        """Set the footer icon image for the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed")
+            if embed.get("footer"):
+                if embed["footer"].get("name"):
+                    embed["footer"]["icon_url"] = icon_url
+                else:
+                    return await ctx.send("Embed icon fields must have text before any other attributes")
+            else:
+                return await ctx.send("Embed icon fields must have text before any other attributes")
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+            await ctx.send("Updated embed footer icon")
+
+    @welcome_setup.command(name="thumbnail")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_thumbnail(self, ctx, *, thumbnail: blink.UrlConverter=None):
+        """Set the thumbnail of the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            embed["thumbnail"] = thumbnail.value if thumbnail else None
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if thumbnail is None:
+            await ctx.send("Thumbnail has been removed")
+        else:
+            await ctx.send("Thumbnail has been updated")
+
+    @welcome_setup.command(name="image")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_image(self, ctx, *, image: blink.UrlConverter=None):
+        """Set the image of the welcome embed"""
+        async with ctx.cache:
+            embed = ctx.cache.value.get("welcome_embed") or {}
+            embed["image"] = image.value if image else None
+            ctx.cache.value["welcome_embed"] = embed
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if image is None:
+            await ctx.send("Image has been removed")
+        else:
+            await ctx.send("Image has been updated")
+
     @commands.Cog.listener("on_member_update")
     async def presence_checker(self, before, after: discord.Member):
         if before.activity == after.activity:
@@ -364,6 +623,9 @@ class Server(blink.Cog, name="Server"):
     @commands.Cog.listener("on_message")
     async def mov_wrapper(self, message):
         async with self.bot.cache_or_create("blacklist-transform", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("transform",)) as blacklist:
+            if message.author.id in blacklist.value["snowflakes"]:
+                return
+        async with self.bot.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
         p = message.channel.permissions_for(message.guild.me)

@@ -20,8 +20,8 @@ import time
 
 class Cluster(object):
     def __init__(self, gateway):
-        self.active = False
-        self._post = asyncio.Event()
+        self.active = False # If this cluster is active and ready to operate
+        self._post = asyncio.Event() # Wait for internal bot cache to be ready before posting statistics
         self.gateway = gateway
 
     def __str__(self):
@@ -33,7 +33,8 @@ class Cluster(object):
         return f"<Identifier={self.identifier}, shards={self.shards}, active={self.active}>"
 
     async def crash(self, error, traceback):
-        await self.ws.panic(error, traceback)
+        """Crash handler"""
+        await self.ws.panic(error, traceback) 
         await self.quit()
 
     @property
@@ -44,31 +45,38 @@ class Cluster(object):
             return float('inf')
 
     def reg_bot(self, bot: AutoShardedBot):
+        """Register the bot object to this cluster after getting an identifier from the controller"""
         self.bot = bot
         self.ws.bot = bot
-        self.ws.bot_dispatch = bot.cluster_event
+        self.ws.bot_dispatch = bot.cluster_event # the coroutine for handling events sent from the controller
 
-    async def wait_identifier(self):
+    async def wait_identifier(self): 
+        """Wait for the controller to assign an identifier"""
         await self.ws._ready.wait()
         self.identifier = self.ws.identifier
         return self.identifier
 
     async def wait_until_ready(self):
+        """Wait until all clusters are online and ready to post stats"""
         if self.ws._total_clusters == 1:
             return
         await self.ws._online.wait()
 
     async def quit(self):
+        """Quit safely"""
         await self.ws.quit()
         self.active = False
 
     async def dispatch(self, data: dict):
+        """Public access to send a message"""
         await self.ws.dispatch(data)
 
     async def dedupe(self, scope: str, hash: str):
+        """Stop duplicate actions being completed by multiple clusters"""
         return await self.ws.dedupe({"scope": scope, "content": hash}, str(uuid.uuid4()))
 
     def start(self, loop):
+        """Start the internal loop in the asyncio event loop"""
         self.ws = ClusterSocket(loop, self, self.gateway)
         self.ws.start()
         self.active = True
@@ -87,6 +95,7 @@ class Cluster(object):
         return self.ws.query()["music"]
 
     async def loop(self):
+        """Main loop to poll the websocket"""
         await self.wait_identifier()
         await self._post.wait()
         while self.active:
@@ -96,6 +105,7 @@ class Cluster(object):
 
     @property
     def shards(self):
+        """Returns a dictionary of shard information worked out from information given by the controller"""
         index = alphabet.index(self.identifier)
         if index >= self.ws._total_clusters:
             raise RuntimeError("Cluster out of total cluster range")
@@ -109,6 +119,7 @@ class Cluster(object):
         }
 
     def update(self):
+        """Sync stored stats with the bot stats"""
         try:
             music = len(self.bot.wavelink.players)
         except Exception:
@@ -120,6 +131,7 @@ class Cluster(object):
         }
         self.ws.update(stats)
 
+    # Proxy functions to immitate abc.Messageable.send, can send messages without channels being cached
     async def log_startup(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.startup()
         if embed:
@@ -164,11 +176,13 @@ class ClusterSocket():
         self._latencies_recieved = collections.deque([], 50)
 
     async def quit(self, code=1000, reason="Goodbye <3"):
+        """Stop the websocket"""
         await self.ws.close(code=code, reason=reason)
         self.active = False
         self.beating = False
 
     async def panic(self, error, traceback):
+        """Send a panic message to the controller"""
         payload = {
             "op": 7,
             "data": {
@@ -180,15 +194,18 @@ class ClusterSocket():
         await self.quit(code=4999, reason=f"Client threw unhandled internal exception {error.__class__.__qualname__}")
 
     async def send(self, payload):
+        """Send a dict over the websocket"""
         self._latencies_sent.appendleft(
             (self.sequence + 1, time.perf_counter_ns()))
         await self.ws.send(json.dumps(payload))
 
     def start(self):
+        """Start internal ws poll0"""
         self._loop.create_task(self.loop())
         self.active = True
 
     def update(self, stats: dict):
+        """Pass stats to the socket handler"""
         self.guilds = stats["guilds"]
         self.users = stats["users"]
         self.music = stats["music"]

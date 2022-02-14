@@ -20,7 +20,7 @@ import blink
 
 class AvPages(menus.ListPageSource):
     def __init__(self, data, embeds):
-        self.embeds = embeds
+        self.embeds = embeds # List of embeds to go through
         self.data = data
         super().__init__(data, per_page=1)
 
@@ -31,11 +31,11 @@ class AvPages(menus.ListPageSource):
 class GlobalLogs(blink.Cog, name="Global logging"):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bot.logActions = 0
-        self.size = 512
+        self.bot.logActions = 0 # statistics logging
+        self.size = 512 # avatar size to push to cdn
         self.msgcache = {}
         if not self.bot.beta:
-            self.active = True
+            self.active = True # only log on production
         else:
             self.active = False
 
