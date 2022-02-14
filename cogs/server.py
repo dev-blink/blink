@@ -222,7 +222,7 @@ class Server(blink.Cog, name="Server"):
             await ctx.send_help(ctx.command)
 
         else:
-            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'", colour=self.bot.colour).set_footer(text="use help status for info"))
+            await ctx.send(embed=discord.Embed(title=f"Status role for {ctx.guild.name}", description=f"Role is <@&{server.get('status_role_id')}> , status is '{server.get('status_role_string')}'", colour=self.bot.colour).set_footer(text="use help statusrole for info"))
 
     @status_role.command(name="enable", aliases=["on"])
     @commands.guild_only()
