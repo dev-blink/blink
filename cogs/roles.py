@@ -95,6 +95,27 @@ class RoleManagement(blink.Cog, name="Role Management"):
         await role.edit(colour=colour, reason=f"{ctx.author} updated the colour to {colour}.")
         return await ctx.send(f"Updated {role.name} to {colour}")
 
+    @commands.command(name="hoist", aliases=["elevate"])
+    @commands.guild_only()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
+    async def hoistrole(self, ctx, *,  role):
+        """Display a role seperately from online members"""
+        role = await blink.searchrole(ctx.guild.roles, role)
+        if not role:
+            return await ctx.send("I could not find that role.")
+        if not ctx.author == ctx.guild.owner:
+            if role >= ctx.author.top_role:
+                return await ctx.send("You are unable to modify that role. (Check your role position.)")
+        if role >= ctx.guild.me.top_role:
+            return await ctx.send("I am unable to modify that role. (Check my role position.)")
+        hoisted = role.hoist
+        await role.edit(hoist=not hoisted)
+        await ctx.send(f"{role.name} {'has been de'if hoisted else 'is now '}hoisted.")
+
+
+
 
 def setup(bot):
     bot.add_cog(RoleManagement(bot, "roles"))

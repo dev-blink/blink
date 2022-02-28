@@ -6,6 +6,7 @@
 
 import json
 from random import Random as RAND
+import discord
 from discord.errors import InvalidArgument
 from discord.ext import commands
 from math import floor as f
@@ -112,7 +113,7 @@ def fancytext(name, term, scope: str):
     return False
 
 
-async def searchrole(roles: list, term: str):
+async def searchrole(roles: list, term: str) -> discord.Role:
     """Custom role search for discord.py"""
     loop = asyncio.get_event_loop()
 
