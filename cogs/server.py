@@ -298,7 +298,7 @@ class Server(blink.Cog, name="Server"):
     @commands.has_guild_permissions(manage_guild=True)
     async def add_prefix(self, ctx, *, prefix: str):
         """Add a guild prefix"""
-        maxlen = 7
+        maxlen = 9
         prefix = prefix.strip()
         async with ctx.cache:
             if not ctx.cache.value.get("prefixes"):
