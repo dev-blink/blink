@@ -16,6 +16,7 @@ import serverconfig as config
 from string import ascii_uppercase as alphabet
 import datetime
 import aiohttp
+from blink import CacheDict
 
 tokens = config.gatewayauth
 loop = asyncio.get_event_loop()
@@ -227,7 +228,7 @@ class Factory(websocket.WebSocketServerFactory):
     def __init__(self):
         super().__init__()
         self.clients = []
-        self.registered_dupes = {}
+        self.registered_dupes = CacheDict(50_000)
         self.protocol = ServerProtocol
 
     def register(self, client):
