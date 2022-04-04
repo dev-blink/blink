@@ -229,10 +229,10 @@ class Fun(blink.Cog, name="Fun"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def countdown(self, ctx):
         # return await ctx.send("no countdown active")
-        significant = datetime.datetime(2022, 4, 2, 4, 36)
+        significant = datetime.datetime(2022, 5, 1, 8, 27)
         now = datetime.datetime.utcnow()
         delta = significant - now
-        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} starts (London UK)")
+        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends (London UK)")
 
     @commands.command(name="nuke", hidden=True)
     @commands.bot_has_permissions(send_messages=True)
