@@ -88,6 +88,10 @@ class Blink(commands.AutoShardedBot):
         self._init_shards: set(int) = set()
         self._shard_ids = shards["this"]
 
+        # Cache
+        self.cache_hits = 0
+        self.cache_misses = 0
+
         # Main
         super().__init__(
             command_prefix=self.get_prefix,
@@ -132,8 +136,7 @@ class Blink(commands.AutoShardedBot):
         # Cogs
         self._cogs: blink.CogStorage = blink.CogStorage()
         self.load_extension("cogs.pre-error")
-        # This is originally blank so it can be appended to, TODO: make an array
-        self.loadexceptions = ""
+        self.loadexceptions = []
         self.startingcogs = [
             "cogs.help",
             "cogs.member",
@@ -169,6 +172,7 @@ class Blink(commands.AutoShardedBot):
             "prod": self.__class__.__qualname__,
             "beta": self.beta,
             "cluster": self.cluster.identifier,
+            "cacherate": f"{self.cacherate()}%",
             "config": {
                 "gateway": config.gateway,
                 "cdn": config.cdn,
@@ -195,6 +199,13 @@ class Blink(commands.AutoShardedBot):
         # This is required to be a property because a standard attribute
         # would need to be copied to allow independent editing
         return [";", "b;", "B;", "blink"]
+    
+    def cacherate(self):
+        """The percentage of cache reads that have hit the cache"""
+        if self.cache_hits + self.cache_misses == 0:
+            return 0
+        else:
+            return round((self.cache_hits / (self.cache_hits + self.cache_misses) * 100), 2)
 
     def dispatch(self, event: str, *args, **kwargs):
         """Overriding this stops events being sent to handlers before the bot is ready"""
@@ -208,7 +219,7 @@ class Blink(commands.AutoShardedBot):
         """
         Overriding this to stop shards launching and stepping on eachother
         This is necessary to abide by the 1 identify per 5s rate limit imposed by discord
-        This is essentially a copy/paste of the library default but with clustering support
+        This is a overridden function of the library default but with clustering support
         """
         gateway = await self.http.get_gateway()
 
@@ -219,6 +230,7 @@ class Blink(commands.AutoShardedBot):
         if not self.cluster.identifier == "A":
             await self.cluster.wait_cluster()
         for shard_id in self.shard_ids:
+            log(f"Launching shard {shard_id}", "boot")
             await self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))
 
         # Tell other clusters that we have identified
@@ -313,7 +325,7 @@ class Blink(commands.AutoShardedBot):
                 self.load_extension(extension)
             except Exception as e:
                 log(f"Unable to load: {extension} Exception was raised: {e}", "boot")
-                self.loadexceptions += f"Unable to load: {extension} Exception was raised: {e}\n"
+                self.loadexceptions.append(f"Unable to load: {extension} Exception was raised: {e}")
 
     async def invalidate_cache(self, scope: str, from_remote: bool = False):
         """
@@ -336,11 +348,13 @@ class Blink(commands.AutoShardedBot):
             cls = blink.DBCache
 
         if identifier in self._cache:
+            self.cache_hits += 1
             return self._cache[identifier]  # Return local cache
 
         # Create new cache and add to local store
         cache = cls(self.DB, identifier, statement, values)
         self._cache[identifier] = cache
+        self.cache_misses += 1
         return cache
 
     async def warn(self, message, shouldRaise=True):
@@ -392,8 +406,9 @@ class Blink(commands.AutoShardedBot):
             f"GUILDS:{len(self.guilds)}",
             f"SHARDS:{len(self.shards)}```",
         ]
-        if not self.loadexceptions == "":
-            boot.append("@everyone ***BOOT ERRORS***\n" + self.loadexceptions)
+        if self.loadexceptions:
+            boot.append("@everyone ***BOOT ERRORS***")
+            boot = boot + self.loadexceptions
 
         self.bootlog = "\n".join(boot)
         if not self.beta:
@@ -442,6 +457,10 @@ class Blink(commands.AutoShardedBot):
 
     @tasks.loop(hours=1)
     async def update_pres(self):
+        """
+        Loop runs every hour to ensure status is correct
+        could be deprecated as status is no longer live
+        """
         for id in self.shards:
             try:
                 await self.change_presence(
@@ -471,25 +490,28 @@ class Blink(commands.AutoShardedBot):
             await self.invalidate_cache(payload.get("cache"), True)
 
     async def on_error(self, event_method: str, *_, **__):
-        """Event error handler sends events to github gist"""
-        exc = sys.exc_info()
-        tb = traceback.format_exc()
+        """Event error handler sends errors to github gist"""
+        exc = sys.exc_info() # The current exception object
+        tb = traceback.format_exc() # The traceback of the current exception
         embed = discord.Embed(colour=discord.Colour.red(),
                               title=f"{exc[0].__qualname__}")
         embed.set_author(name=f"Exception in event {event_method}")
-        async with aiohttp.ClientSession() as cs:
+        async with aiohttp.ClientSession() as cs: # Http session to post
+            # Post exception data to github gists
             async with cs.post("https://api.github.com/gists", headers={"Authorization": "token " + secrets.gist}, json={"public": False, "files": {"traceback.txt": {"content": tb}}}) as gist:
                 data = await gist.json()
-                embed.description = data["html_url"]
-            hook = discord.Webhook(
+                embed.description = data["html_url"] # Set the embed description to the url of the gist
+            hook = discord.Webhook( # Create a new webhook client
                 secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
-            await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR")
+            await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR") # Send the webhook to the error channel
 
     async def stop(self):
+        """Close all internal loops and stop"""
         await self.cluster.quit()
         await self.logout()
         await self.close()
         await self.loop.close()
+        await asyncio.sleep()
         sys.exit(0)
 
 
