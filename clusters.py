@@ -34,7 +34,7 @@ class Cluster(object):
 
     async def crash(self, error, traceback):
         """Crash handler"""
-        await self.ws.panic(error, traceback) 
+        await self.ws.panic(error, traceback)
         await self.quit()
 
     @property
@@ -50,7 +50,7 @@ class Cluster(object):
         self.ws.bot = bot
         self.ws.bot_dispatch = bot.cluster_event # the coroutine for handling events sent from the controller
 
-    async def wait_identifier(self): 
+    async def wait_identifier(self):
         """Wait for the controller to assign an identifier"""
         await self.ws._ready.wait()
         self.identifier = self.ws.identifier
@@ -177,9 +177,9 @@ class ClusterSocket():
 
     async def quit(self, code=1000, reason="Goodbye <3"):
         """Stop the websocket"""
-        await self.ws.close(code=code, reason=reason)
         self.active = False
         self.beating = False
+        await self.ws.close(code=code, reason=reason)
 
     async def panic(self, error, traceback):
         """Send a panic message to the controller"""
