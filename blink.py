@@ -16,6 +16,7 @@ from aiohttp import ClientSession
 import time
 from asyncpg.pool import Pool
 from collections import OrderedDict
+from typing import Callable, List
 import re
 
 
@@ -23,6 +24,7 @@ urlregex = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
 
 class Timer:
+    """Context manager that will store time since created since initialised"""
     def __enter__(self):
         self.start = time.perf_counter()
         return self
@@ -37,12 +39,12 @@ class Timer:
 
 class DBCache():
     def __init__(self, db: Pool, identifier: str, statement: str, values: tuple):
-        self.db = db
-        self.identifier = identifier
-        self.statement = statement
-        self.values = values
-        self._value = None
-        self._current = False
+        self.db = db # Pooled database connection
+        self.identifier = identifier # The unique ID of the cache
+        self.statement = statement # SQL Query to update cache
+        self.values = values # Values to use to query
+        self._value = None # Internal value
+        self._current = False # If data is current
 
     def __repr__(self):
         return f"<In memory DB cache - {self.statement}, {self.values}>"
@@ -52,7 +54,7 @@ class DBCache():
         self._current = True
 
     async def __aenter__(self):
-        if not self._current:
+        if not self._current: # Update when accessed from a context manager
             await self.update()
         return self
 
@@ -71,10 +73,12 @@ class DBCache():
         await self._set_value()
 
     async def bot_invalidate(self, bot):
+        """Tell other clusters that this cache has been modified"""
         await bot.invalidate_cache(self.identifier)
 
 
-def fancytext(name, term, scope: str):
+def fancytext(name, term, checks: List[Callable]):
+    """"""
     eng = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
            'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     conversion = [
@@ -87,28 +91,17 @@ def fancytext(name, term, scope: str):
         ['𝒶', '𝒷', '𝒸', '𝒹', '𝑒', '𝒻', '𝑔', '𝒽', '𝒾', '𝒿', '𝓀', '𝓁', '𝓂', '𝓃', '𝑜', '𝓅',
             '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']  # ascii + 119893 or 119789
     ]
-    if scope == "eq":
-        if name == term:
-            return True
-    elif scope == "sw":
-        if name.startswith(term):
-            return True
-    elif scope == "in":
-        if term in name:
+
+    for func in checks: # Run the checks before doing expensive computation
+        if func(name, term):
             return True
 
-    for alphabet in conversion:
+    for alphabet in conversion: # Support fancy text generator by replacing a-z with 'fancytext'
         check = term
         for x in range(0, 26):
             check = check.replace(eng[x], alphabet[x])
-        if scope == "eq":
-            if name == check:
-                return True
-        elif scope == "sw":
-            if name.startswith(check):
-                return True
-        elif scope == "in":
-            if check in name:
+        for func in checks:
+            if func(name, term):
                 return True
     return False
 
@@ -117,23 +110,26 @@ async def searchrole(roles: list, term: str) -> discord.Role:
     """Custom role search for discord.py"""
     loop = asyncio.get_event_loop()
 
-    for r in roles:
-        if await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), "eq")):
-            return r
-    for r in roles:
-        if await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), "sw")):
-            return r
-    for r in roles:
-        if await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), "in")):
+    checks = [
+        (lambda name, term: name == term),
+        (lambda name, term: name.startswith(term)),
+        (lambda name, term: term in name)
+    ]
+
+    for r in roles: # These must be run in executor because they are expensive to compute and would block the event loop
+        if await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), checks)):
             return r
 
 
 def ordinal(n: int):
     """Turns an int into its ordinal (1 -> 1st)"""
     return f"{n}{'tsnrhtdd'[(f(n/10)%10!=1)*(n%10<4)*n%10::4]}"  # noqa: E226,E228
+    # (f(n/10)%10!=1)*(n%10<4)*n%10 gives 1->1, 2->2, 3->3, n->0
+    # the string 'tsnrhtdd' is then subscripted [x::4]
+    # this returns the letter at index x and x+5
 
 
-class Config():
+class Config(): # Deprecated configuration
     @classmethod
     def newguilds(self):
         return int(702201857606549646)
@@ -152,6 +148,7 @@ class Config():
 
 
 def prettydelta(seconds):
+    """Function to turn seconds into days minutes hours"""
     seconds = int(seconds)
     days, seconds = divmod(seconds, 86400)
     hours, seconds = divmod(seconds, 3600)
@@ -193,9 +190,9 @@ class Cog(commands.Cog):
     def __init__(self, bot, identifier: str):
         self.bot = bot
         self.identifier = identifier
-        bot._cogs.register(self, self.identifier)
+        bot._cogs.register(self, self.identifier) # Allow easy access during runtime code evaluatino
 
-    def cog_unload(self):
+    def cog_unload(self): # Called when a cog is unloaded
         self.bot._cogs.unregister(self.identifier)
         if hasattr(self, "session") and isinstance(self.session, ClientSession):
             self.bot.loop.create_task(self.session.close())
@@ -227,19 +224,20 @@ class Ctx(commands.Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.guild and hasattr(self.bot, "wavelink"):
-            self.player = self.bot.wavelink.players.get(self.guild.id)
+            self.player = self.bot.wavelink.players.get(self.guild.id) # Deprecated music player
 
     def __repr__(self):
         return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
 
     @property
     def clean_prefix(self):
+        """Returns the prefix used and will parse a id into a username"""
         user = self.guild.me if self.guild else self.bot.user
         pattern = re.compile(r"<@!?%s>" % user.id)
         return pattern.sub("@%s" % user.display_name.replace('\\', r'\\'), self.prefix)
 
     async def send(self, *args, **kwargs):
-        if self.message.reference:
+        if self.message.reference: # Reference message that the original message referenced when responding
             self.message.reference.fail_if_not_exists = False
             if not kwargs.get("reference"):
                 kwargs["reference"] = self.message.reference
@@ -248,6 +246,7 @@ class Ctx(commands.Context):
 
 
 class CogStorage:
+    """Dummy object used as an attribute to store each individual cog"""
     def __dir__(self):
         return sorted([a for a in super().__dir__() if not ((a.startswith("__") and a.endswith("__")) or a in ["register", "unregister"])])
 
@@ -262,6 +261,7 @@ class CogStorage:
 
 
 class ServerCache(DBCache):
+    """Subclass of DBCache for guild data, parses json"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.exists = False
@@ -276,6 +276,7 @@ class ServerCache(DBCache):
             self.value = {}
 
     async def save(self, guild_id: int, bot):
+        """Save the dictionary to the database"""
         await bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(self.value), guild_id)
         await self.bot_invalidate(bot)
 
@@ -289,6 +290,7 @@ class ServerCache(DBCache):
 
 
 class UrlConverter(commands.Converter):
+    """Convertor to parse URLs from a string or text"""
     async def convert(self, ctx, argument):
         if urlregex.match(argument):
             if len(argument) > 1000:
