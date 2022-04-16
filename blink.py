@@ -16,11 +16,25 @@ from aiohttp import ClientSession
 import time
 from asyncpg.pool import Pool
 from collections import OrderedDict
+from queue import PriorityQueue
 from typing import Callable, List
 import re
 
 
 urlregex = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
+
+eng = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+       'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+conversion = [
+    ["𝔞", "𝔟", "𝔠", "𝔡", "𝔢", "𝔣", "𝔤", "𝔥", "𝔦", "𝔧", "𝔨", "𝔩", "𝔪", "𝔫", "𝔬",
+        "𝔭", "𝔮", "𝔯", "𝔰", "𝔱", "𝔲", "𝔳", "𝔴", "𝔵", "𝔶", "𝔷"],  # ascii + 119997
+    ['𝖆', '𝖇', '𝖈', '𝖉', '𝖊', '𝖋', '𝖌', '𝖍', '𝖎', '𝖏', '𝖐', '𝖑', '𝖒', '𝖓', '𝖔',
+        '𝖕', '𝖖', '𝖗', '𝖘', '𝖙', '𝖚', '𝖛', '𝖜', '𝖝', '𝖞', '𝖟'],  # ascii + 120101
+    ['𝓪', '𝓫', '𝓬', '𝓭', '𝓮', '𝓯', '𝓰', '𝓱', '𝓲', '𝓳', '𝓴', '𝓵', '𝓶', '𝓷', '𝓸',
+        '𝓹', '𝓺', '𝓻', '𝓼', '𝓽', '𝓾', '𝓿', '𝔀', '𝔁', '𝔂', '𝔃'],  # ascii + 119945
+    ['𝒶', '𝒷', '𝒸', '𝒹', '𝑒', '𝒻', '𝑔', '𝒽', '𝒾', '𝒿', '𝓀', '𝓁', '𝓂', '𝓃', '𝑜', '𝓅',
+        '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']  # ascii + 119893 or 119789
+]
 
 
 class Timer:
@@ -78,37 +92,32 @@ class DBCache():
 
 
 def fancytext(name, term, checks: List[Callable]):
-    """"""
-    eng = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-           'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    conversion = [
-        ["𝔞", "𝔟", "𝔠", "𝔡", "𝔢", "𝔣", "𝔤", "𝔥", "𝔦", "𝔧", "𝔨", "𝔩", "𝔪", "𝔫", "𝔬",
-            "𝔭", "𝔮", "𝔯", "𝔰", "𝔱", "𝔲", "𝔳", "𝔴", "𝔵", "𝔶", "𝔷"],  # ascii + 119997
-        ['𝖆', '𝖇', '𝖈', '𝖉', '𝖊', '𝖋', '𝖌', '𝖍', '𝖎', '𝖏', '𝖐', '𝖑', '𝖒', '𝖓', '𝖔',
-            '𝖕', '𝖖', '𝖗', '𝖘', '𝖙', '𝖚', '𝖛', '𝖜', '𝖝', '𝖞', '𝖟'],  # ascii + 120101
-        ['𝓪', '𝓫', '𝓬', '𝓭', '𝓮', '𝓯', '𝓰', '𝓱', '𝓲', '𝓳', '𝓴', '𝓵', '𝓶', '𝓷', '𝓸',
-            '𝓹', '𝓺', '𝓻', '𝓼', '𝓽', '𝓾', '𝓿', '𝔀', '𝔁', '𝔂', '𝔃'],  # ascii + 119945
-        ['𝒶', '𝒷', '𝒸', '𝒹', '𝑒', '𝒻', '𝑔', '𝒽', '𝒾', '𝒿', '𝓀', '𝓁', '𝓂', '𝓃', '𝑜', '𝓅',
-            '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']  # ascii + 119893 or 119789
-    ]
 
-    for func in checks: # Run the checks before doing expensive computation
+    confidences = set()
+
+    for confidence, func in enumerate(checks): # Run the checks before doing expensive computation
         if func(name, term):
-            return True
+            confidences.add(confidence)
 
     for alphabet in conversion: # Support fancy text generator by replacing a-z with 'fancytext'
         check = term
         for x in range(0, 26):
             check = check.replace(eng[x], alphabet[x])
-        for func in checks:
+        for confidence, func in enumerate(checks):
             if func(name, term):
-                return True
-    return False
+                confidences.add(confidence)
+
+    if confidences:
+        return min(confidences) # Lower is more confident as it used an earlier check
+    else:
+        return -1
 
 
 async def searchrole(roles: list, term: str) -> discord.Role:
     """Custom role search for discord.py"""
     loop = asyncio.get_event_loop()
+
+    matches = PriorityQueue()
 
     checks = [
         (lambda name, term: name == term),
@@ -117,8 +126,12 @@ async def searchrole(roles: list, term: str) -> discord.Role:
     ]
 
     for r in roles: # These must be run in executor because they are expensive to compute and would block the event loop
-        if await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), checks)):
-            return r
+        confidence = await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), checks))
+        if confidence >= 0:
+            matches.put((confidence, r))
+
+    if not matches.empty():
+        return matches.get()[1]
 
 
 def ordinal(n: int):
