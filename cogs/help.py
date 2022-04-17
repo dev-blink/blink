@@ -68,7 +68,7 @@ class BotHelp(commands.HelpCommand):
                 cogs.append(f"--{cog.qualified_name} [{len(cmds)}]")
         cogs = "\n".join(cogs)
         modules.insert(0, discord.Embed(title="React to this message with the controls below to view all modules",
-                       description=f"Use help <module> for help on a module\nUse help <command> for more detail on a command\n\n**Modules active**: \n{cogs}", colour=self.colour))
+                       description=f"Use help <module name> (case sensitive) for help on a module\nUse help <command> for more detail on a command\n\n**Modules active**: \n{cogs}", colour=self.colour))
         menu = HelpMenu(modules)
         await menu.start(self.get_destination())
 
