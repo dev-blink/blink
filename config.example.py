@@ -1,5 +1,5 @@
 beta = False
-gateway = ""  # Cluster master address
+gateway = ""  # Master server socket address
 cdn = ""  # Cdn url and bucket
 api = ""  # Api address
 db = ""  # Database host

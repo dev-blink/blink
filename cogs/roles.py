@@ -100,7 +100,7 @@ class RoleManagement(blink.Cog, name="Role Management"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
-    async def hoistrole(self, ctx, *,  role):
+    async def hoistrole(self, ctx, *, role):
         """Display a role seperately from online members"""
         role = await blink.searchrole(ctx.guild.roles, role)
         if not role:
@@ -113,8 +113,6 @@ class RoleManagement(blink.Cog, name="Role Management"):
         hoisted = role.hoist
         await role.edit(hoist=not hoisted)
         await ctx.send(f"{role.name} {'has been de'if hoisted else 'is now '}hoisted.")
-
-
 
 
 def setup(bot):

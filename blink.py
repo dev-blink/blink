@@ -101,7 +101,7 @@ def fancytext(name, term, checks: List[Callable]):
 
     for alphabet in conversion: # Support fancy text generator by replacing a-z with 'fancytext'
         check = term
-        for x in range(0, 26):
+        for x in range(0, 26): # str.translate cannot be used because it doesnt support non ascii
             check = check.replace(eng[x], alphabet[x])
         for confidence, func in enumerate(checks):
             if func(name, term):
@@ -142,7 +142,7 @@ def ordinal(n: int):
     # this returns the letter at index x and x+5
 
 
-class Config(): # Deprecated configuration
+class Config(): # Deprecated configuration only used in clustering
     @classmethod
     def newguilds(self):
         return int(702201857606549646)

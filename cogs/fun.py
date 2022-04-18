@@ -122,8 +122,8 @@ class Fun(blink.Cog, name="Fun"):
             return await ctx.send("I could not find that role.")
 
         member = random.choice(role.members)
-        embed = discord.Embed(title="Random member with role " +
-                              role.name, description=str(member), colour=0xf5a6b9)
+        embed = discord.Embed(title="Random member with role " + role.name,
+                             description=str(member), colour=0xf5a6b9)
         embed.set_author(name=ctx.author.name + "#" + str(ctx.author.discriminator),
                          icon_url=ctx.author.avatar_url_as(static_format='png'))
         embed.set_footer(text="Chance : 1/" + str(len(role.members)))
