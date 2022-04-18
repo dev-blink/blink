@@ -132,7 +132,6 @@ class Blink(commands.AutoShardedBot):
         self.boottime: datetime.datetime = datetime.datetime.utcnow()
         self.created: bool = False
         self.logger: logging.Logger = logger
-
         # Cogs
         self._cogs: blink.CogStorage = blink.CogStorage()
         self.load_extension("cogs.pre-error")
@@ -199,7 +198,7 @@ class Blink(commands.AutoShardedBot):
         # This is required to be a property because a standard attribute
         # would need to be copied to allow independent editing
         return [";", "b;", "B;", "blink"]
-    
+
     def cacherate(self):
         """The percentage of cache reads that have hit the cache"""
         if self.cache_hits + self.cache_misses == 0:
@@ -377,6 +376,8 @@ class Blink(commands.AutoShardedBot):
         log("Waiting on clusters", "boot")
 
         await self.cluster.wait_until_ready()  # Wait on the other clusters to be ready
+        await asyncio.sleep(self.cluster.index * 2)
+        log(f"Waited {self.cluster.index * 2}s before starting", "boot")
 
         log(f"Clusters took {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')} to start", "boot")
 
@@ -505,13 +506,13 @@ class Blink(commands.AutoShardedBot):
                 secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
             await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR") # Send the webhook to the error channel
 
-    async def stop(self):
+    async def stop(self, cluster_up=True):
         """Close all internal loops and stop"""
-        await self.cluster.quit()
+        if cluster_up:
+            await self.cluster.quit()
         await self.logout()
         await self.close()
         await self.loop.close()
-        await asyncio.sleep()
         sys.exit(0)
 
 
