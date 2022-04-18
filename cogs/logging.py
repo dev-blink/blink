@@ -14,7 +14,6 @@ import uuid
 from jishaku.paginators import PaginatorEmbedInterface
 import config
 import hashlib
-from async_timeout import timeout
 import blink
 
 
@@ -68,9 +67,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
         try:
-            async with timeout(30):
-                if await self.bot.cluster.dedupe("logging", transaction):
-                    return
+            if await self.bot.cluster.dedupe("logging", transaction):
+                return
         except asyncio.TimeoutError:
             return await self.bot.warn(f"Timeout waiting for dedupe ({uuid})", False)
         self.bot.logActions += 1

@@ -3,11 +3,13 @@
 # Proprietary and confidential
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
-
-import collections
+from typing import Callable
+from collections import deque
 import discord  # noqa F401
 from discord.ext.commands import AutoShardedBot
 from string import ascii_uppercase as alphabet
+from async_timeout import timeout as TimeoutManager
+
 import blink
 import websockets
 import asyncio
@@ -39,10 +41,8 @@ class Cluster(object):
 
     @property
     def latency(self):
-        try:
-            return round(self.ws.latency() / 10**6, 5)
-        except OverflowError:
-            return float('inf')
+        """Time between heartbeats being sent and being acked in ms"""
+        return round(self.ws.latency() * 1000, 2)
 
     def reg_bot(self, bot: AutoShardedBot):
         """Register the bot object to this cluster after getting an identifier from the controller"""
@@ -54,6 +54,7 @@ class Cluster(object):
         """Wait for the controller to assign an identifier"""
         await self.ws._ready.wait()
         self.identifier = self.ws.identifier
+        self.index = alphabet.index(self.identifier)
         return self.identifier
 
     async def wait_until_ready(self):
@@ -159,11 +160,10 @@ class ClusterSocket():
         self.cluster = cluster
         self.beating = False
         self._loop = loop
-        self.wait = {}
+        self.stats_wait = {}
         self.guilds = 0
         self.users = 0
         self.music = 0
-        self.dupes = {}
         self.active = False
         self.connected = False
         self._ready = asyncio.Event()
@@ -172,8 +172,11 @@ class ClusterSocket():
         self.identify_hold_after = asyncio.Event()
         self.gateway = gateway
         self.sequence = 0
-        self._latencies_sent = collections.deque([], 50)
-        self._latencies_recieved = collections.deque([], 50)
+        self.heartbeat_last_sent = None
+        self.latencies = deque([], maxlen=50)
+        self.wait_events = {}
+        self.wait_checks = {}
+        self.wait_responses = {}
 
     async def quit(self, code=1000, reason="Goodbye <3"):
         """Stop the websocket"""
@@ -195,14 +198,48 @@ class ClusterSocket():
 
     async def send(self, payload):
         """Send a dict over the websocket"""
-        self._latencies_sent.appendleft(
-            (self.sequence + 1, time.perf_counter_ns()))
         await self.ws.send(json.dumps(payload))
 
     def start(self):
-        """Start internal ws poll0"""
+        """Start internal ws poll"""
         self._loop.create_task(self.loop())
         self.active = True
+
+    def register_waiter(self, id, check):
+        self.wait_events[id] = asyncio.Event()
+        self.wait_checks[id] = check
+        self.wait_responses[id] = None
+
+    def unregister_waiter(self,id):
+        del self.wait_events[id]
+        del self.wait_checks[id]
+        del self.wait_responses[id]
+
+    async def wait_for(self, check: Callable, timeout: int = 30) -> dict:
+        """Wait for a payload that when passed to the check will return true"""
+        id = str(uuid.uuid4())
+        self.register_waiter(id, check)
+        try:
+            async with TimeoutManager(timeout):
+                await self.wait_events[id].wait()
+        except asyncio.TimeoutError:
+            # Catch and reraise to cleanup and prevent leaks
+            self.unregister_waiter(id)
+            raise
+        # Only wait in the timeout to prevent a timeout being raised during logic
+        payload = self.wait_responses[id]
+        self.unregister_waiter(id)
+        return payload
+
+    async def check_waiters(self, payload: dict):
+        """Check if a payload is being waited on"""
+        for id, check in self.wait_checks.items():
+            if check(payload):
+                self.wait_responses[id] = payload
+                self.wait_events[id].set()
+                self.bot.logger.info(f"check id {id} passed with payload {payload}")
+            else:
+                self.bot.logger.info(f"check id {id} failed with payload {payload}")
 
     def update(self, stats: dict):
         """Pass stats to the socket handler"""
@@ -222,7 +259,14 @@ class ClusterSocket():
 
     async def loop(self):
         while self.active:
-            self.ws = await websockets.connect(self.gateway)
+            try:
+                self.ws = await websockets.connect(self.gateway)
+            except OSError:
+                if hasattr(self, "bot"):
+                    await self.bot.stop(False)
+                    raise
+                else:
+                    sys.exit(130)
             self.connected = True
             try:
                 async for message in self.ws:
@@ -236,20 +280,15 @@ class ClusterSocket():
                             await self.identify(data)
                         if data["op"] == 3:
                             await self.intent(data["data"])
-                        if data["op"] == 4:
-                            self._latencies_recieved.appendleft(
-                                (
-                                    data["seq"], time.perf_counter_ns()))
-                        if data["op"] == 6:
-                            await self.reg_dupe(data["data"])
+                        await self.check_waiters(data)
                     except Exception as e:
                         await self.bot.warn(f"Exception in cluster recieve {type(e)} {e}", False)
             except websockets.ConnectionClosed as e:
-                if e.code == 4007:
+                if e.code == 4007: # Too many clusters, we arent needed
                     print("Cluster pool overpopulated, exiting without reconnect")
                     await asyncio.sleep(5)
                     sys.exit(2)
-                elif e.code == 4999:
+                elif e.code == 4999: # We crashed
                     return
                 self.beating = False
 
@@ -279,27 +318,23 @@ class ClusterSocket():
         self.beating = True
         while self.beating:
             await self.ws.send(json.dumps({"op": 2, "data": {}}))
+            self.heartbeat_last_sent = time.perf_counter()
+            self._loop.create_task(self.calculate_heartbeat_interval())
             for x in range(timeout - 3):
                 await asyncio.sleep(1)
                 if self.active is False:
                     return
 
+    async def calculate_heartbeat_interval(self):
+        await self.wait_for(lambda p: (p["op"] == 4 and p["data"]["recieved"] == 2))
+        duration = time.perf_counter() - self.heartbeat_last_sent
+        self.latencies.appendleft(duration)
+
     def latency(self):
-        """socket latency in nanoseconds"""
-        latencies = 0
-
-        def latency_iter():
-            map = dict(self._latencies_sent)
-            for (key, recv) in self._latencies_recieved:
-                sent = map.get(key)
-                if sent:
-                    nonlocal latencies
-                    latencies += 1
-                    yield recv - sent
-
-        try:
-            return sum(latency_iter()) / latencies
-        except ZeroDivisionError:
+        num_latencies = len(self.latencies)
+        if num_latencies > 0:
+            return sum(self.latencies) / num_latencies
+        else:
             return float('inf')
 
     async def post_stats(self):
@@ -317,7 +352,7 @@ class ClusterSocket():
         }
         await self.send(payload)
 
-    async def intent(self, data):
+    async def intent(self, data): # could use handlers
         if data.get("intent") == "STATS":
             self.load_data(data["identifier"], data["guilds"],
                            data["users"], data["music"])
@@ -330,8 +365,8 @@ class ClusterSocket():
                 self.identify_hold_after.set()
 
     def load_data(self, identifier, guilds, users, music):
-        self.wait[identifier] = (guilds, users, music)
-        if len(self.wait) == self._total_clusters - 1:
+        self.stats_wait[identifier] = (guilds, users, music)
+        if len(self.stats_wait) == self._total_clusters - 1:
             if not self._online.is_set():
                 self._online.set()
 
@@ -344,30 +379,21 @@ class ClusterSocket():
             guilds = self.guilds
             users = self.users
             music = self.music
-            for cluster in self.wait:
-                guilds += self.wait[cluster][0]
-                users += self.wait[cluster][1]
-                music += self.wait[cluster][2]
+            for cluster in self.stats_wait:
+                guilds += self.stats_wait[cluster][0]
+                users += self.stats_wait[cluster][1]
+                music += self.stats_wait[cluster][2]
         return {
             "guilds": guilds,
             "users": users,
             "music": music,
         }
 
-    async def reg_dupe(self, payload):
-        self.dupes[payload["req"]] = payload["duplicate"]
-
     async def dedupe(self, payload: dict, req: str):
         payload["req"] = req
         await self.ws.send(json.dumps({"op": 6, "data": payload}))
-        while True:
-            await asyncio.sleep(0)
-            if self.dupes.get(req) is None:
-                continue
-            else:
-                res = self.dupes[req]
-                del self.dupes[req]
-                return res
+        response = await self.wait_for(lambda p: (p["op"] == 6 and p["data"]["req"] == req))
+        return response["duplicate"]
 
     async def wait_for_identify(self):
         await self.identify_hold.wait()
