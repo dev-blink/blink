@@ -393,7 +393,7 @@ class ClusterSocket():
         payload["req"] = req
         await self.ws.send(json.dumps({"op": 6, "data": payload}))
         response = await self.wait_for(lambda p: (p["op"] == 6 and p["data"]["req"] == req))
-        return response["duplicate"]
+        return response["data"]["duplicate"]
 
     async def wait_for_identify(self):
         await self.identify_hold.wait()
