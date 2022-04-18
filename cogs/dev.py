@@ -122,8 +122,7 @@ class Owner(blink.Cog, name="Developer"):
             if not await self.musiccheck(ctx):
                 return
         try:
-            if cog in ["jishaku"]:
-                cog = "jishaku"
+            if cog in "jishaku":
                 self.bot.unload_extension(cog)
                 self.bot.load_extension(cog)
             else:
@@ -142,7 +141,7 @@ class Owner(blink.Cog, name="Developer"):
         """Displays loaded cogs"""
         embed = discord.Embed(title="Loaded Cogs", description='\n'.join(
             "\n".join([getattr(self.bot._cogs, c).__class__.__qualname__ for c in dir(self.bot._cogs)])
-            ), colour=0xf5a6b9)
+        ), colour=0xf5a6b9)
         await ctx.send(embed=embed)
 
     @commands.command(name='close-bot', aliases=["killbot", "closebot"], hidden=True)
@@ -152,7 +151,7 @@ class Owner(blink.Cog, name="Developer"):
         if not await self.musiccheck(ctx):
             return
         check = str(uuid.uuid4())
-        await self.bot.warn(f"Shutdown attempted, key is {check}", False)
+        await self.bot.warn(f"Shutdown attempted, key is:\n{check}", False)
         await ctx.send("Please enter a key")
         try:
             await self.bot.wait_for("message", check=lambda m: m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content == check, timeout=15)
