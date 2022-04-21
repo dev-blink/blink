@@ -122,7 +122,7 @@ class Owner(blink.Cog, name="Developer"):
             if not await self.musiccheck(ctx):
                 return
         try:
-            if cog in "jishaku":
+            if cog == "jishaku":
                 self.bot.unload_extension(cog)
                 self.bot.load_extension(cog)
             else:

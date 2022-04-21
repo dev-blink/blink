@@ -20,6 +20,13 @@ import sys
 import time
 
 
+def _request_tag_generator():
+    i = 0
+    while True:
+        yield i
+        i += 1
+
+
 class Cluster(object):
     def __init__(self, gateway):
         self.active = False # If this cluster is active and ready to operate
@@ -74,7 +81,7 @@ class Cluster(object):
 
     async def dedupe(self, scope: str, hash: str):
         """Stop duplicate actions being completed by multiple clusters"""
-        return await self.ws.dedupe({"scope": scope, "content": hash}, str(uuid.uuid4()))
+        return await self.ws.dedupe({"scope": scope, "content": hash})
 
     def start(self, loop):
         """Start the internal loop in the asyncio event loop"""
@@ -173,6 +180,7 @@ class ClusterSocket():
         self.gateway = gateway
         self.sequence = 0
         self.heartbeat_last_sent = None
+        self.request_tags = _request_tag_generator()
         self.latencies = deque([], maxlen=50)
         self.wait_events = {}
         self.wait_checks = {}
@@ -239,7 +247,7 @@ class ClusterSocket():
                 self.wait_events[id].set()
                 self.bot.logger.info(f"check id {id} passed with payload {payload}")
             else:
-                self.bot.logger.info(f"check id {id} failed with payload {payload}")
+                self.bot.logger.debug(f"check id {id} failed with payload {payload}")
 
     def update(self, stats: dict):
         """Pass stats to the socket handler"""
@@ -302,7 +310,7 @@ class ClusterSocket():
             }
         }
         self._ready.set()
-        await self.ws.send(json.dumps(identify))
+        await self.send(identify)
         self._loop.create_task(self.heartbeat(payload["data"]["heartbeat"]))
 
     def hello(self, data):
@@ -317,7 +325,7 @@ class ClusterSocket():
     async def heartbeat(self, timeout):
         self.beating = True
         while self.beating:
-            await self.ws.send(json.dumps({"op": 2, "data": {}}))
+            await self.send({"op": 2, "data": {}})
             self.heartbeat_last_sent = time.perf_counter()
             self._loop.create_task(self.calculate_heartbeat_interval())
             for x in range(timeout - 3):
@@ -389,10 +397,11 @@ class ClusterSocket():
             "music": music,
         }
 
-    async def dedupe(self, payload: dict, req: str):
-        payload["req"] = req
-        await self.ws.send(json.dumps({"op": 6, "data": payload}))
-        response = await self.wait_for(lambda p: (p["op"] == 6 and p["data"]["req"] == req))
+    async def dedupe(self, payload: dict):
+        request_tag = next(self.request_tags)
+        payload["req"] = request_tag
+        await self.send({"op": 6, "data": payload})
+        response = await self.wait_for(lambda p: (p["op"] == 6 and p["data"]["req"] == request_tag))
         return response["data"]["duplicate"]
 
     async def wait_for_identify(self):

@@ -67,8 +67,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.beating = False
         self.handlers = {
             0: self.invalid_opcode,
-            2: self.registerHeartbeat,
             1: self.identify,
+            2: self.registerHeartbeat,
             3: self.event,
             4: self.invalid_opcode,
             5: self.broadcast,
@@ -117,7 +117,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
 
     async def panicked(self, payload):
         """A cluster has panicked, save its log and close it"""
-        with open(f"Cluster {self.identifier} crash.log", "w+") as f:
+        t = datetime.datetime.utcnow()
+        with open(f"Cluster {self.identifier} crash at {t.year}-{t.month}-{t.day} {t.hour:02}{t.minute:02}.log", "w+") as f:
             f.write(f"{payload.get('error')}\n{payload.get('traceback')}")
         await self.close(4999, "Client exception thrown")
         await _panic(f"Cluster {self.identifier} Has crashed {payload.get('error')}", self.identifier)
@@ -255,7 +256,9 @@ class Factory(websocket.WebSocketServerFactory):
     def __init__(self):
         super().__init__()
         self.clients = []
-        self.registered_dupes = CacheDict(50_000) # Dictionary limited in size for memory efficiency
+        # This dictionary is not limited in size because it is a 2D dictionary
+        # The size limited dictionaries are inside this [scope, size limited dictionary]
+        self.registered_dupes = {}
         self.protocol = ServerProtocol # The websocket class to handle each connection
 
     def register(self, client):
@@ -282,7 +285,7 @@ class Factory(websocket.WebSocketServerFactory):
         the key is unique or not, keys may not be unique across scopes
         """
         if not self.registered_dupes.get(scope):
-            self.registered_dupes[scope] = {}
+            self.registered_dupes[scope] = CacheDict(50_000)
         if self.registered_dupes[scope].get(hash) is None:
             self.registered_dupes[scope][hash] = True
             return False

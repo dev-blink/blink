@@ -53,7 +53,7 @@ class Moderation(blink.Cog, name="Moderation"):
         r = await blink.searchrole(channel.guild.roles, "Muted")
         if r:
             overwrites = channel.overwrites
-            overwrites[r] = discord.PermissionOverwrite(send_messages=False)
+            overwrites[r] = discord.PermissionOverwrite(send_messages=False) # modify !!!
             try:
                 await channel.edit(overwrites=overwrites)
             except discord.Forbidden:

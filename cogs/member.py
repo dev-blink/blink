@@ -4,8 +4,8 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import asyncio
 import discord
-from discord.embeds import EmptyEmbed
 from discord.ext import commands
 import datetime
 import blink
@@ -48,6 +48,20 @@ async def convert(seconds):
 
 
 class Members(blink.Cog, name="Member"):
+    async def guild_av(self, m):
+        member = await self.bot.http.get_member(m.guild.id, m.id)
+        av_hash = member.get("avatar")
+        if av_hash:
+            return f"https://cdn.discordapp.com/guilds/{m.guild.id}/users/{m.id}/avatars/{av_hash}.png?size=1024"
+
+    def avatar_embed(self, link):
+        embed = discord.Embed(colour=self.bot.colour)
+        embed.set_author(
+            name="Link", url=link)
+        embed.set_image(url=link)
+        embed.set_footer(text="Press ↔️ to change to avatar")
+        return embed
+
     @commands.command(name="joined", aliases=["joinedat", "joindate"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True)
@@ -142,11 +156,28 @@ class Members(blink.Cog, name="Member"):
         """Shows a user's avatar"""
         if not user:
             user = ctx.author
-        embed = discord.Embed(colour=self.bot.colour)
-        embed.set_author(
-            name="Link", url=user.avatar_url_as(static_format='png'))
-        embed.set_image(url=user.avatar_url_as(static_format='png'))
-        await ctx.send(embed=embed)
+        global_av_embed = self.avatar_embed(user.avatar_url_as(static_format="png"))
+        msg = await ctx.send(embed=global_av_embed)
+        await msg.add_reaction("↔️")
+
+        guild_av = None
+        guild_av_embed = None
+
+        try:
+            while True:
+                await self.bot.wait_for("reaction_add", check=lambda r, u: u.id == ctx.author.id and str(r.emoji) == "↔️",timeout=30)
+                if not guild_av:
+                    guild_av = await self.guild_av(user)
+                    if not guild_av:
+                        return await msg.edit(content="No server avatar available",embed=global_av_embed)
+                    else:
+                        guild_av_embed = self.avatar_embed(guild_av)
+                await msg.edit(embed=guild_av_embed)
+
+                await self.bot.wait_for("reaction_remove", check=lambda r, u: u.id == ctx.author.id and str(r.emoji) == "↔️", timeout=30)
+                await msg.edit(embed=global_av_embed)
+        except asyncio.TimeoutError:
+            return
 
     @commands.command(name="status")
     @commands.guild_only()
