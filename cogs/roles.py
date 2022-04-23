@@ -26,6 +26,9 @@ class RoleManagement(blink.Cog, name="Role Management"):
         if not role:
             return await ctx.send("I could not find that role.")
 
+        if role == ctx.guild.default_role:
+            return await ctx.send("no")
+
         if not ctx.author == ctx.guild.owner:
             if role >= ctx.author.top_role:
                 return await ctx.send("You are unable to give that role. (Check your role position.)")
@@ -84,7 +87,9 @@ class RoleManagement(blink.Cog, name="Role Management"):
     @commands.has_guild_permissions(manage_roles=True)
     async def rolecolour(self, ctx, role: str, colour: discord.Colour):
         """Sets a role colour from a hex code."""
-        role = await blink.searchrole(ctx.guild.roles, role)
+        role = ctx.guild.get_role(role)
+        if not role:
+            role = await blink.searchrole(ctx.guild.roles, role)
         if not role:
             return await ctx.send("I could not find that role.")
         if not ctx.author == ctx.guild.owner:
@@ -102,7 +107,9 @@ class RoleManagement(blink.Cog, name="Role Management"):
     @commands.has_guild_permissions(manage_roles=True)
     async def hoistrole(self, ctx, *, role):
         """Display a role seperately from online members"""
-        role = await blink.searchrole(ctx.guild.roles, role)
+        role = ctx.guild.get_role(role)
+        if not role:
+            role = await blink.searchrole(ctx.guild.roles, str(role))
         if not role:
             return await ctx.send("I could not find that role.")
         if not ctx.author == ctx.guild.owner:
