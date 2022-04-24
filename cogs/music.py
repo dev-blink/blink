@@ -292,7 +292,7 @@ class Music(blink.Cog):
                     await node.destroy()
                 except Exception:
                     pass
-        nodes = {'MAIN': {'host': 'll.blinkbot.me', 'port': 5259, 'rest_uri': 'http://ll.blinkbot.me:5259',
+        nodes = {'MAIN': {'host': 'lava.link', 'port': 80, 'rest_uri': 'http://lava.link:80',
                           'password': secrets.lavalink, 'identifier': 'MAIN', 'region': 'us_east'}}
 
         for n in nodes.values():
