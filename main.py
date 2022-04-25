@@ -23,6 +23,8 @@ import sys
 import traceback
 import platform
 
+import json
+
 
 # Custom
 import blink
@@ -165,13 +167,17 @@ class Blink(commands.AutoShardedBot):
     def __repr__(self) -> str:
         return f"<Blink bot, cluster={repr(self.cluster)}, initialized={self._initialized}, since={self.boottime}>"
 
-    def _trace(self) -> Dict[str, Union[str, int]]:
+    def _trace(self, prettystring=False) -> Dict[str, Union[str, int]]:
         """Debug information about the bot"""
-        return {
+        d = {
             "prod": self.__class__.__qualname__,
             "beta": self.beta,
             "cluster": self.cluster.identifier,
-            "cacherate": f"{self.cacherate()}%",
+            "cache": {
+                "hits": self.cache_hits,
+                "misses": self.cache_misses,
+                "hitrate": self.cacherate(),
+            },
             "config": {
                 "gateway": config.gateway,
                 "cdn": config.cdn,
@@ -185,8 +191,14 @@ class Blink(commands.AutoShardedBot):
                     "total": self.cluster.ws._total_shards,
                 }
 
-            }
+            },
+            "discord": self._shard_info
         }
+
+        if prettystring:
+            return json.dumps(d, indent=4)
+        else:
+            return d
 
     # These are properties as they are static
     @property
@@ -195,8 +207,9 @@ class Blink(commands.AutoShardedBot):
 
     @property
     def default_prefixes(self) -> List[str]:
-        # This is required to be a property because a standard attribute
-        # would need to be copied to allow independent editing
+        # This is required to be a property because a accessing an
+        # attribute dictionary would return a view of the object
+        # allowing it mutable and be changed
         return [";", "b;", "B;", "blink"]
 
     def cacherate(self):
@@ -220,7 +233,6 @@ class Blink(commands.AutoShardedBot):
         This is necessary to abide by the 1 identify per 5s rate limit imposed by discord
         This is a overridden function of the library default but with clustering support
         """
-        gateway = await self.http.get_gateway()
 
         self._connection.shard_count = self.shard_count
         self._connection.shard_ids = self.shard_ids
@@ -228,6 +240,10 @@ class Blink(commands.AutoShardedBot):
         # A is the first cluster and will not need to wait for the previous one to identify
         if not self.cluster.identifier == "A":
             await self.cluster.wait_cluster()
+        # Bot gateway request is also on the identify limit
+        self._shard_info = await self.http.request(discord.http.Route("GET", "/gateway/bot"))
+        gateway = f"{self._shard_info['url']}?encoding=zlib&v={config.gateway_version}&compress=zlib-stream"
+
         for shard_id in self.shard_ids:
             log(f"Launching shard {shard_id}", "boot")
             await self.launch_shard(gateway, shard_id, initial=(shard_id == self.shard_ids[0]))
@@ -271,7 +287,6 @@ class Blink(commands.AutoShardedBot):
             return
         if message.author.bot:  # Bots dont execute commands
             return
-
         # blacklists
         async with self.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
@@ -436,7 +451,10 @@ class Blink(commands.AutoShardedBot):
     async def get_prefix(self, message: discord.Message) -> List[str]:
         """Custom prefixes"""
         if self.beta:  # Beta only beta prefix
-            return ["beta;"]
+            if message.author.id in self.owner_ids:
+                return ["", "beta;"]
+            else:
+                return ["beta;"]
 
         # Fetch the guild data from the cache
         async with self.cache_or_create(f"guild-{message.guild.id}", "SELECT data FROM guilds WHERE id=$1", (message.guild.id,)) as cache:

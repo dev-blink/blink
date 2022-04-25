@@ -148,6 +148,12 @@ class Owner(blink.Cog, name="Developer"):
     @commands.is_owner()
     async def kill_bot(self, ctx):
         """Logsout"""
+        if self.bot.beta:
+            await self.bot.cluster.dispatch({"event": "SHUTDOWN"})
+            await ctx.send("Quitting safely.")
+            await self.bot.stop()
+            exit()
+
         if not await self.musiccheck(ctx):
             return
         check = str(uuid.uuid4())

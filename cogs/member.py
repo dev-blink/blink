@@ -158,6 +158,8 @@ class Members(blink.Cog, name="Member"):
             user = ctx.author
         global_av_embed = self.avatar_embed(user.avatar_url_as(static_format="png"))
         msg = await ctx.send(embed=global_av_embed)
+        if user.bot:
+            return
         await msg.add_reaction("↔️")
 
         guild_av = None
@@ -188,14 +190,12 @@ class Members(blink.Cog, name="Member"):
         if not user:
             user = ctx.author
 
-        if len(list(user.activities)) == 2:
-            base, secondary = user.activities
-            if secondary:
-                pass
-        else:
-            base = user.activity
-        if not base:
-            return await ctx.send("No status detected.")
+        activities = (a for a in user.activities if not isinstance(a, discord.Spotify))
+
+        try:
+            base = next(activities)
+        except StopIteration:
+            return await ctx.send("no non-spotify activity could be detected, use the spotify command for spotify status")
 
         if isinstance(base, discord.CustomActivity):
             if not base.name:
@@ -231,18 +231,12 @@ class Members(blink.Cog, name="Member"):
         if not user:
             user = ctx.author
 
-        if len(list(user.activities)) == 2:
-            base, secondary = user.activities
-        else:
-            base = user.activity
-            secondary = None
+        activities = (a for a in user.activities if isinstance(a, discord.Spotify))
 
-        if isinstance(base, discord.Spotify):
-            spotify = base
-        elif isinstance(secondary, discord.Spotify):
-            spotify = secondary
-        else:
-            return await ctx.send("No spotify detected.")
+        try:
+            spotify = next(activities)
+        except StopIteration:
+            return await ctx.send("no spotify detected")
 
         if isinstance(spotify, discord.Spotify):
             spotifyembed = discord.Embed(

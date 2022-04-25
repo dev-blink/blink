@@ -45,15 +45,12 @@ class Message:
         self.data = data
 
 
-class Intent:
-    """Class to abstract sending data to clusters"""
+class Intent(Message):
+    """Class to abstract sending events to clusters"""
     def __init__(self, intent: str, data: dict):
-        self.op = 3
+        super().__init__(op=3, data=data)
         self.intent = intent.upper()
-        self.data = {
-            "intent": self.intent,
-        }
-        self.data.update(data)
+        self.data['intent'] = self.intent
 
 
 class ServerProtocol(websocket.WebSocketServerProtocol):
@@ -93,7 +90,9 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
 
         if payload.get("identifier") is None:
             return await self.close(code=4004, error="No client identifier")
-        self.name = payload["identifier"]
+        if payload["identifier"] != self.identifier:
+            return await self.close(code=4004, error="Identifier does not match")
+        self.name = payload["identifier"] # For factory
 
         self.authenticated = True
         self.factory.register(self)
@@ -234,14 +233,14 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         try:
             while self.open:
                 if not await self.heartbeatCheck():
-                    return
+                    return # Socket was closed
         except asyncio.TimeoutError:
             if self.open:
                 await self.close(code=4006, error="No heartbeat recieved")
 
     async def heartbeatCheck(self):
         """Check if a heartbeat has been reciebed in the last interval"""
-        async with timeout(self.heartbeatInterval):
+        async with timeout(self.heartbeatInterval + 5):
             while self.open:
                 await asyncio.sleep(1)
                 if not self.open:
@@ -287,9 +286,11 @@ class Factory(websocket.WebSocketServerFactory):
         if not self.registered_dupes.get(scope):
             self.registered_dupes[scope] = CacheDict(50_000)
         if self.registered_dupes[scope].get(hash) is None:
-            self.registered_dupes[scope][hash] = True
+            self.registered_dupes[scope][hash] = 1
             return False
-        return True
+        else:
+            self.registered_dupes[scope][hash] += 1
+            return True
 
     async def getCluster(self, client):
         """Get an identifier for a cluster"""
@@ -298,19 +299,24 @@ class Factory(websocket.WebSocketServerFactory):
             return
         # This list comprehension iterates over the alphabet until a letter is found that is not a registered cluster
         # It will return the first letter found
-        return next(i for i in alphabet[:config.clusters] if i not in [client.identifier for client in self.clients])
+        # The identifiers array is not inline to prevent O(n^2)
+        # This code is blocking so we dont have to worry about identifiers being assigned between
+        # Therefore the identifiers list will not change and does not need to be recomputed
+        identifiers = [client.identifier for client in self.clients]
+        return next(i for i in alphabet[:config.clusters] if i not in identifiers)
 
 
-# Set up asyncio event loop and run the factory server
-loop = asyncio.get_event_loop()
-coro = loop.create_server(Factory(), '0.0.0.0', 9000)
-server = loop.run_until_complete(coro)
+if __name__ == "__main__":
+    # Set up asyncio event loop and run the factory server
+    loop = asyncio.get_event_loop()
+    coro = loop.create_server(Factory(), '0.0.0.0', 9000)
+    server = loop.run_until_complete(coro)
 
-try:
-    print("Running")
-    loop.run_forever()
-except KeyboardInterrupt:
-    print("Exiting on CTRL+C")
-finally:
-    server.close()
-    loop.close()
+    try:
+        print(f"Pool is {config.clusters} clusters with {config.shards} shards each")
+        loop.run_forever()
+    except KeyboardInterrupt:
+        print("Exiting on CTRL+C")
+    finally:
+        server.close()
+        loop.close()

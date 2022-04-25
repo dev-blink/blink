@@ -15,7 +15,6 @@ import websockets
 import asyncio
 import json
 import blinksecrets as secrets
-import uuid
 import sys
 import time
 
@@ -27,7 +26,7 @@ def _request_tag_generator():
         i += 1
 
 
-class Cluster(object):
+class Cluster:
     def __init__(self, gateway):
         self.active = False # If this cluster is active and ready to operate
         self._post = asyncio.Event() # Wait for internal bot cache to be ready before posting statistics
@@ -103,7 +102,7 @@ class Cluster(object):
         return self.ws.query()["music"]
 
     async def loop(self):
-        """Main loop to poll the websocket"""
+        """Main loop to push the websocket"""
         await self.wait_identifier()
         await self._post.wait()
         while self.active:
@@ -114,7 +113,7 @@ class Cluster(object):
     @property
     def shards(self):
         """Returns a dictionary of shard information worked out from information given by the controller"""
-        index = alphabet.index(self.identifier)
+        index = self.index
         if index >= self.ws._total_clusters:
             raise RuntimeError("Cluster out of total cluster range")
         shards = (index + 1) * self.ws._per_cluster
@@ -130,7 +129,7 @@ class Cluster(object):
         """Sync stored stats with the bot stats"""
         try:
             music = len(self.bot.wavelink.players)
-        except Exception:
+        except AttributeError:
             music = 0
         stats = {
             "guilds": len(self.bot.guilds),
@@ -225,7 +224,7 @@ class ClusterSocket():
 
     async def wait_for(self, check: Callable, timeout: int = 30) -> dict:
         """Wait for a payload that when passed to the check will return true"""
-        id = str(uuid.uuid4())
+        id = next(self.request_tags)
         self.register_waiter(id, check)
         try:
             async with TimeoutManager(timeout):
@@ -298,6 +297,8 @@ class ClusterSocket():
                     sys.exit(2)
                 elif e.code == 4999: # We crashed
                     return
+                elif e.code in range(4001,4005 + 1): # 4001-4005
+                    raise
                 self.beating = False
 
     async def identify(self, payload):
@@ -325,13 +326,12 @@ class ClusterSocket():
     async def heartbeat(self, timeout):
         self.beating = True
         while self.beating:
+            if not self.active:
+                return
             await self.send({"op": 2, "data": {}})
             self.heartbeat_last_sent = time.perf_counter()
             self._loop.create_task(self.calculate_heartbeat_interval())
-            for x in range(timeout - 3):
-                await asyncio.sleep(1)
-                if self.active is False:
-                    return
+            await asyncio.sleep(timeout)
 
     async def calculate_heartbeat_interval(self):
         await self.wait_for(lambda p: (p["op"] == 4 and p["data"]["recieved"] == 2))
