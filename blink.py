@@ -91,7 +91,7 @@ class DBCache():
         await bot.invalidate_cache(self.identifier)
 
 
-def fancytext(name, term, checks: List[Callable]):
+def _rolecheck(name, term, checks: List[Callable]):
 
     confidences = set()
 
@@ -99,12 +99,15 @@ def fancytext(name, term, checks: List[Callable]):
         if func(name, term):
             confidences.add(confidence)
 
+    if 0 in confidences:
+        return 0
+
     for alphabet in conversion: # Support fancy text generator by replacing a-z with 'fancytext'
         check = term
         for x in range(0, 26): # str.translate cannot be used because it doesnt support non ascii
             check = check.replace(eng[x], alphabet[x])
         for confidence, func in enumerate(checks):
-            if func(name, term):
+            if func(name, check):
                 confidences.add(confidence)
 
     if confidences:
@@ -126,8 +129,10 @@ async def searchrole(roles: list, term: str) -> discord.Role:
     ]
 
     for r in roles: # These must be run in executor because they are expensive to compute and would block the event loop
-        confidence = await loop.run_in_executor(None, functools.partial(fancytext, r.name.lower(), term.lower(), checks))
-        if confidence >= 0:
+        confidence = await loop.run_in_executor(None, functools.partial(_rolecheck, r.name.lower(), term.lower(), checks))
+        if confidence == 0:
+            return r
+        elif confidence > 0:
             matches.put((confidence, r))
 
     if not matches.empty():
