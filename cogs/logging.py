@@ -80,6 +80,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1", uid)
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid, str(before), beforeav, tt)
+            tt = datetime.datetime.utcnow().timestamp()
 
         if str(before) != str(after):
             await self._update_un(uid, str(after), tt)
