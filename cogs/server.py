@@ -641,6 +641,8 @@ class Server(blink.Cog, name="Server"):
                     return
                 if attachment.size > 5 * (10**6):
                     return
+                if attachment.size < 10**3:
+                    return
                 bucket = self._transform_cooldown.get_bucket(message)
                 if bucket.update_rate_limit():
                     with contextlib.suppress(discord.Forbidden):
