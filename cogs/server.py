@@ -622,6 +622,8 @@ class Server(blink.Cog, name="Server"):
 
     @commands.Cog.listener("on_message")
     async def mov_wrapper(self, message):
+        if message.author.bot:
+            return
         async with self.bot.cache_or_create("blacklist-transform", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("transform",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
