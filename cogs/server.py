@@ -683,7 +683,7 @@ class Server(blink.Cog, name="Server"):
             async with aiohttp.ClientSession() as cs:
                 async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key": secrets.converter}, json=json) as req:
                     if not req.status == 201:
-                        await self.bot.warn(f"Error in video convert - http {req.status}", False)
+                        await self.bot.warn(f"Error in video convert - http {req.status} {message}", False)
                         return await check.edit(content="This service is temporarily unavailable. [HTTP]")
                     response = await req.json()
                     id = response["id"]
@@ -693,13 +693,13 @@ class Server(blink.Cog, name="Server"):
                             json = await req.json()
 
                         if json.get("errors"):
-                            await self.bot.warn(f"Error {req.status} in video convert: {json['errors']}", False)
+                            await self.bot.warn(f"Error {req.status} in video convert: {json['errors']}  {message}", False)
                             return await check.edit(content="This service is temporarily unavailable. [CONVERT]")
 
                         if not json["output"]:
                             if limiter == 29:
                                 async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
-                                    await self.bot.warn(f"Cancelled job {id} {message} for 30s limit", False)
+                                    await self.bot.warn(f"Cancelled job {id} {message} for 30s limit  {message}", False)
                                     return await check.edit(content="This service is temporarily unavailable. [TIMEOUT]")
                             await asyncio.sleep(1)
                             continue
