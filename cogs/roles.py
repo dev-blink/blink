@@ -26,8 +26,17 @@ class RoleManagement(blink.Cog, name="Role Management"):
         if not role:
             return await ctx.send("I could not find that role.")
 
-        if role == ctx.guild.default_role:
-            return await ctx.send("no")
+        if role.is_integration():
+            return await ctx.send("I am unable to assign integration roles")
+
+        if role.is_premium_subscriber():
+            return await ctx.send("I am unable to assign the booster role")
+
+        if role.is_bot_managed():
+            return await ctx.send("I am unable to assign bot owned roles")
+
+        if role.is_default():
+            return await ctx.send("Cannot assign the @everyone role", allowed_mentions=discord.AllowedMentions.none())
 
         if not ctx.author == ctx.guild.owner:
             if role >= ctx.author.top_role:
