@@ -228,8 +228,8 @@ class Fun(blink.Cog, name="Fun"):
     @commands.command(name="ramadan")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def countdown(self, ctx):
-        # return await ctx.send("no countdown active")
-        significant = datetime.datetime(2022, 5, 1, 19, 27)
+        return await ctx.send("no countdown active")
+        significant = datetime.datetime(2022, 5, 1, 19, 27) # MUST BE UTC
         now = datetime.datetime.utcnow()
         delta = significant - now
         await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends (London UK)")
