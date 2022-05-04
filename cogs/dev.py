@@ -139,9 +139,13 @@ class Owner(blink.Cog, name="Developer"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def query_cog(self, ctx):
         """Displays loaded cogs"""
-        embed = discord.Embed(title="Loaded Cogs", description='\n'.join(
-            "\n".join([getattr(self.bot._cogs, c).__class__.__qualname__ for c in dir(self.bot._cogs)])
-        ), colour=0xf5a6b9)
+        embed = discord.Embed(
+            title="Loaded Cogs",
+            description='\n'.join(
+                "\n".join([getattr(self.bot._cogs, c).__class__.__qualname__ for c in dir(self.bot._cogs)])
+            ),
+            colour=0xf5a6b9
+        )
         await ctx.send(embed=embed)
 
     @commands.command(name='close-bot', aliases=["killbot", "closebot"], hidden=True)
@@ -250,6 +254,7 @@ class Owner(blink.Cog, name="Developer"):
         return await ctx.send(f"total-cache```{sanity(channels[discord.TextChannel], 'discord.channel.TextChannel')}\n{sanity(channels[discord.VoiceChannel], 'discord.channel.VoiceChannel')}\n{sanity(128, 'discord.channel.DMChannel')}\n{sanity(channels[discord.CategoryChannel], 'discord.channel.CategoryChannel')}\n{sanity(len(bot.guilds), 'discord.guild.Guild')}\n{sanity(5000, 'discord.message.Message')}\n{sanity(len(bot.users), 'discord.user.User')}\n{sanity(sum(1 for _ in bot.get_all_members()), 'discord.member.Member')}\n{sanity(len(bot.emojis), 'discord.emoji.Emoji')}\n{sanity(get_all_overwrites(), 'discord.abc._Overwrites')}\n{sanity(get_all_roles(), 'discord.role.Role')}```")
 
     async def musiccheck(self, ctx):
+        """Check to not interrupt music players if music is playing before shutdown"""
         if not self.bot.cluster.music == 0:
             m = await ctx.send(f"Players would be cancelled: {self.bot.cluster.music}")
             await m.add_reaction("\U00002714")

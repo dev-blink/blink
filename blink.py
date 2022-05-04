@@ -9,7 +9,6 @@ from random import Random as RAND
 import discord
 from discord.errors import InvalidArgument
 from discord.ext import commands
-from math import floor as f
 import functools
 import asyncio
 from aiohttp import ClientSession
@@ -23,6 +22,9 @@ import re
 
 urlregex = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
 
+
+# lists used for alphabet conversion
+# could use ascii_lowercase but what benefit ?
 eng = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 conversion = [
@@ -36,18 +38,21 @@ conversion = [
         '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']  # ascii + 119893 or 119789
 ]
 
-
+# unbelivabley simple class
 class Timer:
     """Context manager that will store time since created since initialised"""
-    def __enter__(self):
+    def __enter__(self): # called using the with keyword
         self.start = time.perf_counter()
         return self
 
     def __exit__(self, *args):
+        # Given exception information when manager is closed
+        # too bad that isnt our job so we can ignore
         pass
 
     @property
     def time(self):
+        """Return the time since the timer was created"""
         return time.perf_counter() - self.start
 
 
@@ -64,6 +69,7 @@ class DBCache():
         return f"<In memory DB cache - {self.statement}, {self.values}>"
 
     async def _set_value(self):
+        """Fetch data from database"""
         self._value = await self.db.fetchrow(self.statement, *self.values)
         self._current = True
 
@@ -73,6 +79,7 @@ class DBCache():
         return self
 
     async def __aexit__(*args):
+        # exceptions are still not our problem
         return
 
     @property
@@ -83,6 +90,8 @@ class DBCache():
         self._current = False
 
     async def update(self):
+        # MUST INVALIDATE SO CURRENT IS NOT TRUE WHILE FETCHING FROM DB
+        # prevents silly race conditions and stuff
         self.invalidate()
         await self._set_value()
 
@@ -91,15 +100,15 @@ class DBCache():
         await bot.invalidate_cache(self.identifier)
 
 
-def _rolecheck(name, term, checks: List[Callable]):
-
+def _rolecheck(name, term, checks: List[Callable]) -> int:
+    """Refer to role search algorithm in design"""
     confidences = set()
 
     for confidence, func in enumerate(checks): # Run the checks before doing expensive computation
         if func(name, term):
             confidences.add(confidence)
 
-    if 0 in confidences:
+    if 0 in confidences: # If we have a direct match return before doing expensive computation
         return 0
 
     for alphabet in conversion: # Support fancy text generator by replacing a-z with 'fancytext'
@@ -113,7 +122,7 @@ def _rolecheck(name, term, checks: List[Callable]):
     if confidences:
         return min(confidences) # Lower is more confident as it used an earlier check
     else:
-        return -1
+        return -1 # no match found
 
 
 async def searchrole(roles: list, term: str) -> discord.Role:
@@ -122,13 +131,16 @@ async def searchrole(roles: list, term: str) -> discord.Role:
 
     matches = PriorityQueue()
 
+    # our list of checks, the index is the confidence, lower is better
     checks = [
         (lambda name, term: name == term),
         (lambda name, term: name.startswith(term)),
         (lambda name, term: term in name)
     ]
 
-    for r in roles: # These must be run in executor because they are expensive to compute and would block the event loop
+    for r in roles: # These must be run in executor because they are potentially expensive to compute and would block the event loop
+        # funtools.partial turns f(x) into g() where x is stored inside g
+        # we can use this to consume our arguments into a function that can be called by the event loop without needing our arguments
         confidence = await loop.run_in_executor(None, functools.partial(_rolecheck, r.name.lower(), term.lower(), checks))
         if confidence == 0:
             return r
@@ -136,18 +148,50 @@ async def searchrole(roles: list, term: str) -> discord.Role:
             matches.put((confidence, r))
 
     if not matches.empty():
-        return matches.get()[1]
+        return matches.get()[1] # we want the role not the (confidence, role) tuple
+
+    # by default we return None here, indicating a role was not found
 
 
 def ordinal(n: int):
     """Turns an int into its ordinal (1 -> 1st)"""
-    return f"{n}{'tsnrhtdd'[(f(n/10)%10!=1)*(n%10<4)*n%10::4]}"  # noqa: E226,E228
-    # (f(n/10)%10!=1)*(n%10<4)*n%10 gives 1->1, 2->2, 3->3, n->0
+    return f"{n}{'tsnrhtdd'[(n//10!=1)*(n%10<4)*n%10::4]}"
+    
+    # refer to algorithms design section
+
+    # n//10 gives the number of 10s n is divisible by
+    # we make this a bool by comparing it to 1
+    # if it is not 1 then the bool will be false or a 0 int
+    # this causes all numbers between 10-19 to have a as 0
+    # giving the 'th' result
+
+    # we then find the remainder after dividing by 10
+    # and check if its less than 4
+    # n%10<4 returns a bool and if false the int 0
+    # meaning any numbers greater than or equal to 4
+    # have b being 0, returning 'th' when subscripted
+
+    # finally n%10 returns the remainder after dividing
+    # by 10, this is the last digit of the n
+    # this causes c to be n
+
+    # multiplying all 3 of these together, we get
+    # x = a*b*c
+    # x = 1-3 for the any n where it ends in 1-3 (b*c)
+    # except in 10-19 where we multiply x by 0 (a)
+    # to x = 0
+
     # the string 'tsnrhtdd' is then subscripted [x::4]
     # this returns the letter at index x and x+5
+    # 0 --> t, h
+    # 1 --> s, t
+    # 2 --> n, d
+    # 3 --> r, d
 
 
-class Config(): # Deprecated configuration only used in clustering
+# Deprecated configuration only used in clustering
+# could be moved but these are not volatile like other config settings
+class Config():
     @classmethod
     def newguilds(self):
         return int(702201857606549646)
@@ -182,7 +226,7 @@ def prettydelta(seconds):
 
 
 def prand(spice: float, uid: int, start: int, stop: int, inverse: bool = False):
-    """Baised random"""
+    """Seeded random"""
     b = uid * spice
     rng = RAND(x=(b))
     return rng.randint(start, stop)
@@ -199,16 +243,17 @@ class IncorrectChannelError(commands.CommandError):
     pass
 
 
+# Raised to propogate up when something goes wrong
 class SilentWarning(Exception):
     """Error for backing out of tasks with a warning"""
     pass
 
-
+# Cog class provides default attributes, registers to bot and also cleans up clientsessions
 class Cog(commands.Cog):
     def __init__(self, bot, identifier: str):
         self.bot = bot
         self.identifier = identifier
-        bot._cogs.register(self, self.identifier) # Allow easy access during runtime code evaluatino
+        bot._cogs.register(self, self.identifier) # Allow easy access during runtime code evaluation
 
     def cog_unload(self): # Called when a cog is unloaded
         self.bot._cogs.unregister(self.identifier)
@@ -237,12 +282,12 @@ class CacheDict(OrderedDict):
             oldest = next(iter(self))
             del self[oldest]
 
-
+# class for command context
 class Ctx(commands.Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.guild and hasattr(self.bot, "wavelink"):
-            self.player = self.bot.wavelink.players.get(self.guild.id) # Deprecated music player
+        if self.guild and hasattr(self.bot, "wavelink"): # Attach player if music running
+            self.player = self.bot.wavelink.players.get(self.guild.id)
 
     def __repr__(self):
         return f"<Blink context, author={self.author}, guild={self.guild}, message={self.message}>"
@@ -250,8 +295,12 @@ class Ctx(commands.Context):
     @property
     def clean_prefix(self):
         """Returns the prefix used and will parse a id into a username"""
-        user = self.guild.me if self.guild else self.bot.user
-        pattern = re.compile(r"<@!?%s>" % user.id)
+        # basically turns <@692738917236998154> into @blink
+
+        # technically we should always have a guild because we dont recieve
+        # dm messages by choice but checked here in case of cache discrepancy
+        user = self.guild.me if self.guild else self.bot.user # displayname 
+        pattern = re.compile(r"<@!?%s>" % user.id) # literal basic regex
         return pattern.sub("@%s" % user.display_name.replace('\\', r'\\'), self.prefix)
 
     async def send(self, *args, **kwargs):
@@ -264,7 +313,11 @@ class Ctx(commands.Context):
 
 
 class CogStorage:
-    """Dummy object used as an attribute to store each individual cog"""
+    """Dummy object used as an attribute to store each individual cog"""#
+    # accessed with obj.cogname
+    # eg _cogs.logging
+    # this is really just basic python
+
     def __dir__(self):
         return sorted([a for a in super().__dir__() if not ((a.startswith("__") and a.endswith("__")) or a in ["register", "unregister"])])
 
@@ -286,6 +339,9 @@ class ServerCache(DBCache):
 
     async def _set_value(self):
         await super()._set_value()
+        # deserialse our data into json
+        # we may also be fetching a dead entry so we
+        # use exists to determine if the record is real
         if self._value:
             self._value = json.loads(self._value['data'])
             self.exists = True
@@ -295,6 +351,9 @@ class ServerCache(DBCache):
 
     async def save(self, guild_id: int, bot):
         """Save the dictionary to the database"""
+        # guild_id and bot could be class attrs but if we have them here'
+        # it makes sure when writing code we know what and where we are writing
+        # and not to do tomfoolery
         await bot.DB.execute("UPDATE guilds SET data=$1 WHERE id=$2", json.dumps(self.value), guild_id)
         await self.bot_invalidate(bot)
 

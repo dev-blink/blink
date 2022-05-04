@@ -18,6 +18,7 @@ import blink
 
 
 class AvPages(menus.ListPageSource):
+    """Paginator for scrolling through avatar embeds"""
     def __init__(self, data, embeds):
         self.embeds = embeds # List of embeds to go through
         self.data = data
@@ -28,6 +29,7 @@ class AvPages(menus.ListPageSource):
 
 
 class GlobalLogs(blink.Cog, name="Global logging"):
+    """Logging commands"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bot.logActions = 0 # statistics logging
@@ -40,79 +42,102 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
     async def init(self):  # Async init things
         self.session = aiohttp.ClientSession()
-        if not self.bot.beta:
+        if not self.bot.beta: # beta does not need to log!
             from gcloud.aio.storage import Storage
             self.storage = Storage(
                 service_file='./creds.json')
-        self.blacklist = self.bot.cache_or_create(
-            "blacklist-logging", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("logging",))
+        self.blacklist = self.bot.cache_or_create( # Might aswell create a cache
+            "blacklist-logging", "SELECT snowflakes FROM blacklist WHERE scope=$1",
+            ("logging",)
+        )
         self.message_push.start()
         self.bot.add_cog(self)
 
     def cog_unload(self):
-        self.message_push.cancel()
-        super().cog_unload()
+        self.message_push.cancel() # CANCEL TASK !
+        super().cog_unload() # clear up client session
 
     # AVATAR DB TRANSACTIONS
     @commands.Cog.listener("on_user_update")
     async def update(self, before, after):
+        # checks
         if not self.active:
             return
         if before.bot:
             return
 
         async with self.blacklist:
-            if before.id in self.blacklist.value["snowflakes"]:
+            if before.id in self.blacklist.value["snowflakes"]: # check blacklists
                 return
+
+        # create unique hash of the event
         uuid = f"{before}|{after}--{before.avatar}|{after.avatar}"
         transaction = str(hashlib.md5(uuid.encode()).hexdigest())
+
         try:
-            if await self.bot.cluster.dedupe("logging", transaction):
+            if await self.bot.cluster.dedupe("logging", transaction): # check has for duplicate event
                 return
         except asyncio.TimeoutError:
             return await self.bot.warn(f"Timeout waiting for dedupe ({uuid})", False)
+        # if we are first to get this event
+
         self.bot.logActions += 1
-        tt = datetime.datetime.utcnow().timestamp()
-        uid = before.id
-        beforeav = str(before.avatar_url_as(
-            static_format="jpg", size=self.size))
+
+        tt = datetime.datetime.utcnow().timestamp() # current timestamp
+        uid = before.id # userid
+
+        # before and after avatars
+        beforeav = str(before.avatar_url_as(static_format="jpg", size=self.size))
         afterav = str(after.avatar_url_as(static_format="jpg", size=self.size))
+        
+        # original data base query
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1", uid)
+
+        # if we are not in the database we create a new user
         if str(result) == "SELECT 0" or result is None:
             await self._newuser(uid, str(before), beforeav, tt)
             tt = datetime.datetime.utcnow().timestamp()
+            # need to change timestamp so new data not same as original
 
-        if str(before) != str(after):
-            await self._update_un(uid, str(after), tt)
+        # if usernames are different
+        if str(before) != str(after): # str(discord.User) returns qualified username
+            await self._update_un(uid, str(after), tt) # update username
 
+        # if avatars are different
         if str(before.avatar_url) != str(after.avatar_url):
-            await self._update_av(uid, afterav, tt)
+            await self._update_av(uid, afterav, tt) # update avatar
 
-    def _format(self, timestamp: float, string: str):
-        return f"{timestamp}:{string}"
+    def _format(self, timestamp: float, string: str):#
+        """Format for database"""
+        return f"{timestamp}:{string}" # database format of timestamp:entry
 
     def _unformat(self, query) -> tuple:
+        """Unformat database entry into timestamp and entry"""
         query = query.split(":", 1)
         time = datetime.datetime.utcfromtimestamp(float(query[0]))
         return time, query[1]
 
     async def _newuser(self, id, oldname, oldav, timestamp):
+        """Create a new database entry"""
         name = [self._format(timestamp, oldname)]
-        oldav = await self._avurl(oldav, id)
+        oldav = await self._avurl(oldav, id) # create permanent avatar url
         avatar = [self._format(timestamp, oldav)]
         # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
-        await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)", id, name, avatar)
+        await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)", id, name, avatar) # insert both lists
 
     async def _update_un(self, id, after, tt):
+        """Insert an updated username into the database"""
         query = await self.bot.DB.fetch("SELECT name FROM userlog WHERE id = $1", id)
         try:
-            previousNames = query[0]["name"]
+            previousNames = query[0]["name"] 
         except IndexError:
-            previousNames = []
-        previousNames.append(self._format(tt, after))
+            previousNames = [] # names from entry
+        previousNames.append(self._format(tt, after)) # append formatted
+        # update db
         await self.bot.DB.execute("UPDATE userlog SET name = $1 WHERE id = $2", previousNames, id)
 
     async def _update_av(self, id, after, tt):
+        """Insert an updated avatar into the database"""
         query = await self.bot.DB.fetch("SELECT avatar FROM userlog WHERE id = $1", id)
         av = await self._avurl(after, id)
         try:
@@ -128,19 +153,20 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         await self.bot.DB.execute("UPDATE userlog SET avatar = $1 WHERE id = $2", previousAvatars, id)
 
     async def _avurl(self, url, id):
+        """Upload an expiring url to the cdn"""
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars"):
-            return url
+            return url # these links dont expire
         try:
-            r = await self.session.get(url)
-            img_data = BytesIO(await r.read())
+            r = await self.session.get(url) # download 
+            img_data = BytesIO(await r.read()) # put to buffer
         except Exception:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession() # try again if fail
             r = await self.session.get(url)
-            img_data = BytesIO(await r.read())
-        ext = str(url).replace(f"?size={self.size}", "").split(".")[-1]
-        path = f"avs/{id}/{uuid.uuid4()}.{ext}"
-        await self.storage.upload(config.cdn, path, img_data)
-        return f"https://{config.cdn}/{path}"
+            img_data = BytesIO(await r.read()) 
+            # we shouldnt try more than twice
+        path = f"avs/{id}/{uuid.uuid4()}.jpg"
+        await self.storage.upload(config.cdn, path, img_data) # upload to cloud
+        return f"https://{config.cdn}/{path}" # format url
 
     # GLOBAL MESSAGES DB TRANSACTIONS
     @commands.Cog.listener("on_message")
@@ -150,6 +176,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         async with self.blacklist:
             if message.author.id in self.blacklist.value["snowflakes"]:
                 return
+        # increment msg cache for user
         user = message.author.id
         if self.msgcache.get(user) is None:
             self.msgcache[user] = 1
@@ -166,26 +193,44 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         async with self.blacklist:
             if ctx.author.id in self.blacklist.value["snowflakes"]:
                 return await ctx.send("This service is unavailable to you")
-        uid = user.id
+
+        uid = user.id # user id
+
+        # initial fetch
         result = await self.bot.DB.fetchrow("SELECT name FROM userlog WHERE id = $1", uid)
+
         if not result or result["name"] is None:
             return await ctx.send("No names tracked.")
+    
         result = result["name"]
+        # format array of names
         names = []
         for entry in result:
-            unformatted = self._unformat(entry)
+            unformatted = self._unformat(entry) # unformat into name and timestamp
             dt = unformatted[0]
             name = unformatted[1]
             names.append(
-                f"{dt.day}/{dt.month}/{dt.year} @ {str(dt.hour).zfill(2)}:{str(dt.minute).zfill(2)} -> {name}")
-        paginator = commands.Paginator(
-            prefix='```', suffix='```', max_size=500)
+                f"{dt.day}/{dt.month}/{dt.year} @ {str(dt.hour).zfill(2)}:{str(dt.minute).zfill(2)} -> {name}"
+            ) # format string
+        paginator = commands.Paginator( # makes a paginator out of text that is too long
+            prefix='```',
+            suffix='```',
+            max_size=500
+        ) # ``` needed to wrap codeblock in discord
         for line in reversed(names):
-            paginator.add_line(line)
-        embed = discord.Embed(colour=self.bot.colour,
-                              title=f"Usernames for {user}")
-        interface = PaginatorEmbedInterface(
-            self.bot, paginator, owner=ctx.author, embed=embed, timeout=60)
+            paginator.add_line(line) # each line reversed for chronological order
+        embed = discord.Embed(
+            colour=self.bot.colour,
+            title=f"Usernames for {user}"
+        )
+
+        interface = PaginatorEmbedInterface( # create embed formatted paginator
+            self.bot,
+            paginator,
+            owner=ctx.author,
+            embed=embed,
+            timeout=60
+        )
         return await interface.send_to(ctx)
 
     @commands.command(name="avatars", aliases=["avs"])
@@ -198,28 +243,39 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         async with self.blacklist:
             if ctx.author.id in self.blacklist.value["snowflakes"]:
                 return await ctx.send("This service is unavailable to you")
-        uid = user.id
+        uid = user.id # user id
+
+        # initial fetch
         result = await self.bot.DB.fetchrow("SELECT avatar FROM userlog WHERE id = $1", uid)
+
         if not result or result["avatar"] is None or len(result["avatar"]) == 0:
             return await ctx.send("No avatars tracked.")
         result = result["avatar"]
-        result = sorted(result, key=lambda x: float(
-            x.split(":", 1)[0]), reverse=True)
+        # sort on datetime incase of timestamps being out of order
+        result = sorted(result, key=lambda x: float(x.split(":", 1)[0]), reverse=True)
+
+        # format embeds, each embed is an avatar
         embeds = []
         for entry in result:
             unformatted = self._unformat(entry)
             dt = unformatted[0]
             avatar = unformatted[1]
-            embed = discord.Embed(
-                description=f"[Link]({avatar})", colour=self.bot.colour, timestamp=dt)
-            embed.set_image(url=avatar)
-            embed.set_footer(text=f"{result.index(entry)+1}/{len(result)}")
+            embed = discord.Embed( # create embed
+                description=f"[Link]({avatar})",
+                colour=self.bot.colour,
+                timestamp=dt
+            )
+            embed.set_image(url=avatar) # set image to avatar link
+            embed.set_footer(text=f"{result.index(entry)+1}/{len(result)}") # positional index
             embeds.append(embed)
-        if len(embeds) == 1:
+        if len(embeds) == 1: # cant paginate 1 embed
             return await ctx.send(embed=embeds[0])
         pages = menus.MenuPages(source=AvPages(
-            range(0, len(embeds)), embeds), clear_reactions_after=True)
-        await pages.start(ctx)
+            range(0, len(embeds)),
+            embed
+            ),
+        clear_reactions_after=True)
+        await pages.start(ctx) # send to ctx
 
     # GLOBAL MESSAGES
     @commands.command(name="messages", aliases=["msgs"])
@@ -229,17 +285,21 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         count = await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1", member.id)
         if not count:
             return await ctx.send("Nothing in our database.")
+        # embed formatting
         embed = discord.Embed(
-            description=f'{count["messages"]} messages sent.', colour=self.bot.colour)
-        embed.set_author(
-            name=f"{member}", icon_url=member.avatar_url_as(static_format="png"))
+            description=f'{count["messages"]} messages sent.',
+            colour=self.bot.colour
+        )
+        embed.set_author(name=f"{member}", icon_url=member.avatar_url_as(static_format="png"))
         return await ctx.send(embed=embed)
 
     async def batch(self):
         if self.msgcache == {} or self.active is False:
             return
+        # need to create a copy because it can be changed during iteration which is bad !
         cache = dict(self.msgcache)
         self.msgcache = {}
+        # iterate over and increment database
         for user in cache:
             count = cache[user]
             result = await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1", user)
@@ -248,7 +308,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             else:
                 await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2", result["messages"] + count, user)
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=300) # update database every 300s
     async def message_push(self):
         try:
             await self.batch()
@@ -258,4 +318,6 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
 def setup(bot):
     cog = GlobalLogs(bot, "logging")
+    # cog needs async init so we spawn a task to do that before adding
     bot.loop.create_task(cog.init())
+

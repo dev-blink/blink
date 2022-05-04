@@ -21,6 +21,9 @@ class Fun(blink.Cog, name="Fun"):
 
     @commands.Cog.listener("on_message_delete")
     async def append_snipes(self, message):
+        """Append snipes to queue"""
+
+        # checks
         if len(message.content) > 1024:
             return
         if message.author.bot:
@@ -29,11 +32,15 @@ class Fun(blink.Cog, name="Fun"):
             return
         if len(message.content) == 1:
             return
+        
+        # create 2dict if not exists
         g = self.snipes.get(message.guild.id)
         if g is None:
             g = {}
             self.snipes[message.guild.id] = {}
         snipes = g.get(message.channel.id)
+
+        # create or add to queue
         if not snipes:
             snipes = deque([], 5)
         snipes.appendleft((message.content, str(
@@ -56,12 +63,14 @@ class Fun(blink.Cog, name="Fun"):
     @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
     async def snipe(self, ctx):
         """Snipe recently deleted messages"""
+        # check for snipes
         g = self.snipes.get(ctx.guild.id)
         if g is None:
             return await ctx.send("No snipes found.")
         snipes = g.get(ctx.channel.id)
         if snipes is None:
             return await ctx.send("No snipes found")
+        # create embed
         embed = discord.Embed(title="Deleted messages", colour=self.bot.colour)
         for snipe in list(reversed(snipes)):
             embed.add_field(
@@ -70,6 +79,7 @@ class Fun(blink.Cog, name="Fun"):
 
     @commands.Cog.listener("on_message_edit")
     async def append_edit_snipes(self, before, after):
+        # checks
         if (len(before.content) + len(after.content)) > 1000:
             return
         if before.author.bot:
@@ -80,11 +90,13 @@ class Fun(blink.Cog, name="Fun"):
             return
         if not before.guild:
             return
+        # create 2d dict
         g = self.esnipes.get(before.guild.id)
         if g is None:
             g = {}
             self.esnipes[before.guild.id] = {}
         snipes = g.get(before.channel.id)
+        # add to or create queue
         if not snipes:
             snipes = deque([], 5)
         snipes.appendleft((f"{before.content} **🠢** {after.content}",
@@ -96,12 +108,14 @@ class Fun(blink.Cog, name="Fun"):
     @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
     async def edit_snipe(self, ctx):
         """Snipe recently edited messages"""
+        # check for snipes
         g = self.esnipes.get(ctx.guild.id)
         if g is None:
             return await ctx.send("No snipes found.")
         snipes = g.get(ctx.channel.id)
         if snipes is None:
             return await ctx.send("No snipes found")
+        # form embed
         embed = discord.Embed(title="Edited messages", colour=self.bot.colour)
         for snipe in list(reversed(snipes)):
             embed.add_field(
@@ -113,7 +127,7 @@ class Fun(blink.Cog, name="Fun"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def rand(self, ctx, *, term=None):
         """Prints a random member of a role (if none specified @everyone)"""
-
+        # find role
         if not term:
             role = ctx.guild.default_role
         else:
@@ -122,6 +136,7 @@ class Fun(blink.Cog, name="Fun"):
             return await ctx.send("I could not find that role.")
 
         member = random.choice(role.members)
+        # form embed
         embed = discord.Embed(title="Random member with role " + role.name,
                              description=str(member), colour=0xf5a6b9)
         embed.set_author(name=ctx.author.name + "#" + str(ctx.author.discriminator),
@@ -136,7 +151,7 @@ class Fun(blink.Cog, name="Fun"):
         responses = ['● It is certain.', '● It is decidedly so.', '● Without a doubt.', '● Yes - definitely.', '● You may rely on it.', '● As I see it, yes.', '● Most likely.', '● Outlook good.', '● Yes.', '● Signs point to yes.', '● Reply hazy, try again.',
                      '● Ask again later.', '● Better not tell you now.', '● Cannot predict now.', '● Concentrate and ask again.', "● Don't count on it.", '● My reply is no.', '● My sources say no.', '● Outlook not so good.', '● Very doubtful.']
         response = random.choice(responses).replace("●", "\U0001f3b1")
-        if question:
+        if question: # add question mark
             if not question.endswith("?"):
                 question = question + "?"
             embed = discord.Embed(
@@ -155,13 +170,11 @@ class Fun(blink.Cog, name="Fun"):
         """Creates a ship name between 2 members"""
         if not member2:
             member2 = ctx.author
-        if not member1.nick:
-            member1.nick = member1.name
-        if not member2.nick:
-            member2.nick = member2.name
-        choices = [f"{member1.nick[:len(member1.nick)//2]}{member2.nick[len(member2.nick)//2:]}",
-                   f"{member2.nick[:len(member2.nick)//2]}{member1.nick[len(member1.nick)//2:]}"]
-        await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!", allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
+        # random splice between member1:member2 and member2:member1
+        #takes half of each
+        choices = [f"{member1.display_name[:len(member1.display_name)//2]}{member2.display_name[len(member2.display_name)//2:]}",
+                   f"{member2.display_name[:len(member2.display_name)//2]}{member1.display_name[len(member1.display_name)//2:]}"]
+        await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!")
 
     @commands.command(name="pp", aliases=["penis"])
     @commands.guild_only()
@@ -177,6 +190,7 @@ class Fun(blink.Cog, name="Fun"):
     async def bigtext(self, ctx, *, text):
         """Convert something into big text"""
         text = pyfiglet.Figlet('slant').renderText(text)
+        # render text with library
         if text == "":
             return await ctx.send("No/invalid characters.")
         if len(text) > 1990:
@@ -236,7 +250,7 @@ class Fun(blink.Cog, name="Fun"):
 
     @commands.command(name="nuke", hidden=True)
     @commands.bot_has_permissions(send_messages=True)
-    async def nuke(self, ctx):
+    async def nuke(self, ctx): # joke command
         await ctx.send("nuking <a:bloading:705202826946674718>")
 
 

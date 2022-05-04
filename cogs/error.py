@@ -16,7 +16,8 @@ from wavelink import ZeroConnectedNodes as NoNodes
 
 
 async def sendEmbedError(ctx, message):
-    embed = discord.Embed(colour=15158332)
+    """put error in embed if it fits"""
+    embed = discord.Embed(colour=ctx.bot.colour)
     if len(message) < 256:
         embed.title = message
     else:
@@ -35,11 +36,12 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
         return await self.handle(ctx, error)
 
     async def handle(self, ctx, error):
+        """match errors"""
         ignored = (commands.CommandNotFound, blink.SilentWarning,
                    blink.IncorrectChannelError)
         error = getattr(error, 'original', error)
 
-        if ctx.prefix == "":
+        if ctx.prefix == "": # if developer no prefix is used we should ignore bc it could be a normal message
             if isinstance(error, commands.UserInputError):
                 return
 
@@ -100,7 +102,7 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
 
         elif isinstance(error, commands.CommandOnCooldown):
             if ctx.author.id in self.nocooldown:
-                await ctx.reinvoke()
+                await ctx.reinvoke() # run again and ignore cooldown
                 return
             try:
                 return await ctx.message.add_reaction("\U000023f2")
@@ -109,8 +111,6 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
 
         elif isinstance(error, blink.NoChannelProvided):
             return await sendEmbedError(ctx, 'You must be in a voice channel or provide one to connect to.')
-        elif isinstance(error, commands.NSFWChannelRequired):
-            return await sendEmbedError(ctx, "This command is locked to nsfw channels only.")
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             return await sendEmbedError(ctx, str(error))
@@ -142,8 +142,11 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
 
         tb = '\n'.join(traceback.format_exception(
             type(error), error, error.__traceback__))
-        embed = discord.Embed(description=f"Guild: {guild}\nChannel: {channel}\nAuthor: {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`**",
-                              colour=discord.Colour.red(), timestamp=datetime.datetime.utcnow())
+        embed = discord.Embed(
+            description=f"Guild: {guild}\nChannel: {channel}\nAuthor: {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`**",
+            colour=discord.Colour.red(),
+            timestamp=datetime.datetime.utcnow()
+        )
         async with aiohttp.ClientSession() as cs:
             async with cs.post("https://api.github.com/gists", headers={"Authorization": "token " + secrets.gist}, json={"public": False, "files": {"traceback.txt": {"content": tb}}}) as gist:
                 data = await gist.json()

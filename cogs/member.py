@@ -11,13 +11,13 @@ import datetime
 import blink
 
 
-statuses = {
+statuses = { # map of statuses to images representing them in the ui
     discord.Status.online: "https://cdn.discordapp.com/emojis/707359046122078249.png?v=1",
     discord.Status.idle: "https://cdn.discordapp.com/emojis/707359045971083315.png?v=1",
     discord.Status.dnd: "https://cdn.discordapp.com/emojis/707368559759720498.png?v=1",
     discord.Status.offline: "https://cdn.discordapp.com/emojis/707359046138855550.png?v=1",
 }
-flags = {
+flags = { # map of user flags to emojis
     discord.UserFlags.bug_hunter: "<:bughunter:747172876624593007>",
     discord.UserFlags.bug_hunter_level_2: "<:bughunter2:747166557204906055>",
 
@@ -38,6 +38,7 @@ flags = {
 
 
 async def convert(seconds):
+    """Nicely display spotify duration"""
     delta = str(datetime.timedelta(seconds=seconds))
     if delta[:3] == "0:0":
         return delta[3:]
@@ -50,14 +51,15 @@ async def convert(seconds):
 class Members(blink.Cog, name="Member"):
     async def guild_av(self, m):
         member = await self.bot.http.get_member(m.guild.id, m.id)
+        # fetch the raw member for guild avatar because not in library k
         av_hash = member.get("avatar")
         if av_hash:
             return f"https://cdn.discordapp.com/guilds/{m.guild.id}/users/{m.id}/avatars/{av_hash}.png?size=1024"
 
     def avatar_embed(self, link):
+        """Form an avatar embed from a link"""
         embed = discord.Embed(colour=self.bot.colour)
-        embed.set_author(
-            name="Link", url=link)
+        embed.set_author(name="Link", url=link)
         embed.set_image(url=link)
         embed.set_footer(text="Press ↔️ to change to avatar")
         return embed
@@ -90,15 +92,22 @@ class Members(blink.Cog, name="Member"):
         if not member:
             member = ctx.author
 
-        perms = '\n'.join(
+        perms = '\n'.join( # iterate over perms 
+            # value is a 1/0 or true/false of wether the user has that permission
             perm for perm, value in member.guild_permissions if value)
 
-        embed = discord.Embed(title='Permissions for:',
-                              description=ctx.guild.name, colour=self.bot.colour)
-        embed.set_author(icon_url=member.avatar_url_as(
-            static_format='png'), name=str(member))
+        embed = discord.Embed(
+            title='Permissions for:',
+            description=ctx.guild.name,
+            colour=self.bot.colour
+        )
+        embed.set_author(
+            icon_url=member.avatar_url_as(
+            static_format='png'),
+            name=str(member)
+        )
 
-        # \uFEFF is a Zero-Width Space
+        # \uFEFF is a zero width space
         embed.add_field(name='\uFEFF', value=perms)
 
         await ctx.send(content=None, embed=embed)
@@ -111,28 +120,41 @@ class Members(blink.Cog, name="Member"):
         if not member:
             member: discord.Member = ctx.author
 
-        embed = discord.Embed(description=' '.join(
-            flags[f] for f in member.public_flags.all()), colour=self.bot.colour)
-        embed.set_author(name=f"{member}", url=member.avatar_url_as(
-            static_format='png'), icon_url=statuses[member.status])
+        embed = discord.Embed( # add badges from public flags using emoji dict
+            description=' '.join(flags[f] for f in member.public_flags.all()),
+            colour=self.bot.colour
+        )
+        embed.set_author( # set author badge to status icon image
+            name=f"{member}",
+            url=member.avatar_url_as(static_format='png'),
+            icon_url=statuses[member.status]
+        )
+        # thumbnail to user avatar
         embed.set_thumbnail(url=member.avatar_url_as(static_format='png'))
 
-        joined = member.joined_at
-        joindate = str(joined.day) + "/" + str(joined.month) + "/" + str(joined.year) + \
-            "  " + str(joined.hour) + ":" + str(joined.minute).zfill(2)
+        # guild join date
+        j = member.joined_at
+        joindate = f"{j.day}/{j.month}/{j.year} {j.hour}:{j.minute:02}"
         embed.add_field(name="User joined:", value=joindate, inline=True)
 
-        registered = member.created_at
-        registerdate = str(registered.day) + "/" + str(registered.month) + "/" + str(
-            registered.year) + "  " + str(registered.hour) + ":" + str(registered.minute).zfill(2)
-        embed.add_field(name="User registered:",
-                        value=registerdate, inline=True)
+        # created at datae
+        r = member.created_at
+        registerdate = f"{r.day}/{r.month}/{r.year} {r.hour}:{r.minute:02}"
+        embed.add_field(
+            name="User registered:",
+            value=registerdate,
+            inline=True
+        )
 
+        # join position
         sortedmembers = sorted(
-            ctx.guild.members, key=lambda member: member.joined_at)
+            ctx.guild.members,
+            key=lambda member: member.joined_at
+        )
         joinposition = sortedmembers.index(member) + 1
         embed.add_field(name="Join position:", value=joinposition, inline=True)
 
+        # special permission
         if member == ctx.guild.owner:
             hasadmin = "Server Owner"
         elif member.guild_permissions.administrator:
@@ -143,9 +165,11 @@ class Members(blink.Cog, name="Member"):
             hasadmin = "Member"
         embed.add_field(name="Server Status", value=hasadmin, inline=True)
 
+        # no of roles
         rolecount = len(member.roles) - 1
         embed.add_field(name="Number of roles:", value=rolecount, inline=True)
 
+        # top role
         highestrole = member.top_role
         embed.add_field(name="Highest role:", value=highestrole, inline=True)
         await ctx.send(embed=embed)
@@ -156,9 +180,11 @@ class Members(blink.Cog, name="Member"):
         """Shows a user's avatar"""
         if not user:
             user = ctx.author
+        
+        # normal user avatar embed
         global_av_embed = self.avatar_embed(user.avatar_url_as(static_format="png"))
         msg = await ctx.send(embed=global_av_embed)
-        if user.bot:
+        if user.bot: # bots cannot have guild avatars
             return
         await msg.add_reaction("↔️")
 
@@ -166,20 +192,22 @@ class Members(blink.Cog, name="Member"):
         guild_av_embed = None
 
         try:
-            while True:
+            while True: # continuously loop through reaction add/remove to see if user pressed a button
                 await self.bot.wait_for("reaction_add", check=lambda r, u: u.id == ctx.author.id and str(r.emoji) == "↔️",timeout=30)
+                # check if the guild_av has been tried, and then try and fetch it
+                # needs to be cached to prevent excessive http api requests
                 if not guild_av:
-                    guild_av = await self.guild_av(user)
+                    guild_av = await self.guild_av(user) # try fetch guild avatar
                     if not guild_av:
                         return await msg.edit(content="No server avatar available",embed=global_av_embed)
                     else:
-                        guild_av_embed = self.avatar_embed(guild_av)
-                await msg.edit(embed=guild_av_embed)
+                        guild_av_embed = self.avatar_embed(guild_av) # create embed
+                await msg.edit(embed=guild_av_embed) # swap embed
 
                 await self.bot.wait_for("reaction_remove", check=lambda r, u: u.id == ctx.author.id and str(r.emoji) == "↔️", timeout=30)
-                await msg.edit(embed=global_av_embed)
+                await msg.edit(embed=global_av_embed) # swap back
         except asyncio.TimeoutError:
-            return
+            return # done waiting for user
 
     @commands.command(name="status")
     @commands.guild_only()
@@ -190,13 +218,15 @@ class Members(blink.Cog, name="Member"):
         if not user:
             user = ctx.author
 
+        # generator of all user activities
         activities = (a for a in user.activities if not isinstance(a, discord.Spotify))
 
-        try:
+        try: # try to get first activity
             base = next(activities)
         except StopIteration:
             return await ctx.send("no non-spotify activity could be detected, use the spotify command for spotify status")
 
+        # user has an emoji or a custom status
         if isinstance(base, discord.CustomActivity):
             if not base.name:
                 base.name = "Custom Emoji:"
@@ -207,19 +237,24 @@ class Members(blink.Cog, name="Member"):
             embed.set_author(
                 name=user.name, icon_url=user.avatar_url_as(static_format='png'))
 
+        # user is 'playing' status
         elif isinstance(base, discord.Activity):
             embed = discord.Embed(colour=self.bot.colour)
             embed.set_author(
                 name=user.name, icon_url=user.avatar_url_as(static_format='png'))
             embed.add_field(name="Playing " + base.name, value=base.details or f"for {blink.prettydelta((datetime.datetime.utcnow() -  base.created_at).total_seconds())}" if base.created_at else "No timing available", inline=False)
 
+        # user is 'streaming' on twitch
         elif isinstance(base, discord.Streaming):
             embed = discord.Embed(
                 title="Streaming", url=base.url, description=base.name or base.url, colour=0x593695)
         else:
             embed = False
+        
+        # if an embed was generated
         if embed:
             return await ctx.send(embed=embed)
+        # could not make an embed, must have no valid status
         await ctx.send("A status was unable to be determined.")
 
     @commands.command(name="listening", aliases=["playing", "spotify", "spot"])
@@ -231,9 +266,10 @@ class Members(blink.Cog, name="Member"):
         if not user:
             user = ctx.author
 
+        # generator for list of spotify activities
         activities = (a for a in user.activities if isinstance(a, discord.Spotify))
 
-        try:
+        try: # get first activity
             spotify = next(activities)
         except StopIteration:
             return await ctx.send("no spotify detected")
@@ -259,6 +295,9 @@ class Members(blink.Cog, name="Member"):
             spotifyembed.add_field(
                 name="Duration:", value=songtime, inline=False)
             return await ctx.send(embed=spotifyembed)
+        
+        # unreachable allows support for other methods of getting
+        # spotifty data without significant refactoring
 
 
 def setup(bot):
