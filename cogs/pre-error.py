@@ -15,4 +15,4 @@ class PRELOAD(blink.Cog):
 
 
 def setup(bot):
-    bot.add_cog(PRELOAD(bot))
+    bot.add_cog(PRELOAD(bot,"preload"))
