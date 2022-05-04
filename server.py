@@ -13,7 +13,12 @@ import platform
 import asyncio
 from async_timeout import timeout
 import serverconfig as config
+
+# THIS IS THE "LIST" OF CLUSTER IDENTIFIERS
+# we could modify this to be anything, but
+# the alphabet is enough for now
 from string import ascii_uppercase as alphabet
+
 import datetime
 import aiohttp
 from blink import CacheDict
@@ -21,6 +26,9 @@ from blink import CacheDict
 tokens = config.gatewayauth # list of tokens that clients are allowed to authenticate with
 loop = asyncio.get_event_loop()
 
+###########################################
+# SEE docs.py for close codes and opcodes #
+###########################################
 
 async def _panic(message: str, cluster: str):
     """Send a push notification on an unclean disconnect"""
@@ -35,7 +43,7 @@ async def _panic(message: str, cluster: str):
     async with aiohttp.ClientSession() as cs:
         async with cs.post("https://api.pushed.co/1/push", data=data, headers={"content-type": "application/x-www-form-urlencoded"}) as response:
             print(
-                f"[GATEWAY]PANIC REPORT SENT FOR CLUSTER {cluster} AT {datetime.datetime.utcnow()} UTC NOTIFICATIONS SERVICE RESPONSED WITH HTTP {response.status}")
+                f"[GATEWAY]PANIC REPORT SENT FOR CLUSTER {cluster} AT {datetime.datetime.utcnow()} UTC NOTIFICATIONS SERVICE RESPONDED WITH HTTP {response.status}")
 
 
 class Message:
@@ -72,6 +80,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             6: self.dedupe,
             7: self.panicked,
         }
+    
+    # Most of the code is just payload validation
 
     async def broadcast(self, payload):
         """Send a message to all other clusters connected"""
@@ -108,7 +118,12 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         dupe = self.factory.dedupe(payload["scope"], payload["content"])
         return await self.send(6, {"duplicate": dupe, "req": payload["req"]})
 
-    async def event(self, payload): # Skeleton code, event opcode is not used
+    # Skeleton code, event opcode is not used
+    # Very useful for debugging client server
+    # interactions because can send as an event
+    # and gateway wont close and event is printed
+    # could be used in the future for more client->server->client
+    async def event(self, payload):
         """Handles a cluster sending an event"""
         if payload.get("intent") is None:
             return await self.close(code=4001, error="No intent for event payload")
@@ -123,8 +138,8 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         await _panic(f"Cluster {self.identifier} Has crashed {payload.get('error')}", self.identifier)
 
     async def ack(self, op):
-        """After every packet is recieved, an 'ack' is sent"""
-        await self.send(4, {"recieved": op})
+        """After every packet is received, an 'ack' is sent"""
+        await self.send(4, {"received": op})
 
     async def decode(self, payload: bytes):
         """Deserialise a payload into a Message object"""
@@ -152,7 +167,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         await self.close(code=4003, error="Payload opcode was not acceptable")
 
     async def send(self, op, payload):
-        """Send data to the clusters websocket and serialise it"""
+        """Abstract to send data to the client websocket and serialise it"""
         self.sequence += 1
         data = {
             "op": op,
@@ -176,10 +191,12 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         cluster = await self.factory.getCluster(self)
         if not cluster:
             return # Abandon hello because cluster pool is full
+            # Factory deals with closing the connection
+
         self.identifier = cluster
         self.open = True
-        self.sessionID = str(uuid.uuid4())
-        self.heartbeatInterval = 30
+        self.sessionID = str(uuid.uuid4()) # random char string (af2424-543531a-...)
+        self.heartbeatInterval = 30 # seconds
         hello = {
             "id": self.sessionID,
             "host": platform.node(),
@@ -189,11 +206,11 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             "shard": config.shards,
         }
         await self.send(0, hello)
-        await loop.create_task(self.heartbeat())
+        await loop.create_task(self.heartbeat()) # start heartbeat loop concurrently
 
     async def onMessage(self, payload, isBinary):
-        """Handle a raw message from a cluster"""
-        payload = await self.decode(payload)
+        """Handle a raw message from a client"""
+        payload = await self.decode(payload) # handles payload validation
         if payload is None:
             return
         if not self.authenticated and payload.op != 1:
@@ -204,7 +221,7 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
             try:
                 await self.ack(payload.op) # Ack payload
             except Disconnected:
-                pass
+                pass # sometimes ack can ack a before closing payload and raise an err
 
     async def onClose(self, isClean, code, reason):
         """Panic if a cluster didnt close properly"""
@@ -229,25 +246,26 @@ class ServerProtocol(websocket.WebSocketServerProtocol):
         self.beating = True
 
     async def heartbeat(self):
-        """Continually check if a heartbeat has been recieved"""
+        """Continually check if a heartbeat has been received"""
         try:
             while self.open:
-                if not await self.heartbeatCheck():
+                if not await self.heartbeatCheck(): # waits heartbeat interval for a timeout
                     return # Socket was closed
         except asyncio.TimeoutError:
             if self.open:
-                await self.close(code=4006, error="No heartbeat recieved")
+                await self.close(code=4006, error="No heartbeat received")
 
     async def heartbeatCheck(self):
-        """Check if a heartbeat has been reciebed in the last interval"""
+        """Check if a heartbeat has been received in the last interval"""
         async with timeout(self.heartbeatInterval + 5):
+            # check every second if a heartbeat has been received
             while self.open:
                 await asyncio.sleep(1)
                 if not self.open:
-                    return False
-                if self.beating:
-                    self.beating = False
-                    return True
+                    return False # connection is dead no point heartbeating
+                if self.beating: # it has been received
+                    self.beating = False # mark as false for next iteration of loop
+                    return True # we are heartbeating
 
 
 class Factory(websocket.WebSocketServerFactory):
@@ -255,7 +273,7 @@ class Factory(websocket.WebSocketServerFactory):
     def __init__(self):
         super().__init__()
         self.clients = []
-        # This dictionary is not limited in size because it is a 2D dictionary
+        # This dictionary is not limited in size because it is a 2D dictionary and there arent many scopes
         # The size limited dictionaries are inside this [scope, size limited dictionary]
         self.registered_dupes = {}
         self.protocol = ServerProtocol # The websocket class to handle each connection
@@ -283,7 +301,10 @@ class Factory(websocket.WebSocketServerFactory):
         this function will store all keys and return true or false if
         the key is unique or not, keys may not be unique across scopes
         """
+        # Check if scope exists, then check if hash exists in scope
+        # increment it if it exists, set to 1 if it does not
         if not self.registered_dupes.get(scope):
+            # max size of 50,000 to prevent excessive memory use
             self.registered_dupes[scope] = CacheDict(50_000)
         if self.registered_dupes[scope].get(hash) is None:
             self.registered_dupes[scope][hash] = 1
@@ -309,7 +330,8 @@ class Factory(websocket.WebSocketServerFactory):
 if __name__ == "__main__":
     # Set up asyncio event loop and run the factory server
     loop = asyncio.get_event_loop()
-    coro = loop.create_server(Factory(), '0.0.0.0', 9000)
+    # listen all ipv4 addresses could be moved to config but no point
+    coro = loop.create_server(Factory(), '0.0.0.0', 9000) # port
     server = loop.run_until_complete(coro)
 
     try:

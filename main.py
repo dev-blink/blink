@@ -238,7 +238,7 @@ class Blink(commands.AutoShardedBot):
         self._connection.shard_ids = self.shard_ids
 
         # A is the first cluster and will not need to wait for the previous one to identify
-        if not self.cluster.identifier == "A":
+        if not self.cluster.index == 0:
             await self.cluster.wait_cluster()
         # Bot gateway request is also on the identify limit
         self._shard_info = await self.http.request(discord.http.Route("GET", "/gateway/bot"))
@@ -452,7 +452,7 @@ class Blink(commands.AutoShardedBot):
         """Custom prefixes"""
         if self.beta:  # Beta only beta prefix
             if message.author.id in self.owner_ids:
-                return ["", "beta;"]
+                return ["beta;", ""]
             else:
                 return ["beta;"]
 

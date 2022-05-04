@@ -334,7 +334,7 @@ class ClusterSocket():
             await asyncio.sleep(timeout)
 
     async def calculate_heartbeat_interval(self):
-        await self.wait_for(lambda p: (p["op"] == 4 and p["data"]["recieved"] == 2))
+        await self.wait_for(lambda p: (p["op"] == 4 and p["data"]["received"] == 2))
         duration = time.perf_counter() - self.heartbeat_last_sent
         self.latencies.appendleft(duration)
 
