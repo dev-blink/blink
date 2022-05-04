@@ -13,12 +13,15 @@ from typing import Union
 
 # Checks if there is a muted role on the server and creates one if there isn't
 async def mute(ctx, user, reason):
-    role = await blink.searchrole(ctx.guild.roles, "Muted")
+    role = await blink.searchrole(ctx.guild.roles, "Muted") # role search
     if not role:  # checks if there is muted role
         try:  # creates muted role
+
+            # we need to deny all send messages to all channels
             muted = await ctx.guild.create_role(name="Muted", reason="To use for muting")
             for channel in ctx.guild.channels:
                 await channel.set_permissions(muted, send_messages=False)
+
         except discord.Forbidden:
             return await ctx.send("I have no permissions to make a muted role")
         await user.add_roles(muted)  # adds newly created muted role
@@ -29,14 +32,16 @@ async def mute(ctx, user, reason):
 
 
 async def dmattempt(user, action, reason, guild):
-    if user.bot:
+    """Try to dm a user about their moderation action"""
+    if user.bot: # bots cannot dm bots
         return False
+    # do not dm non server members even if we can
     if user not in guild.members:
         return False
     try:
         await user.send(f"You were {action} in {guild} for {reason}")
     except discord.HTTPException:
-        return False
+        return False # catch if they have dms off
     return True
 
 
@@ -51,7 +56,7 @@ class Moderation(blink.Cog, name="Moderation"):
         if not channel.guild.me.guild_permissions.manage_channels:
             return
         r = await blink.searchrole(channel.guild.roles, "Muted")
-        if r:
+        if r: # if muted role change channel overwrites to deny permissions to speak
             overwrites = channel.overwrites
             overwrites[r] = discord.PermissionOverwrite(send_messages=False) # modify !!!
             try:
@@ -60,6 +65,8 @@ class Moderation(blink.Cog, name="Moderation"):
                 return
 
     async def privcheck(self, ctx, user):
+        """Check if a user is authorized to sanction a user"""
+        # we either return true or raise an error
         if not user:
             await ctx.send("You must specify a user.")
             raise blink.SilentWarning()
@@ -117,16 +124,16 @@ class Moderation(blink.Cog, name="Moderation"):
         """Unbans a user."""
         if isinstance(user, str):
             try:
-                user = int(user)
+                user = int(user) # check for user id
             except ValueError:
-                def scheme(x): return str(x.user) == user  # noqa E731
+                def scheme(x): return str(x.user) == user  # we check for username
             else:
-                def scheme(x): return x.user.id == user  # noqa E731
+                def scheme(x): return x.user.id == user  # we check for id
         else:
             def scheme(x): return x.user == user  # noqa E731
 
         bans = await ctx.guild.bans()
-        ban = discord.utils.find(scheme, bans)
+        ban = discord.utils.find(scheme, bans) # find exact match
         if ban:
             await ctx.guild.unban(ban.user)
             await ctx.send(f"Unbanned {ban.user} {f'({ban.reason})' if ban.reason else ''}")
@@ -246,7 +253,7 @@ class Moderation(blink.Cog, name="Moderation"):
     async def clean(self, ctx, user: discord.Member = None, *, count: int = None):
         """Cleans a set amount of messages from a user (defaults to bots and 50 messages)"""
         if count:
-            if count > 100:
+            if count > 100: # limit to 100
                 count = 100
 
         def checkbot(m):
@@ -265,7 +272,7 @@ class Moderation(blink.Cog, name="Moderation"):
                 count = 30
             else:
                 count = 50
-        if not cleanbot:
+        if not cleanbot: # users
             try:
                 await ctx.channel.purge(limit=count, check=checkuser)
                 await ctx.message.delete()
@@ -280,7 +287,7 @@ class Moderation(blink.Cog, name="Moderation"):
                     else:
                         raise
             return await ctx.send(f"Cleaned {count} messages from user: {user.mention}", delete_after=4)
-        else:
+        else: # bots
             try:
                 await ctx.channel.purge(limit=count, check=checkbot)
             except Exception as e:

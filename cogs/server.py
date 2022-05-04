@@ -27,6 +27,7 @@ EMBED_LIMITS = {
 
 
 async def too_long(value, scope, ctx):
+    """Check if embed limit is in range"""
     if value is None:
         return False
     if len(value) > EMBED_LIMITS[scope]:
@@ -67,12 +68,18 @@ class Server(blink.Cog, name="Server"):
             role = await blink.searchrole(ctx.guild.roles, str(term))
         if not role:
             return await ctx.send("I could not find that role.")
+        # checks
         if len(role.members) > 35 or len(role.members) == 0:
             return await ctx.send(f"There are {len(role.members)} members with the role {role.name}")
+        
+        # form embed
         embed = discord.Embed(
-            title=f"{role.name} - {len(role.members)}", colour=0xf5a6b9)
+            title=f"{role.name} - {len(role.members)}",
+            colour=0xf5a6b9
+        )
         embed.add_field(name="Members:", value=" ".join(
-            str(m) + " " for m in role.members), inline=False)
+            str(m) + " " for m in role.members), inline=False
+        )
         await ctx.send(embed=embed)
 
     @commands.command(name="muted", aliases=["mutes", "currentmutes"])
@@ -86,9 +93,13 @@ class Server(blink.Cog, name="Server"):
             return await ctx.send("I could not find the muted.")
         if len(role.members) == 0:
             return await ctx.send("There are no currently muted members.")
+        # embed
         embed = discord.Embed(title="Current mutes", colour=self.bot.colour)
-        embed.add_field(name="Members:", value=" ".join(str(m)
-                        for m in role.members), inline=False)
+        embed.add_field(
+            name="Members:", value=" ".join(str(m)
+                for m in role.members
+            ), inline=False
+        )
         if len(embed.description) > 2048:
             return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
         await ctx.send(embed=embed)
@@ -98,11 +109,16 @@ class Server(blink.Cog, name="Server"):
     @commands.bot_has_guild_permissions(send_messages=True, embed_links=True)
     async def users(self, ctx):
         """Shows the user count for the guild."""
-        embed = discord.Embed(title=(ctx.guild.name + ":"),
-                              colour=self.bot.colour)
+        embed = discord.Embed(
+            title=(ctx.guild.name + ":"),
+            colour=self.bot.colour
+        )
         embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(name="Guild Members:",
-                        value=ctx.guild.member_count, inline=False)
+        embed.add_field(
+            name="Guild Members:",
+            value=ctx.guild.member_count,
+            inline=False
+        )
         return await ctx.send(embed=embed)
 
     @commands.command(name="lock")
@@ -138,9 +154,11 @@ class Server(blink.Cog, name="Server"):
         embed.set_author(
             name=g.name, icon_url=g.icon_url_as(static_format="png"))
 
-        cd = g.created_at
-        ge = str(g.explicit_content_filter)
+        cd = g.created_at # created date
+        ge = str(g.explicit_content_filter) # guild explicit filter
         om = im = dm = ofm = admins = mods = adminbots = bots = 0
+        # online idle dnd offline members
+        # no admins mods adminbots and bots
 
         for m in g.members:
             if m.status == discord.Status.online:
@@ -161,19 +179,31 @@ class Server(blink.Cog, name="Server"):
             if m.bot:
                 bots += 1
 
-        embed.add_field(inline=True, name="**Info**",
-                        value=f"**Created** {cd.year:04}/{cd.month}/{cd.day:02}\n**Region** {g.region}\n**Emojis** {len(g.emojis)}/{g.emoji_limit*2}\n**Upload Limit** {round(g.filesize_limit * 0.00000095367432)}MB\n**Verification level** {str(g.verification_level).capitalize()}\n**Media filtering** {'No one' if ge == 'Disabled' else 'No role' if ge =='no_role' else 'Everyone'}")
-        embed.add_field(inline=True, name="**Members**",
-                        value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}")
-        embed.add_field(inline=True, name="**Staff**",
-                        value=f"**Owner** {g.owner}\n**Admins** {admins}\n**Mods** {mods}\n**Admin Bots** {adminbots}\n**Bots** {bots}")
+        embed.add_field(
+            inline=True,
+            name="**Info**",
+            value=f"**Created** {cd.year:04}/{cd.month}/{cd.day:02}\n**Region** {g.region}\n**Emojis** {len(g.emojis)}/{g.emoji_limit*2}\n**Upload Limit** {round(g.filesize_limit * 0.00000095367432)}MB\n**Verification level** {str(g.verification_level).capitalize()}\n**Media filtering** {'No one' if ge == 'Disabled' else 'No role' if ge =='no_role' else 'Everyone'}"
+        )
+        embed.add_field(
+            inline=True,
+            name="**Members**",
+            value=f"**All** {g.member_count}\n<:bonline:707359046122078249> {om}\n<:bidle:707359045971083315> {im}\n<:bdnd:707368559759720498> {dm}\n<:boffline:707359046138855550> {ofm}"
+        )
+        embed.add_field(
+            inline=True,
+            name="**Staff**",
+            value=f"**Owner** {g.owner}\n**Admins** {admins}\n**Mods** {mods}\n**Admin Bots** {adminbots}\n**Bots** {bots}"
+        )
         embed.set_footer(
-            text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}")
+            text=f"Shard: {self.bot.cluster.identifier}{g.shard_id}"
+        )
 
         if g.banner:
             embed.set_image(url=g.banner_url_as(format="png", size=128))
+        # send before doing other requests to make faster
         m = await ctx.send(embed=embed)
 
+        # check if server on server lists
         if (await self.bot.session.head(f"https://disboard.org/server/{g.id}")).status == 200:
             disboard = f"[Disboard](https://disboard.org/server/{g.id})"
         else:
@@ -183,31 +213,39 @@ class Server(blink.Cog, name="Server"):
             topgg = f"[Top.gg](https://top.gg/servers/{g.id})"
         else:
             topgg = None
-        features = ' | '.join(m.replace('_', ' ').lower().capitalize()
-                              for m in (f for f in g.features if f != 'MORE_EMOJI'))
+        
+        # guild premium features eg from nitro
+        # format from FOO_BAR to Foo Bar
+        features = ' | '.join(m.replace('_', ' ').lower().capitalize() for m in (f for f in g.features if f != 'MORE_EMOJI'))
+        # extra features
         other = [
             f"**Unlocked Features** : {features if not features == '' else 'None'}",
             f"**Boosts** {g.premium_subscription_count} | **Boosters** {len(g.premium_subscribers)}",
             f"**Channels** {len(g.channels)} ({len(list(c for c in g.channels if isinstance(c,discord.TextChannel)))} Text, {len(list(c for c in g.channels if isinstance(c,discord.VoiceChannel)))} Voice, {len(list(c for c in g.channels if isinstance(c,discord.CategoryChannel)))} Category)",
             f"**Moderation requires 2FA** {'Yes' if g.mfa_level == 1 else 'No'}",
         ]
+        # bans
         if g.me.guild_permissions.ban_members:
             other.append('**Bans** ' + str(len(await g.bans())))
         if disboard or topgg:
             other.append(
-                f"{disboard if disboard else ''} {topgg if topgg else ''}")
+                f"{disboard if disboard else ''} {topgg if topgg else ''}"
+            )
         embed.add_field(name='**Other**', value="\n".join(other), inline=False)
         return await m.edit(embed=embed)
 
     @commands.command(name="servericon", aliases=["sicon", "icon"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def server_icon(self, ctx):
+        """Show the guild icon"""
         if ctx.guild.icon is None:
             return await ctx.send("Guild has no icon.")
         embed = discord.Embed(title=ctx.guild.name, colour=self.bot.colour)
         embed.set_image(url=ctx.guild.icon_url_as(static_format="png"))
         await ctx.send(embed=embed)
 
+    # status role command group
+    # most of these just modify db entries
     @commands.group(name="statusrole", aliases=["srole", "sr"], invoke_without_command=True)
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
@@ -218,7 +256,7 @@ class Server(blink.Cog, name="Server"):
         async with ctx.cache:
             server = ctx.cache.value
 
-        if not server.get("status_role_enabled"):
+        if not server.get("status_role_enabled"): # not enabled, show help
             await ctx.send_help(ctx.command)
 
         else:
@@ -278,19 +316,27 @@ class Server(blink.Cog, name="Server"):
             await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Configured status role, use `statusrole enable` to enable.")
 
+    # prefix commands
+    # also just modify database entry
     @commands.group(name="prefix", aliases=["prefixes"], invoke_without_command=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def prefixes(self, ctx):
         """Show guild prefixes"""
         async with ctx.cache:
-            prefixes = ctx.cache.value.get(
-                "prefixes") or self.bot.default_prefixes
-            embed = discord.Embed(description="\n".join(
-                prefixes), colour=self.bot.colour)
-        embed.set_author(name=f"Prefixes for {ctx.guild}", icon_url=ctx.guild.icon_url_as(
-            static_format="png"))
+            prefixes = ctx.cache.value.get("prefixes") or self.bot.default_prefixes
+            embed = discord.Embed(
+                description="\n".join(
+                    prefixes
+                ),
+                colour=self.bot.colour
+            )
+        embed.set_author(
+            name=f"Prefixes for {ctx.guild}",
+            icon_url=ctx.guild.icon_url_as(static_format="png")
+        )
         embed.set_footer(
-            text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes")
+            text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes"
+        )
         await ctx.send(embed=embed)
 
     @prefixes.command(name="add", aliases=["set"])
@@ -299,7 +345,7 @@ class Server(blink.Cog, name="Server"):
     async def add_prefix(self, ctx, *, prefix: str):
         """Add a guild prefix"""
         maxlen = 9
-        prefix = prefix.strip()
+        prefix = prefix.strip() # remove whitespace
         async with ctx.cache:
             if not ctx.cache.value.get("prefixes"):
                 ctx.cache.value["prefixes"] = self.bot.default_prefixes
@@ -624,16 +670,19 @@ class Server(blink.Cog, name="Server"):
     async def mov_wrapper(self, message):
         if message.author.bot:
             return
+        # blacklists
         async with self.bot.cache_or_create("blacklist-transform", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("transform",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
         async with self.bot.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
             if message.author.id in blacklist.value["snowflakes"]:
                 return
+        # perm checks
         p = message.channel.permissions_for(message.guild.me)
         if not (p.manage_messages and p.attach_files and p.send_messages and p.add_reactions):
             return
 
+        # attachment checks
         if message.attachments:
             attachment = message.attachments[0]
             if attachment.filename.endswith((".mov", ".mp4")):
@@ -645,27 +694,33 @@ class Server(blink.Cog, name="Server"):
                     return
                 if attachment.size < 10**3:
                     return
+                # cooldown
                 bucket = self._transform_cooldown.get_bucket(message)
                 if bucket.update_rate_limit():
                     with contextlib.suppress(discord.Forbidden):
                         await message.add_reaction("⏳")
                     return
 
+                # spawn a task so it can be cancelled 
                 task = self.bot.loop.create_task(self.mov_mp4(message))
 
+                # wait for delete to cancel
                 with contextlib.suppress(asyncio.TimeoutError):
                     await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id, timeout=60)
                 task.cancel()
-                del task
+                del taskc # dont leak memory lol
 
     async def mov_mp4(self, message: discord.Message):
-        with contextlib.suppress(asyncio.CancelledError):
+        """Do actual conversion logic"""
+        with contextlib.suppress(asyncio.CancelledError): # if we are cancelled clean up
             attachment = message.attachments[0]
 
+            # ask user
             check = await message.channel.send(reference=message, content="looks like your video is broken, would you like me to try and fix it for you ?")
             await check.add_reaction("✔")
             await check.add_reaction("✖")
 
+            # wait for yes
             try:
                 react = await self.bot.wait_for("raw_reaction_add", check=lambda p: p.message_id == check.id and p.user_id == message.author.id and str(p.emoji) in ("✔", "✖"), timeout=10)
             except asyncio.TimeoutError:
@@ -673,6 +728,8 @@ class Server(blink.Cog, name="Server"):
             else:
                 if str(react.emoji) == "✖":
                     return await check.delete()
+            
+            # we got a yes
 
             await check.edit(content="working on it...")
             json = {
@@ -684,49 +741,55 @@ class Server(blink.Cog, name="Server"):
                     "target": "mp4"
                 }]
             }
+            # request to converter
             async with aiohttp.ClientSession() as cs:
                 async with cs.post("https://api2.online-convert.com/jobs", headers={"X-Oc-Api-Key": secrets.converter}, json=json) as req:
                     if not req.status == 201:
                         await self.bot.warn(f"Error in video convert - http {req.status} {message}", False)
                         return await check.edit(content="This service is temporarily unavailable. [HTTP]")
                     response = await req.json()
-                    id = response["id"]
+                    id = response["id"] # ID OF REQUEST
                 try:
-                    for limiter in range(30):
+                    # fetch task status every second
+                    for limiter in range(30): # 30 seconds 30 checks
                         async with cs.get(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                             json = await req.json()
 
-                        if json.get("errors"):
+                        if json.get("errors"): # if we get a fail
                             await self.bot.warn(f"Error {req.status} in video convert: {json['errors']}  {message}", False)
                             return await check.edit(content="This service is temporarily unavailable. [CONVERT]")
 
                         if not json["output"]:
-                            if limiter == 29:
+                            if limiter == 29: # we havent got an output after 30 seconds, cancel the job 
                                 async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                                     await self.bot.warn(f"Cancelled job {id} {message} for 30s limit  {message}", False)
                                     return await check.edit(content="This service is temporarily unavailable. [TIMEOUT]")
                             await asyncio.sleep(1)
                             continue
 
-                        break
+                        break # we must have an output
                 except asyncio.CancelledError:
                     async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                         return await self.bot.warn("Convert task cancelled due to timeout", False)
 
                 if not json["output"]:
-                    return
+                    return # no output ? return
 
                 async with cs.get(json["output"][0]["uri"]) as req:
-                    data = BytesIO(await req.read())
+                    data = BytesIO(await req.read()) # download to upload
 
+                # our file is too big to send, we wasted all this compute time
                 if len(data.getbuffer()) > message.guild.filesize_limit:
                     await check.delete()
                     return await message.channel.send("looks like that video was too big for me to upload")
+                
+                # make a file
                 file = discord.File(data, filename="video.mp4")
+                # send message
                 msg = await message.channel.send(content="This is a beta feature, please contact us in the support server if you have any feedback.", file=file, reference=message)
                 await check.delete()
                 await msg.add_reaction("🗑")
-
+                # allow our user to delete the message
                 with contextlib.suppress(asyncio.TimeoutError):
                     await self.bot.wait_for("raw_reaction_add", check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
                     await msg.delete()

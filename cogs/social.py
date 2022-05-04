@@ -21,6 +21,8 @@ URLREGEX = blink.urlregex
 
 
 async def api(route, method):
+    """Request something from the api, returns a dummy payload if not available"""
+    # we must always return an image
     try:
         async with timeout(5):
             async with aiohttp.ClientSession() as cs:
@@ -34,11 +36,13 @@ async def api(route, method):
 
 
 class _Users(discord.AllowedMentions):
+    """Allow only mentioning of users"""
     def __init__(self):
         super().__init__(everyone=False, users=True, roles=False)
 
 
 class ShipStats:
+    """Class to abstract ship statistics"""
     def __init__(self, hugs: int, kisses: int, xp: str, age: str):
         self.hugs = hugs
         self.kisses = kisses
@@ -52,13 +56,18 @@ class Ship:
         self.db = db
         self.bot = bot
         self.cache = self.bot.cache_or_create(
-            f"social-ship-{self.id}", "SELECT * FROM ships WHERE id = $1", (self.id,))
+            f"social-ship-{self.id}", "SELECT * FROM ships WHERE id = $1",
+            (self.id,)
+        )
 
     async def gen_thumbnail(self):
+        """Make api request for ship icon of colour"""
         return await api(f"/social/images/ship/{self.colour:06}", "GET")
 
     async def __aenter__(self):
-        async with self.cache as cache:
+        """Async with context manager"""
+        async with self.cache as cache: # fetch from cache
+            # format data if a record exists
             if cache.value:
                 self.exists = True
                 self.res = cache.value
@@ -68,9 +77,10 @@ class Ship:
         return self
 
     async def __aexit__(self, error, error_type, traceback):
-        pass
+        pass # we dont care about exceptions here 
 
     def format(self):
+        """Set class attributes"""
         self.captain = self.res.get('captain')
         self.partner = self.res.get('partner')
         self.name = self.res.get('name')
@@ -78,16 +88,39 @@ class Ship:
         self.colour = self.res.get('colour')
         self.icon = self.res.get('icon')
         self.created = datetime.datetime.fromtimestamp(
-            self.res.get('timestamp'))
+            self.res.get('timestamp')
+        )
 
-    async def create(self, captain: int, partner: int, name: str, description: str = "No description", colour: int = 16099001, icon: str = "https://cdn.blinkbot.me/assets/ship.png"):
-        await self.db.execute("INSERT INTO ships VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", self.id, captain, partner, name, description, colour, icon, int(datetime.datetime.utcnow().timestamp()))
+    async def create(
+        self,
+        captain: int,
+        partner: int,
+        name: str,
+        description: str = "No description",
+        colour: int = 16099001,
+        icon: str = "https://cdn.blinkbot.me/assets/ship.png"
+    ):
+        await self.db.execute( # insert into db
+            "INSERT INTO ships VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+            self.id,
+            captain,
+            partner,
+            name,
+            description,
+            colour,
+            icon,
+            int(datetime.datetime.utcnow().timestamp())
+        )
+
+        # we just inserted into the database, now we must invalidate our cache
         await self.cache.bot_invalidate(self.bot)
+        # reformat
         async with self.cache as cache:
             self.res = cache.value
         self.format()
 
     async def gen_stats(self) -> ShipStats:
+        # get captain stats
         async with User(self.captain, self.db, self.bot) as captain:
             captain_hugs = (await captain.decompile(scope="hugs", recipient=self.partner))[1]
             captain_kisses = (await captain.decompile(scope="kisses", recipient=self.partner))[1]
@@ -97,6 +130,7 @@ class Ship:
             if captain_kisses is None:
                 captain_kisses = 0
 
+        # add to partner stats
         async with User(self.partner, self.db, self.bot) as partner:
             partner_hugs = (await partner.decompile(scope="hugs", recipient=self.captain))[1]
             partner_kisses = (await partner.decompile(scope="kisses", recipient=self.captain))[1]
@@ -109,43 +143,56 @@ class Ship:
         total_hugs = partner_hugs + captain_hugs
         total_kisses = partner_kisses + captain_kisses
 
-        timestamp = datetime.datetime.utcnow().timestamp().__int__() - \
-            self.created.timestamp()
+        # create xp
+        timestamp = datetime.datetime.utcnow().timestamp().__int__() - self.created.timestamp()
         days = datetime.timedelta(seconds=timestamp).days
         age = humanize.naturaldelta(timestamp)
+        # xp formula humanized to a readable value
         xp = humanize.intword(int((days ** 2) * 50) + (total_hugs + total_kisses) * 37)
 
         return ShipStats(hugs=total_hugs, kisses=total_kisses, xp=xp, age=age)
 
     async def to_embed(self):
+        """Generate the user facing embed"""
         stats = await self.gen_stats()
         embed = discord.Embed(colour=self.colour, description=self.description)
         embed.add_field(name="**Captain**", value=f"<@{self.captain}>")
         embed.add_field(name="**Partner**", value=f"<@{self.partner}>")
         embed.add_field(name="**XP**", value=f"{stats.xp} XP")
         embed.add_field(
-            name="**Counters**", value=f"{stats.hugs} Hug{'s' if stats.hugs != 1 else ''} | {stats.kisses} Kiss{'es' if stats.kisses != 1 else ''}", inline=False)
+            name="**Counters**",
+            value=f"{stats.hugs} Hug{'s' if stats.hugs != 1 else ''} | {stats.kisses} Kiss{'es' if stats.kisses != 1 else ''}",
+            inline=False
+        )
         embed.add_field(name="**Ship Age**", value=stats.age, inline=False)
         embed.set_author(name=self.name, icon_url=self.icon)
         embed.set_thumbnail(url=await self.gen_thumbnail())
         return embed
 
     async def modify(self, scope, data):
+        """Modify an INDIVIDUAL column"""
+        # SCOPE IS NOT SANITISED SO MUST NOT BE POTENTIAL USER INPUT
         await self.db.execute(f"UPDATE ships SET {scope}=$1 WHERE id=$2", data, self.id)
         await self.cache.bot_invalidate(self.bot)
 
     async def sink(self):
+        """Delete the ship"""
         await self.db.execute("DELETE FROM ships WHERE id=$1", self.id)
         await self.cache.bot_invalidate(self.bot)
 
 
 class Action:
+    """
+    Class returned when attempting to make an action
+    Contains success, reason for fail, and number of past actions
+    """
     def __init__(self, success: bool, reason: str = None, count: int = None):
         self.success = success
         self.count = count
         self.reason = reason
 
     def translate(self):
+        """Turn reason into a user readable format"""
         translations = {
             "userblocked": "You have blocked this user.",
             "blocked": "You have been blocked by this user.",
@@ -156,20 +203,26 @@ class Action:
 
 
 class ElegibilityReason:
+    """Class to determine if a user is elegible to perform an action"""
     def __init__(self, elegible: bool, reason: str = None):
         self.elegible = elegible
         self.reason = reason
 
 
 class User:
+    """Class for a social user object"""
     def __init__(self, id: int, db, bot):
         self.user = id
         self.db = db
         self.bot = bot
+        # cached database entry
         self.cache = self.bot.cache_or_create(
-            f"social-user-{self.user}", "SELECT * FROM social WHERE id = $1", (self.user,))
+            f"social-user-{self.user}", "SELECT * FROM social WHERE id = $1",
+            (self.user,)
+        )
 
     def format(self):
+        """Set class attributes"""
         self.hugs = self.res.get("hugs")
         self.kisses = self.res.get("kisses")
         self.relation = self.res.get("relation")
@@ -177,33 +230,38 @@ class User:
         self.blocked = self.res.get("blocked")
 
     async def __aenter__(self):
+        """Aync with context manager"""
         async with self.cache as cache:
             if not cache.value:
+                # if cache doesnt exist we must create a new user
                 await self.setup()
+                # we want the new value after creating
                 await cache.update()
             self.res = cache.value
             self.format()
 
+        # if we have a ship with another user
         self.taken = (True if self.relation != 0 else False)
-        self.session = aiohttp.ClientSession()
         return self
 
     async def __aexit__(self, error, error_type, traceback):
-        await self.session.close()
+        pass
 
     async def setup(self):
+        """Create a new user from the object"""
         # id, hugs, kisses, relationship, ship, blocked
         await self.db.execute("INSERT INTO social VALUES ($1,$2,$3,$4,$5,$6)", self.user, [], [], 0, "nul", [])
         await self.cache.bot_invalidate(self.bot)
 
     async def elegible(self, scope: str, recipient) -> ElegibilityReason:
+        """Work out if a user is elegible for an action"""
+        # for ship hug kiss
         if self.relation == recipient.user:
             return ElegibilityReason(True)
-        res = recipient
 
         if recipient.user in self.blocked:
             return ElegibilityReason(False, reason="userblocked")
-        if self.user in res.blocked:
+        if self.user in recipient.blocked:
             return ElegibilityReason(False, reason="blocked")
 
         if scope == "hug":
@@ -211,11 +269,13 @@ class User:
         elif scope == "kiss" or "ship":
             if self.taken:
                 return ElegibilityReason(False, "usertaken")
-            if res.taken:
+            if recipient.taken:
                 return ElegibilityReason(False, "taken")
             return ElegibilityReason(True)
 
     async def block(self, recipient):
+        """Stop the recipient from using social commands on the user"""
+        # returns a message to send to the user
         blocked = self.blocked
         if recipient in blocked:
             return "User already blocked."
@@ -225,6 +285,8 @@ class User:
         return "Success"
 
     async def unblock(self, recipient):
+        """Allow the recipient to use social commands on the user"""
+        # return a message to send to the user
         blocked = self.blocked
         if recipient not in blocked:
             return "User not blocked."
@@ -234,6 +296,7 @@ class User:
         return "Success"
 
     async def decompile(self, scope: str, recipient: int):
+        """Decompile list of actions into number to recipient"""
         action = self.res.get(scope)
         if action == []:
             entry = id = count = index = None
@@ -251,16 +314,22 @@ class User:
         return entry, count, index, action
 
     async def hug(self, recipient: int) -> Action:
+        """Hug a recipient"""
         async with User(recipient, self.db, self.bot) as recp:
+            # Must check if we are elegible to perform the action
             check = await self.elegible(scope="hug", recipient=recp)
             if not check.elegible:
                 return Action(success=False, reason=check.reason)
+            
+            # work out number of hugs
             rentry, rcount, rindex, rhugs = await recp.decompile(scope="hugs", recipient=self.user)
             if rcount is None:
                 rcount = 0
 
         entry, count, index, hugs = await self.decompile(scope="hugs", recipient=recipient)
 
+
+        # increment counter or set to 1 if not exists
         if index is None:
             await self.db.execute("UPDATE social SET hugs=$1 WHERE id=$2", hugs + [f"{recipient}:1"], self.user)
             await self.cache.bot_invalidate(self.bot)
@@ -274,16 +343,21 @@ class User:
         return Action(success=True, count=count + rcount)
 
     async def kiss(self, recipient: int) -> Action:
-        async with User(recipient, self.db, self.bot) as recp:
+        """Hug a recipient"""
+        async with User(recipient, self.db, self.bot) as recp:#
+            # must check for elegible
             check = await self.elegible(scope="kiss", recipient=recp)
             if not check.elegible:
                 return Action(success=False, reason=check.reason)
+
+            # work out number we have
             rentry, rcount, rindex, rhugs = await recp.decompile(scope="kisses", recipient=self.user)
             if rcount is None:
                 rcount = 0
 
         entry, count, index, kisses = await self.decompile(scope="kisses", recipient=recipient)
 
+        # increment or set to 1 
         if index is None:
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2", kisses + [f"{recipient}:1"], self.user)
             await self.cache.bot_invalidate(self.bot)
@@ -297,24 +371,28 @@ class User:
         return Action(success=True, count=count + rcount)
 
     async def set_ship(self, id: str, relation: int):
+        """Set the ship of the user and relation"""
         await self.db.execute("UPDATE social SET ship = $1 WHERE id=$2", id, self.user)
         await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2", relation, self.user)
         await self.cache.bot_invalidate(self.bot)
 
     async def sink_ship(self):
+        """Delete ship from both users"""
         await self.db.execute("UPDATE social SET ship =$1 WHERE id =$2", "nul", self.user)
         await self.db.execute("UPDATE social SET relation =$1 WHERE id=$2", 0, self.user)
         await self.cache.bot_invalidate(self.bot)
 
 
 class Social(blink.Cog):
+    """Commands relating to social interactions"""
 
+    # fetch from api
     async def gen_kiss(self):
         return await api("/social/images/kiss/", "GET")
 
     async def gen_hug(self):
         return await api("/social/images/hug/", "GET")
-
+ 
     @commands.group(name="blocked", invoke_without_command=True)
     async def blocked(self, ctx):
         """Manage users blocked from using social commands on you"""
@@ -529,6 +607,7 @@ class Social(blink.Cog):
             return await ctx.send("Your ship has sunk.")
 
     async def _new_ship(self, captain: int, partner: int, ctx: commands.Context):
+        """Create a ship with user input"""
         try:
             def is_captain(m):
                 return m.author.id == captain and m.channel == ctx.channel

@@ -5,12 +5,10 @@
 
 
 from discord.ext import commands
+import blink
 
-
-class PRELOAD(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
+class PRELOAD(blink.Cog):
+    """Ignore all errors before loading"""
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         pass
