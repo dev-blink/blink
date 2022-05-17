@@ -7,7 +7,6 @@
 import json
 from random import Random as RAND
 import discord
-from discord.errors import InvalidArgument
 from discord.ext import commands
 import functools
 import asyncio
@@ -37,6 +36,7 @@ conversion = [
     ['𝒶', '𝒷', '𝒸', '𝒹', '𝑒', '𝒻', '𝑔', '𝒽', '𝒾', '𝒿', '𝓀', '𝓁', '𝓂', '𝓃', '𝑜', '𝓅',
         '𝓆', '𝓇', '𝓈', '𝓉', '𝓊', '𝓋', '𝓌', '𝓍', '𝓎', '𝓏']  # ascii + 119893 or 119789
 ]
+
 
 # unbelivabley simple class
 class Timer:
@@ -156,7 +156,7 @@ async def searchrole(roles: list, term: str) -> discord.Role:
 def ordinal(n: int):
     """Turns an int into its ordinal (1 -> 1st)"""
     return f"{n}{'tsnrhtdd'[(n//10!=1)*(n%10<4)*n%10::4]}"
-    
+
     # refer to algorithms design section
 
     # n//10 gives the number of 10s n is divisible by
@@ -248,6 +248,7 @@ class SilentWarning(Exception):
     """Error for backing out of tasks with a warning"""
     pass
 
+
 # Cog class provides default attributes, registers to bot and also cleans up clientsessions
 class Cog(commands.Cog):
     def __init__(self, bot, identifier: str):
@@ -282,6 +283,7 @@ class CacheDict(OrderedDict):
             oldest = next(iter(self))
             del self[oldest]
 
+
 # class for command context
 class Ctx(commands.Context):
     def __init__(self, *args, **kwargs):
@@ -299,7 +301,7 @@ class Ctx(commands.Context):
 
         # technically we should always have a guild because we dont recieve
         # dm messages by choice but checked here in case of cache discrepancy
-        user = self.guild.me if self.guild else self.bot.user # displayname 
+        user = self.guild.me if self.guild else self.bot.user # displayname
         pattern = re.compile(r"<@!?%s>" % user.id) # literal basic regex
         return pattern.sub("@%s" % user.display_name.replace('\\', r'\\'), self.prefix)
 
@@ -369,11 +371,12 @@ class ServerCache(DBCache):
 class UrlConverter(commands.Converter):
     """Convertor to parse URLs from a string or text"""
     async def convert(self, ctx, argument):
+        argument = argument.strip()
         if urlregex.match(argument):
             if len(argument) > 1000:
-                raise InvalidArgument("Urls must be at most 1000 characters")
+                raise commands.BadArgument("Urls must be at most 1000 characters")
             return argument
         else:
             if ctx.message.attachments:
                 return ctx.message.attachments[0].url
-            raise InvalidArgument("String could not be interpereted as a url")
+            raise commands.BadArgument("String could not be interpereted as a url")
