@@ -19,7 +19,7 @@ from typing import Callable, List
 import re
 
 
-urlregex = re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+")
+urlregex = re.compile(r"^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$")
 
 
 # lists used for alphabet conversion
