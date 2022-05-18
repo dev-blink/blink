@@ -71,7 +71,7 @@ class Server(blink.Cog, name="Server"):
         # checks
         if len(role.members) > 35 or len(role.members) == 0:
             return await ctx.send(f"There are {len(role.members)} members with the role {role.name}")
-        
+
         # form embed
         embed = discord.Embed(
             title=f"{role.name} - {len(role.members)}",
@@ -96,9 +96,10 @@ class Server(blink.Cog, name="Server"):
         # embed
         embed = discord.Embed(title="Current mutes", colour=self.bot.colour)
         embed.add_field(
-            name="Members:", value=" ".join(str(m)
-                for m in role.members
-            ), inline=False
+            name="Members:", value=" ".join(
+                str(m) for m in role.members
+            ),
+            inline=False
         )
         if len(embed.description) > 2048:
             return await ctx.send(f"There are {len(role.members)} people muted, which is too many for me to display.")
@@ -213,7 +214,7 @@ class Server(blink.Cog, name="Server"):
             topgg = f"[Top.gg](https://top.gg/servers/{g.id})"
         else:
             topgg = None
-        
+
         # guild premium features eg from nitro
         # format from FOO_BAR to Foo Bar
         features = ' | '.join(m.replace('_', ' ').lower().capitalize() for m in (f for f in g.features if f != 'MORE_EMOJI'))
@@ -389,6 +390,65 @@ class Server(blink.Cog, name="Server"):
                 await ctx.cache.save(ctx.guild.id, self.bot)
             await ctx.send("Guild prefixes have been reset to default")
 
+#################################
+# WELCOME COMMANDS AND LISTENER #
+#################################
+
+    def build_embed(self, data: dict) -> discord.Embed:
+        embed = discord.Embed()
+        E = discord.embeds._EmptyEmbed
+
+        if data.get("title"):
+            embed.title = data.get("title")
+        if data.get("description"):
+            embed.description = data.get("description")
+        if data.get("colour"):
+            embed.colour = data.get("colour")
+
+        author = data.get("author")
+        if author:
+            embed.set_author(
+                name=author.get("name"),
+                url=author.get("url") or E,
+                icon_url=author.get("icon_url") or E
+            )
+
+        footer = data.get("footer")
+        if footer:
+            embed.set_footer(
+                text=footer.get("text"),
+                icon_url=footer.get("icon_url") or E,
+            )
+
+        if data.get("thumbnail"):
+            embed.set_thumbnail(url=data.get("thumbnail"))
+
+        if data.get("image"):
+            embed.set_image(url=data.get("image"))
+
+        return embed
+
+    async def trigger_welcome(self, member):
+        if not member.guild:
+            return
+        server = self.bot.cache_or_create(
+            f"guild-{member.guild.id}", "SELECT data FROM guilds WHERE id=$1",
+            (member.guild.id,)
+        )
+        async with server:
+            if not server.value.get("welcome_enabled"):
+                return
+            embed_dict = server.value.get("welcome_embed")
+            embed = self.build_embed(embed_dict)
+            webhook_data = server.value.get("welcome_webhook")
+
+            async with aiohttp.ClientSession() as cs:
+                hook = discord.Webhook(
+                    webhook_data,
+                    adapter=discord.AsyncWebhookAdapter(cs)
+                )
+                await hook.send(embed=embed)
+
     @commands.group(name="welcome", invoke_without_command=True)
     @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True)
@@ -397,11 +457,16 @@ class Server(blink.Cog, name="Server"):
         async with ctx.cache:
             server = ctx.cache.value
             if server.get("welcome_enabled"):
-                return await ctx.send(f"Welcome screen is enabled, use {ctx.clean_prefix}welcome test to to view the message.")
-            elif server.get("welcome_setup"):
-                await ctx.send(f"Welcome is setup, use {ctx.clean_prefix}welcome enable #channel to enable welcome messages.")
-            else:
-                await ctx.send_help(ctx.command)
+                await ctx.send(f"Welcome screen is enabled, use {ctx.clean_prefix}welcome test to to view the message.")
+            await ctx.send_help(ctx.command)
+
+    @welcome.command(name="test")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_test(self, ctx):
+        """Test the welcome embed"""
+        await ctx.send("Attempting to trigger a welcome message")
+        await self.trigger_welcome(ctx.author)
 
     @welcome.command(name="enable")
     @commands.has_guild_permissions(manage_guild=True)
@@ -412,16 +477,17 @@ class Server(blink.Cog, name="Server"):
             return await ctx.send(f"I do not have permission to manage webhooks (integrations) for {channel.mention}")
         async with ctx.cache:
             server = ctx.cache.value
-            if not server.get("welcome_setup"):
-                return await ctx.send(f"Welcome messages are not setup, use {ctx.clean_prefix}welcome setup to set them up")
-            hook = await channel.create_webhook(name="blink welcome messages")
+            hook = await channel.create_webhook(name="channel settings -> integrations -> webhooks to change")
             hook = {
                 "id": hook.id,
                 "token": hook.token,
+                "type": 1,
             }
             server["welcome_webhook"] = hook
+            server["welcome_enabled"] = True
             await ctx.cache.save(ctx.guild.id, self.bot)
-        await ctx.send(f"Welcome messages are enabled, use {ctx.clean_prefix}welcome test to view the message")
+        await ctx.send(f"Welcome messages are enabled, use {ctx.clean_prefix}welcome test to view the message\nTo change the display username and avatar go to channel settings -> integrations -> webhooks-> this webhook")
+        await self.trigger_welcome(ctx.author)
 
     # WELCOME EMBED CONFIGURATION
     @welcome.group(name="setup", invoke_without_command=True)
@@ -473,13 +539,13 @@ class Server(blink.Cog, name="Server"):
         """Set the side colour of the welcome embed"""
         async with ctx.cache:
             embed = ctx.cache.value.get("welcome_embed") or {}
-            embed["color"] = colour.value if colour else None
+            embed["colour"] = colour.value if colour else None
             ctx.cache.value["welcome_embed"] = embed
             await ctx.cache.save(ctx.guild.id, self.bot)
         if colour is None:
             await ctx.send("Colour has been reset")
         else:
-            await ctx.send("Colour has been updated")
+            await ctx.send(embed=discord.Embed(title="Colour has been updated",colour=colour))
 
     # WELCOME EMBED AUTHOR
     @welcome_setup.group(name="author", invoke_without_command=True)
@@ -517,7 +583,7 @@ class Server(blink.Cog, name="Server"):
     async def welcome_setup_author_icon(self, ctx, icon_url: blink.UrlConverter):
         """Set the author icon image for the welcome embed"""
         async with ctx.cache:
-            embed = ctx.cache.value.get("welcome_embed")
+            embed = ctx.cache.value.get("welcome_embed") or {}
             if embed.get("author"):
                 if embed["author"].get("name"):
                     embed["author"]["icon_url"] = icon_url
@@ -535,7 +601,7 @@ class Server(blink.Cog, name="Server"):
     async def welcome_setup_author_url(self, ctx, url: blink.UrlConverter):
         """Set the author url of the welcome embed"""
         async with ctx.cache:
-            embed = ctx.cache.value.get("welcome_embed")
+            embed = ctx.cache.value.get("welcome_embed") or {}
             if embed.get("author"):
                 if embed["author"].get("name"):
                     embed["author"]["url"] = url
@@ -583,7 +649,7 @@ class Server(blink.Cog, name="Server"):
     async def welcome_setup_footer_icon(self, ctx, icon_url: blink.UrlConverter):
         """Set the footer icon image for the welcome embed"""
         async with ctx.cache:
-            embed = ctx.cache.value.get("welcome_embed")
+            embed = ctx.cache.value.get("welcome_embed") or {}
             if embed.get("footer"):
                 if embed["footer"].get("name"):
                     embed["footer"]["icon_url"] = icon_url
@@ -617,7 +683,7 @@ class Server(blink.Cog, name="Server"):
         """Set the image of the welcome embed"""
         async with ctx.cache:
             embed = ctx.cache.value.get("welcome_embed") or {}
-            embed["image"] = image.value if image else None
+            embed["image"] = image if image else None
             ctx.cache.value["welcome_embed"] = embed
             await ctx.cache.save(ctx.guild.id, self.bot)
         if image is None:
@@ -701,14 +767,14 @@ class Server(blink.Cog, name="Server"):
                         await message.add_reaction("⏳")
                     return
 
-                # spawn a task so it can be cancelled 
+                # spawn a task so it can be cancelled
                 task = self.bot.loop.create_task(self.mov_mp4(message))
 
                 # wait for delete to cancel
                 with contextlib.suppress(asyncio.TimeoutError):
                     await self.bot.wait_for("message_delete", check=lambda m: m.id == message.id, timeout=60)
                 task.cancel()
-                del taskc # dont leak memory lol
+                del task # dont leak memory lol
 
     async def mov_mp4(self, message: discord.Message):
         """Do actual conversion logic"""
@@ -728,7 +794,7 @@ class Server(blink.Cog, name="Server"):
             else:
                 if str(react.emoji) == "✖":
                     return await check.delete()
-            
+
             # we got a yes
 
             await check.edit(content="working on it...")
@@ -760,7 +826,7 @@ class Server(blink.Cog, name="Server"):
                             return await check.edit(content="This service is temporarily unavailable. [CONVERT]")
 
                         if not json["output"]:
-                            if limiter == 29: # we havent got an output after 30 seconds, cancel the job 
+                            if limiter == 29: # we havent got an output after 30 seconds, cancel the job
                                 async with cs.delete(f"https://api2.online-convert.com/jobs/{id}", headers={"X-Oc-Api-Key": secrets.converter}) as req:
                                     await self.bot.warn(f"Cancelled job {id} {message} for 30s limit  {message}", False)
                                     return await check.edit(content="This service is temporarily unavailable. [TIMEOUT]")
@@ -782,7 +848,7 @@ class Server(blink.Cog, name="Server"):
                 if len(data.getbuffer()) > message.guild.filesize_limit:
                     await check.delete()
                     return await message.channel.send("looks like that video was too big for me to upload")
-                
+
                 # make a file
                 file = discord.File(data, filename="video.mp4")
                 # send message
