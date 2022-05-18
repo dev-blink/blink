@@ -88,7 +88,7 @@ class Info(blink.Cog, name="Info"):
         ping = (time.monotonic() - before) * 1000 # in ms
         await message.edit(embed=discord.Embed(
             title="\U0001f3d3 Pong",
-            description=f"HTTP request time: {int(ping)}ms\nWebsocket latency: {round((self.bot.latency * 1000))}ms\nCluster latency: {self.bot.cluster.latency}ms\nDB cacherate: {self.bot.cacherate()}%",
+            description=f"HTTP request time: {int(ping)}ms\nWebsocket latency: {round((self.bot.latency * 1000))}ms\nCluster latency: {self.bot.cluster.latency}ms\nDB cacherate: {self.bot.cacherate()}%\nSongs cached: {len(self.bot._cogs.member.lyric_cache)}",
             colour=self.bot.colour
         ), content=None)
 

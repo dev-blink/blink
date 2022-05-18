@@ -9,6 +9,7 @@ import discord
 from discord.ext import commands
 import datetime
 import blink
+import aiohttp
 
 
 statuses = { # map of statuses to images representing them in the ui
@@ -49,6 +50,11 @@ async def convert(seconds):
 
 
 class Members(blink.Cog, name="Member"):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lyric_cache = blink.CacheDict(10_000)
+
     async def guild_av(self, m):
         member = await self.bot.http.get_member(m.guild.id, m.id)
         # fetch the raw member for guild avatar because not in library k
@@ -92,7 +98,7 @@ class Members(blink.Cog, name="Member"):
         if not member:
             member = ctx.author
 
-        perms = '\n'.join( # iterate over perms 
+        perms = '\n'.join( # iterate over perms
             # value is a 1/0 or true/false of wether the user has that permission
             perm for perm, value in member.guild_permissions if value)
 
@@ -102,8 +108,7 @@ class Members(blink.Cog, name="Member"):
             colour=self.bot.colour
         )
         embed.set_author(
-            icon_url=member.avatar_url_as(
-            static_format='png'),
+            icon_url=member.avatar_url_as(static_format='png'),
             name=str(member)
         )
 
@@ -180,7 +185,7 @@ class Members(blink.Cog, name="Member"):
         """Shows a user's avatar"""
         if not user:
             user = ctx.author
-        
+
         # normal user avatar embed
         global_av_embed = self.avatar_embed(user.avatar_url_as(static_format="png"))
         msg = await ctx.send(embed=global_av_embed)
@@ -250,7 +255,7 @@ class Members(blink.Cog, name="Member"):
                 title="Streaming", url=base.url, description=base.name or base.url, colour=0x593695)
         else:
             embed = False
-        
+
         # if an embed was generated
         if embed:
             return await ctx.send(embed=embed)
@@ -295,9 +300,93 @@ class Members(blink.Cog, name="Member"):
             spotifyembed.add_field(
                 name="Duration:", value=songtime, inline=False)
             return await ctx.send(embed=spotifyembed)
-        
+
         # unreachable allows support for other methods of getting
         # spotifty data without significant refactoring
+
+    @commands.command(name="lyrics", aliases=["l", "lyric"])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.guild_only()
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def display_lyrics(self, ctx):
+        """Display the lyrics if they are available"""
+        m = ctx.author
+        try:
+            sp = next(p for p in m.activities if isinstance(p, discord.Spotify))
+        except StopIteration:
+            return await ctx.send("no spotify presence detected")
+
+        lyrics = await self.get_lyrics(sp)
+
+        if not lyrics:
+            return await ctx.send("could not find any lyrics for that song :/")
+
+        delta = (datetime.datetime.utcnow() - sp.start).seconds
+
+        time, index, interval, l1, l2, l3, real_index, max_index = self.lyric_index(lyrics, delta)
+
+        pre_song = index == 1 and real_index == -1
+        post_song = index == -2 and real_index == 0
+
+        first_lyric = index - real_index == 1
+        last_lyric = index == max_index
+
+        l1, l2, l3 = (k['lyrics'].strip().replace("*","\\*") for k in (l1, l2, l3))
+
+        display = [
+            f"**{l1}**" if first_lyric else l1,
+            f"**{l2}**" if not (first_lyric or last_lyric or pre_song or post_song) else l2,
+            f"**{l3}**" if last_lyric else l3,
+        ]
+
+        if pre_song:
+            display.pop()
+            display.insert(0, "♫♫♫")
+        elif post_song:
+            del display[0]
+            display.append("♫♫♫")
+
+        embed = discord.Embed(
+            title=f"{sp.title} - {', '.join(sp.artists)}",
+            description="\n".join(display),
+            colour=sp.colour,
+        )
+        embed.set_thumbnail(url=sp.album_cover_url)
+        await ctx.send(
+            # content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
+            embed=embed
+        )
+
+    async def get_lyrics(self, spotify: discord.Spotify):
+        track_id = spotify.track_id
+
+        if self.lyric_cache.get(track_id):
+            return self.lyric_cache[track_id]
+
+        query = f"{'%20'.join(spotify.title.split(' '))}%20{'%20'.join(spotify.artist.split(' '))}"
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(f"https://api.textyl.co/api/lyrics?q={query}") as req:
+                try:
+                    data = await req.json()
+                except aiohttp.ContentTypeError:
+                    return None
+
+        self.lyric_cache[track_id] = data
+        return data
+
+    def lyric_index(self, data: list, time: int):
+        index = -2
+        real_index = 0
+        max_index = len(data) - 1
+        for (i, lyric) in enumerate(data):
+            if lyric['seconds'] >= time:
+                index = i - 1
+                real_index = i - 1
+                break
+        if index in (-1, 0):
+            index = 1
+        interval = data[index + 1]['seconds'] - time
+        return time, index, interval, data[index - 1], data[index], data[index + 1], real_index, max_index
 
 
 def setup(bot):

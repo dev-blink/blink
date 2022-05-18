@@ -174,9 +174,12 @@ class Blink(commands.AutoShardedBot):
             "beta": self.beta,
             "cluster": self.cluster.identifier,
             "cache": {
-                "hits": self.cache_hits,
-                "misses": self.cache_misses,
-                "hitrate": self.cacherate(),
+                "lyric": len(self._cogs.member.lyric_cache),
+                "database": {
+                    "hits": self.cache_hits,
+                    "misses": self.cache_misses,
+                    "hitrate": self.cacherate(),
+                }
             },
             "config": {
                 "gateway": config.gateway,
