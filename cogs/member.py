@@ -307,7 +307,6 @@ class Members(blink.Cog, name="Member"):
     @commands.command(name="lyrics", aliases=["l", "lyric"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
-    @commands.cooldown(1, 10, commands.BucketType.user)
     async def display_lyrics(self, ctx):
         """Display the lyrics if they are available"""
         m = ctx.author
