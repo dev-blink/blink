@@ -10,3 +10,4 @@ statcord = ""
 errorhook = {}  # Discord error reporting webhook
 gist = ""  # Github gists
 converter = ""  # Media convertor api key
+spotify_api = "" # auth key for workers oauth api

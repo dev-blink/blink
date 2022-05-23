@@ -17,7 +17,7 @@ from wavelink import ZeroConnectedNodes as NoNodes
 
 async def sendEmbedError(ctx, message):
     """put error in embed if it fits"""
-    embed = discord.Embed(colour=ctx.bot.colour)
+    embed = discord.Embed(colour=discord.Colour.red())
     if len(message) < 256:
         embed.title = message
     else:
@@ -125,6 +125,16 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
 
         elif isinstance(error, commands.UnexpectedQuoteError):
             return await sendEmbedError(ctx, "Looks like you tried to use a quote in an argument (don't do that) it makes it impossible to distinguish arguments.")
+
+        elif isinstance(error, blink.SpotifyApiResponseError):
+            if error.status == 204:
+                return await sendEmbedError(ctx,"Succesfully got player information from spotify, but spotify returned nothing playing, are you in a private session?")
+            if error.status == 404:
+                return await ctx.send(embed=discord.Embed(
+                    title="Unable to retrive spotify information from the user's status",
+                    description=f"To allow blink to access data directly from spotify use the {ctx.clean_prefix}spotifysync command",
+                    colour=discord.Colour.red(),
+                ))
         #
         # Error reporting
         #

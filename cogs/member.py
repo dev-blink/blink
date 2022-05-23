@@ -10,6 +10,7 @@ from discord.ext import commands
 import datetime
 import blink
 import aiohttp
+import blinksecrets as secrets
 
 
 statuses = { # map of statuses to images representing them in the ui
@@ -54,6 +55,7 @@ class Members(blink.Cog, name="Member"):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lyric_cache = blink.CacheDict(10_000)
+        self.dead_tracks = set()
 
     async def guild_av(self, m):
         member = await self.bot.http.get_member(m.guild.id, m.id)
@@ -262,65 +264,30 @@ class Members(blink.Cog, name="Member"):
         # could not make an embed, must have no valid status
         await ctx.send("A status was unable to be determined.")
 
-    @commands.command(name="listening", aliases=["playing", "spotify", "spot"])
-    @commands.guild_only()
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def spotifystatus(self, ctx, user: discord.Member = None):
-        """Displays a members spotify status"""
-        if not user:
-            user = ctx.author
-
-        # generator for list of spotify activities
-        activities = (a for a in user.activities if isinstance(a, discord.Spotify))
-
-        try: # get first activity
-            spotify = next(activities)
-        except StopIteration:
-            return await ctx.send("no spotify detected")
-
-        if isinstance(spotify, discord.Spotify):
-            spotifyembed = discord.Embed(
-                title=f"{spotify.title}", colour=spotify.colour)
-
-            spotifyembed.add_field(
-                name="Album:", value=spotify.album, inline=False)
-
-            spotifyembed.set_thumbnail(url=spotify.album_cover_url)
-
-            artists = ", ".join(spotify.artists)
-            if len(spotify.artists) > 1:
-                pluralartist = "Artists:"
-            else:
-                pluralartist = "By:"
-            spotifyembed.add_field(
-                name=pluralartist, value=artists, inline=False)
-
-            songtime = await convert(spotify.duration.seconds)
-            spotifyembed.add_field(
-                name="Duration:", value=songtime, inline=False)
-            return await ctx.send(embed=spotifyembed)
-
-        # unreachable allows support for other methods of getting
-        # spotifty data without significant refactoring
-
-    @commands.command(name="lyrics", aliases=["l", "lyric"])
+    @commands.command(name="spotify", aliases=["lyrics", "l", "lyric", "playing", "listening", "sp"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def display_lyrics(self, ctx):
         """Display the lyrics if they are available"""
-        m = ctx.author
-        try:
-            sp = next(p for p in m.activities if isinstance(p, discord.Spotify))
-        except StopIteration:
-            return await ctx.send("no spotify presence detected")
-
-        lyrics = await self.get_lyrics(sp)
+        sp = await self.get_spotify(ctx.author)
+        lyrics = await self.get_lyrics(sp.title, sp.artists, sp.track_id)
 
         if not lyrics:
-            return await ctx.send("could not find any lyrics for that song :/")
+            # legacy embed
+            embed = discord.Embed(
+                title=f"{sp.title} - {', '.join(sp.artists.split('; '))}",
+                colour=sp.colour
+            )
+            embed.add_field(
+                name="Album",
+                value=sp.album,
+            )
+            embed.set_thumbnail(
+                url=sp.icon_url
+            )
+            return await ctx.send(embed=embed)
 
-        delta = (datetime.datetime.utcnow() - sp.start).seconds
+        delta = (datetime.datetime.utcnow() - sp.started_at).seconds
 
         time, index, interval, l1, l2, l3, real_index, max_index = self.lyric_index(lyrics, delta)
 
@@ -346,28 +313,34 @@ class Members(blink.Cog, name="Member"):
             display.append("♫♫♫")
 
         embed = discord.Embed(
-            title=f"{sp.title} - {', '.join(sp.artists)}",
+            title=f"{sp.title} - {', '.join(sp.artists.split('; '))}",
             description="\n".join(display),
             colour=sp.colour,
         )
-        embed.set_thumbnail(url=sp.album_cover_url)
+        embed.set_thumbnail(url=sp.icon_url)
         await ctx.send(
             # content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
             embed=embed
         )
 
-    async def get_lyrics(self, spotify: discord.Spotify):
-        track_id = spotify.track_id
+    def get_current_pos_str(self, start, end, display_len):
+        current_duration = datetime.datetime.utcnow() - start
+        total_duration = end - start
+        current_pos = current_duration / total_duration
+        return current_pos
 
+    async def get_lyrics(self, track, artists, track_id):
         if self.lyric_cache.get(track_id):
             return self.lyric_cache[track_id]
+        if track_id in self.dead_tracks:
+            return None
 
-        query = f"{'%20'.join(spotify.title.split(' '))}%20{'%20'.join(spotify.artist.split(' '))}"
         async with aiohttp.ClientSession() as cs:
-            async with cs.get(f"https://api.textyl.co/api/lyrics?q={query}") as req:
+            async with cs.get(f"https://api.textyl.co/api/lyrics?q={track} - {artists}") as req:
                 try:
                     data = await req.json()
                 except aiohttp.ContentTypeError:
+                    self.dead_tracks.add(track_id)
                     return None
 
         self.lyric_cache[track_id] = data
@@ -386,6 +359,60 @@ class Members(blink.Cog, name="Member"):
             index = 1
         interval = data[index + 1]['seconds'] - time
         return time, index, interval, data[index - 1], data[index], data[index + 1], real_index, max_index
+
+    @commands.command(name="spotifysync")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    @commands.guild_only()
+    async def spotify_url(self, ctx):
+        """Sync spotify to blink"""
+        return await ctx.send("this command is currently not in operation")
+        state = await self.get_state(ctx.author.id)
+        url = f"https://accounts.spotify.com/authorize?client_id=4dc7aefcb3674ee2864123eddcdadd4e&state={state}&redirect_uri=https://callback.blinkbot.me&response_type=code&scope=user-read-currently-playing"
+        embed = discord.Embed(
+            title="Click to authorize blink bot to view your spotify activity",
+            url=url,
+            colour=self.bot.colour
+        )
+        try:
+            await ctx.author.send(embed=embed)
+        except discord.Forbidden:
+            return await ctx.send("Please enable dms")
+        await ctx.send("A link has been sent to your dm to authorize, this link expires in 5 minutes, do not share it with anyone")
+
+    async def get_state(self, user_id):
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(
+                f"https://sp.blinkbot.me/state/{user_id}",
+                headers={
+                    "Authorization": secrets.spotify_api
+                }
+            ) as res:
+                payload = await res.json()
+                return payload['state']
+
+    async def get_spotify_from_worker(self, user_id):
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(
+                f"https://sp.blinkbot.me/current/{user_id}",
+                headers={
+                    "Authorization": secrets.spotify_api
+                }
+            ) as res:
+                try:
+                    payload = await res.json()
+                except aiohttp.ContentTypeError:
+                    payload = {}
+                return payload, res.status
+
+    async def get_spotify(self, member: discord.Member):
+        try:
+            sp = next(p for p in member.activities if isinstance(p, discord.Spotify))
+        except StopIteration:
+            sp, status = await self.get_spotify_from_worker(member.id)
+            if status != 200:
+                raise blink.SpotifyApiResponseError(status)
+
+        return blink.SpotifyData(sp)
 
 
 def setup(bot):

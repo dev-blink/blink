@@ -341,7 +341,7 @@ class Blink(commands.AutoShardedBot):
             try:
                 self.load_extension(extension)
             except Exception as e:
-                log(f"Unable to load: {extension} Exception was raised: {e}", "boot")
+                log(f"Unable to load: {extension} Exception was raised: {e}", "EXC")
                 self.loadexceptions.append(f"Unable to load: {extension} Exception was raised: {e}")
 
     async def invalidate_cache(self, scope: str, from_remote: bool = False):

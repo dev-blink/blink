@@ -4,6 +4,7 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import datetime
 import json
 from random import Random as RAND
 import discord
@@ -15,7 +16,7 @@ import time
 from asyncpg.pool import Pool
 from collections import OrderedDict
 from queue import PriorityQueue
-from typing import Callable, List
+from typing import Callable, List, Union
 import re
 
 
@@ -380,3 +381,43 @@ class UrlConverter(commands.Converter):
             if ctx.message.attachments:
                 return ctx.message.attachments[0].url
             raise commands.BadArgument("String could not be interpereted as a url")
+
+
+class SpotifyApiResponseError(Exception):
+    def __init__(self, status, *args: object) -> None:
+        super().__init__(*args)
+        self.status = status
+
+
+class SpotifyData():
+    __slots__ = ("title", "artists", "album", "track_id", "started_at", "ends_at", "icon_url", "colour")
+
+    def __init__(self, data: Union[dict, discord.Spotify]):
+        if isinstance(data, discord.Spotify):
+            self.init_sp(data)
+        elif isinstance(data, dict):
+            self.init_dict(data)
+        else:
+            raise TypeError(f"Expected either dict or discord.Spotify got {type(data)}")
+        self.colour = 0x1db954
+
+    def init_sp(self, spotify: discord.Spotify):
+        self.title = spotify.title
+        self.artists = spotify.artist
+        self.album = spotify.album
+        self.track_id = spotify.track_id
+        self.started_at = spotify.created_at
+        self.ends_at = spotify.end
+        self.icon_url = spotify.album_cover_url
+
+    def init_dict(self, payload: dict):
+        track = payload['item']
+        album = track['album']
+        artists = track['artists']
+        self.title = track['name']
+        self.artists = "; ".join(a['name'] for a in artists)
+        self.album = album['name']
+        self.track_id = track['id']
+        self.started_at = datetime.datetime.utcfromtimestamp(payload['timestamp'] / 1000)
+        self.ends_at = self.started_at + datetime.timedelta(milliseconds=track['duration_ms'])
+        self.icon_url = album['images'][0]['url']
