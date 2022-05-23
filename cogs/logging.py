@@ -89,7 +89,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         # before and after avatars
         beforeav = str(before.avatar_url_as(static_format="jpg", size=self.size))
         afterav = str(after.avatar_url_as(static_format="jpg", size=self.size))
-        
+
         # original data base query
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1", uid)
 
@@ -129,7 +129,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         """Insert an updated username into the database"""
         query = await self.bot.DB.fetch("SELECT name FROM userlog WHERE id = $1", id)
         try:
-            previousNames = query[0]["name"] 
+            previousNames = query[0]["name"]
         except IndexError:
             previousNames = [] # names from entry
         previousNames.append(self._format(tt, after)) # append formatted
@@ -157,12 +157,12 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         if url.lower().startswith("https://cdn.discordapp.com/embed/avatars"):
             return url # these links dont expire
         try:
-            r = await self.session.get(url) # download 
+            r = await self.session.get(url) # download
             img_data = BytesIO(await r.read()) # put to buffer
         except Exception:
             self.session = aiohttp.ClientSession() # try again if fail
             r = await self.session.get(url)
-            img_data = BytesIO(await r.read()) 
+            img_data = BytesIO(await r.read())
             # we shouldnt try more than twice
         path = f"avs/{id}/{uuid.uuid4()}.jpg"
         await self.storage.upload(config.cdn, path, img_data) # upload to cloud
@@ -201,7 +201,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
         if not result or result["name"] is None:
             return await ctx.send("No names tracked.")
-    
+
         result = result["name"]
         # format array of names
         names = []
@@ -270,11 +270,13 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             embeds.append(embed)
         if len(embeds) == 1: # cant paginate 1 embed
             return await ctx.send(embed=embeds[0])
-        pages = menus.MenuPages(source=AvPages(
-            range(0, len(embeds)),
-            embed
+        pages = menus.MenuPages(
+            source=AvPages(
+                range(0, len(embeds)),
+                embeds
             ),
-        clear_reactions_after=True)
+            clear_reactions_after=True
+        )
         await pages.start(ctx) # send to ctx
 
     # GLOBAL MESSAGES
@@ -320,4 +322,3 @@ def setup(bot):
     cog = GlobalLogs(bot, "logging")
     # cog needs async init so we spawn a task to do that before adding
     bot.loop.create_task(cog.init())
-
