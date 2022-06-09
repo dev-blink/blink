@@ -264,7 +264,7 @@ class Members(blink.Cog, name="Member"):
         # could not make an embed, must have no valid status
         await ctx.send("A status was unable to be determined.")
 
-    @commands.command(name="spotify", aliases=["lyrics", "l", "fm", "playing", "listening", "sp"])
+    @commands.command(name="spotify", aliases=["lyrics", "l", "fm", "so", "sp"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def display_lyrics(self, ctx):
