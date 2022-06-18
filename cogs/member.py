@@ -365,7 +365,7 @@ class Members(blink.Cog, name="Member"):
     @commands.guild_only()
     async def spotify_url(self, ctx):
         """Sync spotify to blink"""
-        return await ctx.send("this command is currently not in operation")
+        await ctx.send("This command is currently waiting for spotify to authorize blink bot before it will work.")
         state = await self.get_state(ctx.author.id)
         url = f"https://accounts.spotify.com/authorize?client_id=4dc7aefcb3674ee2864123eddcdadd4e&state={state}&redirect_uri=https://callback.blinkbot.me&response_type=code&scope=user-read-currently-playing"
         embed = discord.Embed(
