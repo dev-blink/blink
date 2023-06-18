@@ -418,6 +418,6 @@ class SpotifyData():
         self.artists = "; ".join(a['name'] for a in artists)
         self.album = album['name']
         self.track_id = track['id']
-        self.started_at = datetime.datetime.utcfromtimestamp(payload['timestamp'] / 1000)
+        self.started_at = datetime.datetime.fromtimestamp(payload['timestamp'] / 1000, tz=datetime.tzinfo.utcoffset(0))
         self.ends_at = self.started_at + datetime.timedelta(milliseconds=track['duration_ms'])
         self.icon_url = album['images'][0]['url']
