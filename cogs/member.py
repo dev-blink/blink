@@ -320,7 +320,7 @@ class Members(blink.Cog, name="Member"):
         )
         embed.set_thumbnail(url=sp.icon_url)
         await ctx.send(
-            content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
+            # content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
             embed=embed
         )
 
