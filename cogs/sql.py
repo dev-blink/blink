@@ -113,5 +113,5 @@ class plural:
         return f'{v} {singular}'
 
 
-def setup(bot):
-    bot.add_cog(SQL(bot, "sql"))
+async def setup(bot):
+    await bot.add_cog(SQL(bot, "sql"))

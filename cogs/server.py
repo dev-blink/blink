@@ -861,5 +861,5 @@ class Server(blink.Cog, name="Server"):
                     await msg.delete()
 
 
-def setup(bot):
-    bot.add_cog(Server(bot, "server"))
+async def setup(bot):
+    await bot.add_cog(Server(bot, "server"))

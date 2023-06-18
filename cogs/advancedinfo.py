@@ -46,7 +46,7 @@ class AdvancedInfo(blink.Cog, name="Advanced info"):
         )
         registered = user.created_at
 
-        embed.add_field(name="Tag:", value=f"{user.name}#{user.discriminator}")
+        embed.add_field(name="Tag:", value=f"{user}")
         registerdate = str(registered.day) + "/" + str(registered.month) + "/" + str(
             registered.year) + "  " + str(registered.hour) + ":" + str(registered.minute).zfill(2)
 
@@ -79,5 +79,5 @@ class AdvancedInfo(blink.Cog, name="Advanced info"):
                     return await ctx.send(await req.text())
 
 
-def setup(bot):
-    bot.add_cog(AdvancedInfo(bot, "advancedinfo"))
+async def setup(bot):
+    await bot.add_cog(AdvancedInfo(bot, "advancedinfo"))

@@ -302,5 +302,5 @@ class Moderation(blink.Cog, name="Moderation"):
             return await ctx.send(f"Cleaned {count} messages from bots", delete_after=4)
 
 
-def setup(bot):
-    bot.add_cog(Moderation(bot, "mod"))
+async def setup(bot):
+    await bot.add_cog(Moderation(bot, "mod"))

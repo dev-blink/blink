@@ -12,7 +12,7 @@ import datetime
 import aiohttp
 import asyncpg
 import blinksecrets as secrets
-from wavelink import ZeroConnectedNodes as NoNodes
+from wavelink import InvalidNode as NoNodes
 
 
 async def sendEmbedError(ctx, message):
@@ -155,7 +155,7 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
         embed = discord.Embed(
             description=f"Guild: {guild}\nChannel: {channel}\nAuthor: {ctx.author} {ctx.author.id} ({ctx.author.mention})\nCommand: **`{ctx.message.content}`**",
             colour=discord.Colour.red(),
-            timestamp=datetime.datetime.utcnow()
+            timestamp=discord.utils.utcnow()
         )
         async with aiohttp.ClientSession() as cs:
             async with cs.post("https://api.github.com/gists", headers={"Authorization": "token " + secrets.gist}, json={"public": False, "files": {"traceback.txt": {"content": tb}}}) as gist:
@@ -166,5 +166,5 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
         await self.bot.cluster.log_errors(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(CommandErrorHandler(bot, "error"))
+async def setup(bot):
+    await bot.add_cog(CommandErrorHandler(bot, "error"))

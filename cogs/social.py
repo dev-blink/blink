@@ -109,7 +109,7 @@ class Ship:
             description,
             colour,
             icon,
-            int(datetime.datetime.utcnow().timestamp())
+            int(discord.utils.utcnow().timestamp())
         )
 
         # we just inserted into the database, now we must invalidate our cache
@@ -144,7 +144,7 @@ class Ship:
         total_kisses = partner_kisses + captain_kisses
 
         # create xp
-        timestamp = datetime.datetime.utcnow().timestamp().__int__() - self.created.timestamp()
+        timestamp = discord.utils.utcnow().timestamp().__int__() - self.created.timestamp()
         days = datetime.timedelta(seconds=timestamp).days
         age = humanize.naturaldelta(timestamp)
         # xp formula humanized to a readable value
@@ -679,5 +679,5 @@ class Social(blink.Cog):
         return await ctx.send(embed=await ship.to_embed())
 
 
-def setup(bot):
-    bot.add_cog(Social(bot, "social"))
+async def setup(bot):
+    await bot.add_cog(Social(bot, "social"))

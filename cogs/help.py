@@ -47,7 +47,7 @@ class BotHelp(commands.HelpCommand):
 
     def get_ending_note(self):
         """String for the footer"""
-        return f'Use {self.clean_prefix}{self.invoked_with} <command/module> for more info on a command or module.'
+        return f'Use {self.context.clean_prefix}{self.invoked_with} <command/module> for more info on a command or module.'
 
     def get_command_signature(self, command):
         """Returns the command name along with the arguments"""
@@ -67,7 +67,7 @@ class BotHelp(commands.HelpCommand):
             if filtered:
                 # craft embed
                 embed = discord.Embed(
-                    title=f"Module {cog.qualified_name}", description=cog.description or discord.Embed.Empty, colour=self.colour)
+                    title=f"Module {cog.qualified_name}", description=cog.description, colour=self.colour)
                 for c in filtered:
                     embed.add_field( # add field for each command
                         name=f"**{c.name}**", value=c.help or "No description", inline=False)
@@ -124,5 +124,5 @@ class BotHelp(commands.HelpCommand):
         return self.context # has to be context to start an embed menu
 
 
-def setup(bot):
+async def setup(bot):
     bot.help_command = BotHelp(bot.colour)

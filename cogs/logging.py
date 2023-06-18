@@ -87,8 +87,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         uid = before.id # userid
 
         # before and after avatars
-        beforeav = str(before.avatar_url_as(static_format="jpg", size=self.size))
-        afterav = str(after.avatar_url_as(static_format="jpg", size=self.size))
+        beforeav = str(before.display_avatar.replace(static_format="jpg", size=self.size))
+        afterav = str(after.display_avatar.replace(static_format="jpg", size=self.size))
 
         # original data base query
         result = await self.bot.DB.fetchrow("SELECT name, avatar FROM userlog WHERE id = $1", uid)
@@ -292,7 +292,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             description=f'{count["messages"]} messages sent.',
             colour=self.bot.colour
         )
-        embed.set_author(name=f"{member}", icon_url=member.avatar_url_as(static_format="png"))
+        embed.set_author(name=f"{member}", icon_url=member.display_avatar.replace(static_format="png"))
         return await ctx.send(embed=embed)
 
     async def batch(self):
@@ -318,7 +318,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             await self.bot.warn(f"Exception in message cache, ({type(e)}) {e}", False)
 
 
-def setup(bot):
+async def setup(bot):
     cog = GlobalLogs(bot, "logging")
     # cog needs async init so we spawn a task to do that before adding
-    bot.loop.create_task(cog.init())
+    await cog.init()

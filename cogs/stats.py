@@ -66,5 +66,5 @@ class Stats(blink.Cog, name="Stats"):
             return str(music)
 
 
-def setup(bot):
-    bot.add_cog(Stats(bot, "stats"))
+async def setup(bot):
+    await bot.add_cog(Stats(bot, "stats"))

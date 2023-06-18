@@ -45,7 +45,7 @@ class ListingHandler(blink.Cog):
             await cs.close()
 
 
-def setup(bot):
+async def setup(bot):
     if bot.beta:
         return
-    bot.add_cog(ListingHandler(bot, "listing"))
+    await bot.add_cog(ListingHandler(bot, "listing"))

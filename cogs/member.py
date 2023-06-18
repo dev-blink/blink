@@ -110,7 +110,7 @@ class Members(blink.Cog, name="Member"):
             colour=self.bot.colour
         )
         embed.set_author(
-            icon_url=member.avatar_url_as(static_format='png'),
+            icon_url=member.display_avatar.replace(static_format='png'),
             name=str(member)
         )
 
@@ -133,11 +133,11 @@ class Members(blink.Cog, name="Member"):
         )
         embed.set_author( # set author badge to status icon image
             name=f"{member}",
-            url=member.avatar_url_as(static_format='png'),
+            url=member.display_avatar.replace(static_format='png'),
             icon_url=statuses[member.status]
         )
         # thumbnail to user avatar
-        embed.set_thumbnail(url=member.avatar_url_as(static_format='png'))
+        embed.set_thumbnail(url=member.display_avatar.replace(static_format='png'))
 
         # guild join date
         j = member.joined_at
@@ -189,7 +189,7 @@ class Members(blink.Cog, name="Member"):
             user = ctx.author
 
         # normal user avatar embed
-        global_av_embed = self.avatar_embed(user.avatar_url_as(static_format="png"))
+        global_av_embed = self.avatar_embed(user.display_avatar.replace(static_format="png"))
         msg = await ctx.send(embed=global_av_embed)
         if user.bot: # bots cannot have guild avatars
             return
@@ -242,14 +242,14 @@ class Members(blink.Cog, name="Member"):
             if base.emoji:
                 embed.set_thumbnail(url=base.emoji.url)
             embed.set_author(
-                name=user.name, icon_url=user.avatar_url_as(static_format='png'))
+                name=user.name, icon_url=user.display_avatar.replace(static_format='png'))
 
         # user is 'playing' status
         elif isinstance(base, discord.Activity):
             embed = discord.Embed(colour=self.bot.colour)
             embed.set_author(
-                name=user.name, icon_url=user.avatar_url_as(static_format='png'))
-            embed.add_field(name="Playing " + base.name, value=base.details or f"for {blink.prettydelta((datetime.datetime.utcnow() -  base.created_at).total_seconds())}" if base.created_at else "No timing available", inline=False)
+                name=user.name, icon_url=user.display_avatar.replace(static_format='png'))
+            embed.add_field(name="Playing " + base.name, value=base.details or f"for {blink.prettydelta((discord.utils.utcnow() -  base.created_at).total_seconds())}" if base.created_at else "No timing available", inline=False)
 
         # user is 'streaming' on twitch
         elif isinstance(base, discord.Streaming):
@@ -270,12 +270,13 @@ class Members(blink.Cog, name="Member"):
     async def display_lyrics(self, ctx):
         """Display the lyrics if they are available"""
         sp = await self.get_spotify(ctx.author)
-        lyrics = await self.get_lyrics(sp.title, sp.artists, sp.track_id)
+        lyrics = await self.get_lyrics(sp.track_id)
 
         if not lyrics:
             # legacy embed
             embed = discord.Embed(
                 title=f"{sp.title} - {', '.join(sp.artists.split('; '))}",
+                url=f"https://open.spotify.com/track/{sp.track_id}",
                 colour=sp.colour
             )
             embed.add_field(
@@ -287,17 +288,16 @@ class Members(blink.Cog, name="Member"):
             )
             return await ctx.send(embed=embed)
 
-        delta = (datetime.datetime.utcnow() - sp.started_at).seconds
+        delta: datetime.timedelta = (discord.utils.utcnow() - sp.started_at)
 
-        time, index, interval, l1, l2, l3, real_index, max_index = self.lyric_index(lyrics, delta)
+        delta = (delta.seconds * 1000)# + (delta.microseconds / 1000)
 
-        pre_song = index == 1 and real_index == -1
-        post_song = index == -2 and real_index == 0
+        time, index, interval, l1, l2, l3, real_index, max_index, pre_song, post_song = self.lyric_index(lyrics, delta)
 
         first_lyric = index - real_index == 1
         last_lyric = index == max_index
 
-        l1, l2, l3 = (k['lyrics'].strip().replace("*","\\*") for k in (l1, l2, l3))
+        l1, l2, l3 = (k['words'].strip().replace("*","\\*") for k in (l1, l2, l3))
 
         display = [
             f"**{l1}**" if first_lyric else l1,
@@ -314,58 +314,68 @@ class Members(blink.Cog, name="Member"):
 
         embed = discord.Embed(
             title=f"{sp.title} - {', '.join(sp.artists.split('; '))}",
+            url=f"https://open.spotify.com/track/{sp.track_id}",
             description="\n".join(display),
             colour=sp.colour,
         )
         embed.set_thumbnail(url=sp.icon_url)
         await ctx.send(
-            # content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
+            content=f"{time=} {index=} {interval=} {real_index=}\n{pre_song=} {post_song=} {first_lyric=} {last_lyric=}",
             embed=embed
         )
 
     def get_current_pos_str(self, start, end, display_len):
-        current_duration = datetime.datetime.utcnow() - start
+        current_duration = discord.utils.utcnow() - start
         total_duration = end - start
         current_pos = current_duration / total_duration
         return current_pos
 
-    async def get_lyrics(self, track, artists, track_id):
-        if self.lyric_cache.get(track_id):
-            return self.lyric_cache[track_id]
+    async def get_lyrics(self, track_id):
+        cache = self.lyric_cache.get(track_id)
+        if cache:
+            return cache
         if track_id in self.dead_tracks:
             return None
 
         async with aiohttp.ClientSession() as cs:
-            async with cs.get(f"https://api.textyl.co/api/lyrics?q={track} - {artists}") as req:
+            async with cs.get(f"https://spotify-lyric-api.herokuapp.com/?trackid={track_id}") as req:
                 try:
                     data = await req.json()
                 except aiohttp.ContentTypeError:
                     self.dead_tracks.add(track_id)
                     return None
 
-        self.lyric_cache[track_id] = data
-        return data
+        if data['error']:
+            self.dead_tracks.add(track_id)
+            return None
 
-    def lyric_index(self, data: list, time: int):
-        index = -2
+        self.lyric_cache[track_id] = data['lines']
+        return data['lines']
+
+    def lyric_index(self, data: list, time: float):
+        index = -1
         real_index = 0
+        at_end = False
+        at_start = False
         max_index = len(data) - 1
         for (i, lyric) in enumerate(data):
-            if lyric['seconds'] >= time:
+            if float(lyric['startTimeMs']) >= time:
                 index = i - 1
                 real_index = i - 1
                 break
-        if index in (-1, 0):
-            index = 1
-        interval = data[index + 1]['seconds'] - time
-        return time, index, interval, data[index - 1], data[index], data[index + 1], real_index, max_index
+        else:
+            at_end = True
+        if index == -1:
+            at_start = True
+        interval = float(data[index + 1]['startTimeMs']) - time
+        return time, index, interval, data[index - 1], data[index], data[index + 1], real_index, max_index, at_start, at_end
 
     @commands.command(name="spotifysync")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.guild_only()
     async def spotify_url(self, ctx):
         """Sync spotify to blink"""
-        await ctx.send("This command is currently waiting for spotify to authorize blink bot before it will work.")
+        await ctx.send("This command is currently waiting for spotify to authorize blink bot before it will work. (to bypass this you must be added as a user to the development app, if this interests you contact the owner in the support server with ;support)")
         state = await self.get_state(ctx.author.id)
         url = f"https://accounts.spotify.com/authorize?client_id=4dc7aefcb3674ee2864123eddcdadd4e&state={state}&redirect_uri=https://callback.blinkbot.me&response_type=code&scope=user-read-currently-playing"
         embed = discord.Embed(
@@ -415,5 +425,5 @@ class Members(blink.Cog, name="Member"):
         return blink.SpotifyData(sp)
 
 
-def setup(bot):
-    bot.add_cog(Members(bot, "member"))
+async def setup(bot):
+    await bot.add_cog(Members(bot, "member"))

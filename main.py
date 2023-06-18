@@ -25,6 +25,8 @@ import platform
 
 import json
 
+import yarl
+
 
 # Custom
 import blink
@@ -120,6 +122,7 @@ class Blink(commands.AutoShardedBot):
                 voice_states=True,
                 guild_messages=True,
                 guild_reactions=True,
+                message_content=True,
                 presences=True,
                 members=True,
             ),
@@ -131,12 +134,12 @@ class Blink(commands.AutoShardedBot):
         # Globals
         self._initialized: bool = False
         self.beta: bool = config.beta
-        self.boottime: datetime.datetime = datetime.datetime.utcnow()
+        self.boottime: datetime.datetime = discord.utils.utcnow()
         self.created: bool = False
         self.logger: logging.Logger = logger
         # Cogs
         self._cogs: blink.CogStorage = blink.CogStorage()
-        self.load_extension("cogs.pre-error")
+        loop.create_task(self.load_extension("cogs.pre-error"))
         self.loadexceptions = []
         self.startingcogs = [
             "cogs.help",
@@ -160,7 +163,7 @@ class Blink(commands.AutoShardedBot):
             self.startingcogs.append("cogs.stats")
 
         # Global channel cooldown - to avoid spamming commands
-        self._cooldown:commands.CooldownMapping = commands.CooldownMapping.from_cooldown(
+        self._cooldown: commands.CooldownMapping = commands.CooldownMapping.from_cooldown(
             5, 5.5, commands.BucketType.channel)
         log(f"Starting - {self.cluster}", "boot")
 
@@ -215,12 +218,15 @@ class Blink(commands.AutoShardedBot):
         # allowing it mutable and be changed
         return [";", "b;", "B;", "blink"]
 
-    def cacherate(self):
-        """The percentage of cache reads that have hit the cache"""
+    def _cacherate(self):
         if self.cache_hits + self.cache_misses == 0:
             return 0
         else:
-            return round((self.cache_hits / (self.cache_hits + self.cache_misses) * 100), 2)
+            return (self.cache_hits / (self.cache_hits + self.cache_misses) * 100)
+
+    def cacherate(self):
+        """The percentage of cache reads that have hit the cache"""
+        return round(self._cacherate(), 2)
 
     def dispatch(self, event: str, *args, **kwargs):
         """Overriding this stops events being sent to handlers before the bot is ready"""
@@ -245,7 +251,7 @@ class Blink(commands.AutoShardedBot):
             await self.cluster.wait_cluster()
         # Bot gateway request is also on the identify limit
         self._shard_info = await self.http.request(discord.http.Route("GET", "/gateway/bot"))
-        gateway = f"{self._shard_info['url']}?encoding=zlib&v={config.gateway_version}&compress=zlib-stream"
+        gateway = yarl.URL(self._shard_info['url'])
 
         for shard_id in self.shard_ids:
             log(f"Launching shard {shard_id}", "boot")
@@ -253,7 +259,6 @@ class Blink(commands.AutoShardedBot):
 
         # Tell other clusters that we have identified
         await self.cluster.ws.post_identify()
-        self._connection.shards_launched.set()
 
     async def on_ready(self):
         """Creates the bot if the bot is ready for the first time"""
@@ -335,11 +340,11 @@ class Blink(commands.AutoShardedBot):
 
         return ctx
 
-    def load_extensions(self):
+    async def load_extensions(self):
         """Load all extensions to the bot, catching and logging any errors"""
         for extension in self.startingcogs:
             try:
-                self.load_extension(extension)
+                await self.load_extension(extension)
             except Exception as e:
                 log(f"Unable to load: {extension} Exception was raised: {e}", "EXC")
                 self.loadexceptions.append(f"Unable to load: {extension} Exception was raised: {e}")
@@ -379,7 +384,7 @@ class Blink(commands.AutoShardedBot):
         Log a warning to the warnings discord channel
         Can raise an exception to back out of things if failure occurs
         """
-        time = datetime.datetime.utcnow()
+        time = discord.utils.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
         await self.cluster.log_warns(message)
         if shouldRaise:
@@ -409,18 +414,18 @@ class Blink(commands.AutoShardedBot):
         self.session = aiohttp.ClientSession()  # TODO: localise sessions to cogs
 
         # Extensions
-        self.unload_extension("cogs.pre-error")
-        self.load_extensions()
+        await self.unload_extension("cogs.pre-error")
+        await self.load_extensions()
 
         # Time taken for bot to be able to serve users
-        boottime = datetime.datetime.utcnow() - self.boottime
+        boottime = discord.utils.utcnow() - self.boottime
 
         # Log boot metrics to the discord channel
         # TODO: this is ugly lol
         members = sum(1 for _ in self.get_all_members())
         boot = [
             '-' * 79,
-            f"**BOT STARTUP:** {self.cluster.identifier} started at {datetime.datetime.utcnow()}",
+            f"**BOT STARTUP:** {self.cluster.identifier} started at {discord.utils.utcnow()}",
             f"```STARTUP COMPLETED IN : {boottime} ({round(members / boottime.total_seconds(),2)} members / second)",
             f"GUILDS:{len(self.guilds)}",
             f"SHARDS:{len(self.shards)}```",
@@ -437,7 +442,7 @@ class Blink(commands.AutoShardedBot):
         self.created = True
 
         log(f"Created in {humanize.naturaldelta(time.perf_counter()-before,minimum_unit='microseconds')}", "boot")
-        log(f"This cluster start time was {humanize.naturaldelta(datetime.datetime.utcnow()- self.boottime)}", "boot")
+        log(f"This cluster start time was {humanize.naturaldelta(discord.utils.utcnow()- self.boottime)}", "boot")
 
         for id in self.shards:  # Set initial shard specific presence - this is different from the starting up presence set in __init__
             await self.change_presence(
@@ -505,7 +510,7 @@ class Blink(commands.AutoShardedBot):
             await self.stop()
         if payload["event"] == "RELOAD":
             # Reload cogs - sent by the dev reload command
-            self.reload_extension(payload["cog"])
+            await self.reload_extension(payload["cog"])
 
         if payload["event"] == "INVALIDATE_CACHE":
             # Purge local cache if remote invalidated it
@@ -524,7 +529,7 @@ class Blink(commands.AutoShardedBot):
                 data = await gist.json()
                 embed.description = data["html_url"] # Set the embed description to the url of the gist
             hook = discord.Webhook( # Create a new webhook client
-                secrets.errorhook, adapter=discord.AsyncWebhookAdapter(cs))
+                secrets.errorhook, session=cs)
             await hook.send(embed=embed, username=f"CLUSTER {self.cluster.identifier} EVENT ERROR") # Send the webhook to the error channel
 
     async def stop(self, cluster_up=True):
@@ -553,7 +558,7 @@ async def launch(loop: asyncio.BaseEventLoop):
     bot = Blink(cluster, log)
     cluster.reg_bot(bot) # Cluster requires a bot object to function
     try:
-        await bot.start(secrets.token, bot=True, reconnect=True)
+        await bot.start(secrets.token)
     except KeyboardInterrupt: # close the bot on CTRL+C, it is proper practice to shutdown via the dev command
         await bot.logout()
         await cluster.quit()

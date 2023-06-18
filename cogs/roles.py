@@ -44,10 +44,10 @@ class RoleManagement(blink.Cog, name="Role Management"):
         if role >= ctx.guild.me.top_role:
             return await ctx.send("I am unable to assign that role. (Check my role position.)")
         if role in user.roles:
-            await user.remove_roles(role, reason=(ctx.author.name + "#" + str(ctx.author.discriminator)), atomic=True)
+            await user.remove_roles(role, reason=str(ctx.author), atomic=True)
             return await ctx.send("Removed role **`%s`** from " % role.name + user.mention)
         else:
-            await user.add_roles(role, reason=(ctx.author.name + "#" + str(ctx.author.discriminator)), atomic=True)
+            await user.add_roles(role, reason=str(ctx.author), atomic=True)
             return await ctx.send("Added role **`%s`** to " % role.name + user.mention)
 
     @commands.command(name='roles', aliases=["showroles"])
@@ -67,10 +67,10 @@ class RoleManagement(blink.Cog, name="Role Management"):
                 roles = roles + (role.name + "\n")
 
         embed = discord.Embed(colour=self.bot.colour)
-        embed.set_author(icon_url=member.avatar_url_as(
+        embed.set_author(icon_url=member.display_avatar.replace(
             static_format='png'), name=str(member))
         embed.add_field(
-            name=f"Roles for {member.name}#{member.discriminator} in {ctx.guild.name}", value=roles)
+            name=f"Roles for {member} in {ctx.guild.name}", value=roles)
 
         await ctx.send(embed=embed)
 
@@ -84,7 +84,7 @@ class RoleManagement(blink.Cog, name="Role Management"):
         if not rolename:
             return await ctx.send("You must specify a role name.")
         try:
-            await ctx.guild.create_role(name=" ".join(rolename), permissions=discord.Permissions.none(), reason=f"Created by {ctx.author.name}#{ctx.author.discriminator}")
+            await ctx.guild.create_role(name=" ".join(rolename), permissions=discord.Permissions.none(), reason=f"Created by {ctx.author}")
             return await ctx.send("Successfully created the role: " + " ".join(rolename))
         except discord.DiscordException:
             return await ctx.send("I am unable to create that role.")
@@ -131,5 +131,5 @@ class RoleManagement(blink.Cog, name="Role Management"):
         await ctx.send(f"{role.name} {'has been de'if hoisted else 'is now '}hoisted.")
 
 
-def setup(bot):
-    bot.add_cog(RoleManagement(bot, "roles"))
+async def setup(bot):
+    await bot.add_cog(RoleManagement(bot, "roles"))

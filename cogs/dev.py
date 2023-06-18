@@ -86,9 +86,9 @@ class Owner(blink.Cog, name="Developer"):
         try:
             if cog in ["jsk", "jishaku"]:
                 cog = "jishaku"
-                self.bot.load_extension(cog)
+                await self.bot.load_extension(cog)
             else:
-                self.bot.load_extension("cogs." + cog)
+                await self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -105,9 +105,9 @@ class Owner(blink.Cog, name="Developer"):
         try:
             if cog in ["jsk", "jishaku"]:
                 cog = "jishaku"
-                self.bot.unload_extension(cog)
+                await self.bot.unload_extension(cog)
             else:
-                self.bot.unload_extension("cogs." + cog)
+                await self.bot.unload_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -123,11 +123,11 @@ class Owner(blink.Cog, name="Developer"):
                 return
         try:
             if cog == "jishaku":
-                self.bot.unload_extension(cog)
-                self.bot.load_extension(cog)
+                await self.bot.unload_extension(cog)
+                await self.bot.load_extension(cog)
             else:
-                self.bot.unload_extension("cogs." + cog)
-                self.bot.load_extension("cogs." + cog)
+                await self.bot.unload_extension("cogs." + cog)
+                await self.bot.load_extension("cogs." + cog)
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -214,8 +214,8 @@ class Owner(blink.Cog, name="Developer"):
             return
         for cog in self.bot.startingcogs:
             try:
-                self.bot.unload_extension(cog)
-                self.bot.load_extension(cog)
+                await self.bot.unload_extension(cog)
+                await self.bot.load_extension(cog)
             except Exception as e:
                 await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         return await ctx.send("All loaded cogs reloaded")
@@ -272,5 +272,5 @@ class Owner(blink.Cog, name="Developer"):
             return True
 
 
-def setup(bot):
-    bot.add_cog(Owner(bot, "dev"))
+async def setup(bot):
+    await bot.add_cog(Owner(bot, "dev"))

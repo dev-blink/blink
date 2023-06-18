@@ -44,7 +44,7 @@ class Fun(blink.Cog, name="Fun"):
         if not snipes:
             snipes = deque([], 5)
         snipes.appendleft((message.content, str(
-            message.author), datetime.datetime.utcnow()))
+            message.author), discord.utils.utcnow()))
         self.snipes[message.guild.id][message.channel.id] = snipes
 
     @commands.command(name="clearsnipes", aliases=["cs"])
@@ -74,7 +74,7 @@ class Fun(blink.Cog, name="Fun"):
         embed = discord.Embed(title="Deleted messages", colour=self.bot.colour)
         for snipe in list(reversed(snipes)):
             embed.add_field(
-                name=f"**{snipe[1]} deleted {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**", value=snipe[0], inline=False)
+                name=f"**{snipe[1]} deleted {blink.prettydelta((discord.utils.utcnow() - snipe[2]).total_seconds())} ago**", value=snipe[0], inline=False)
         return await ctx.send(embed=embed)
 
     @commands.Cog.listener("on_message_edit")
@@ -100,7 +100,7 @@ class Fun(blink.Cog, name="Fun"):
         if not snipes:
             snipes = deque([], 5)
         snipes.appendleft((f"{before.content} **🠢** {after.content}",
-                          str(before.author), datetime.datetime.utcnow()))
+                          str(before.author), discord.utils.utcnow()))
         self.esnipes[before.guild.id][before.channel.id] = snipes
 
     @commands.command(name="esnipe", aliases=["editsnipe", "es"])
@@ -119,7 +119,7 @@ class Fun(blink.Cog, name="Fun"):
         embed = discord.Embed(title="Edited messages", colour=self.bot.colour)
         for snipe in list(reversed(snipes)):
             embed.add_field(
-                name=f"**{snipe[1]} edited {blink.prettydelta((datetime.datetime.utcnow() - snipe[2]).total_seconds())} ago**", value=snipe[0], inline=False)
+                name=f"**{snipe[1]} edited {blink.prettydelta((discord.utils.utcnow() - snipe[2]).total_seconds())} ago**", value=snipe[0], inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="random")
@@ -139,7 +139,7 @@ class Fun(blink.Cog, name="Fun"):
         # form embed
         embed = discord.Embed(title="Random member with role " + role.name,
                              description=str(member), colour=0xf5a6b9)
-        embed.set_author(name=ctx.author.name + "#" + str(ctx.author.discriminator),
+        embed.set_author(name=str(ctx.author),
                          icon_url=ctx.author.avatar_url_as(static_format='png'))
         embed.set_footer(text="Chance : 1/" + str(len(role.members)))
         return await ctx.send(embed=embed)
@@ -244,7 +244,7 @@ class Fun(blink.Cog, name="Fun"):
     async def countdown(self, ctx):
         return await ctx.send("no countdown active")
         significant = datetime.datetime(2022, 5, 1, 19, 27) # MUST BE UTC
-        now = datetime.datetime.utcnow()
+        now = discord.utils.utcnow()
         delta = significant - now
         await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends (London UK)")
 
@@ -254,5 +254,5 @@ class Fun(blink.Cog, name="Fun"):
         await ctx.send("nuking <a:bloading:705202826946674718>")
 
 
-def setup(bot):
-    bot.add_cog(Fun(bot, "fun"))
+async def setup(bot):
+    await bot.add_cog(Fun(bot, "fun"))

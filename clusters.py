@@ -141,21 +141,15 @@ class Cluster:
     # Proxy functions to immitate abc.Messageable.send, can send messages without channels being cached
     async def log_startup(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.startup()
-        if embed:
-            embed = embed.to_dict()
-        return await self.bot.http.send_message(channel, content, tts=tts, embed=embed, nonce=nonce)
+        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
 
     async def log_errors(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.errors()
-        if embed:
-            embed = embed.to_dict()
-        return await self.bot.http.send_message(channel, content, tts=tts, embed=embed, nonce=nonce)
+        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
 
     async def log_warns(self, content=None, tts=False, embed=None, nonce=None):
         channel = blink.Config.warns()
-        if embed:
-            embed = embed.to_dict()
-        return await self.bot.http.send_message(channel, content, tts=tts, embed=embed, nonce=nonce)
+        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
 
     async def wait_cluster(self):
         await self.ws.wait_for_identify()
@@ -273,7 +267,7 @@ class ClusterSocket():
                     await self.bot.stop(False)
                     raise
                 else:
-                    sys.exit(130)
+                    raise
             self.connected = True
             try:
                 async for message in self.ws:

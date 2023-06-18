@@ -7,6 +7,7 @@
 from discord.ext import commands
 import blink
 
+
 class PRELOAD(blink.Cog):
     """Ignore all errors before loading"""
     @commands.Cog.listener()
@@ -14,5 +15,5 @@ class PRELOAD(blink.Cog):
         pass
 
 
-def setup(bot):
-    bot.add_cog(PRELOAD(bot,"preload"))
+async def setup(bot):
+    await bot.add_cog(PRELOAD(bot,"preload"))

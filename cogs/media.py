@@ -65,5 +65,5 @@ class Media(blink.Cog, name="Media"):
         return await ctx.send(embed=await self._do_reddit("dankmemes"))
 
 
-def setup(bot):
-    bot.add_cog(Media(bot, "media"))
+async def setup(bot):
+    await bot.add_cog(Media(bot, "media"))

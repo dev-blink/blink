@@ -25,7 +25,7 @@ class Info(blink.Cog, name="Info"):
         )
         embed.set_author(name="Invite me!")
         embed.set_thumbnail(
-            url=self.bot.user.avatar_url_as(static_format='png')
+            url=self.bot.user.display_avatar.replace(static_format='png')
         )
 
         await ctx.send(embed=embed)
@@ -42,7 +42,7 @@ class Info(blink.Cog, name="Info"):
         )
         embed.set_author(name="Join the support server!")
         embed.set_thumbnail(
-            url=self.bot.user.avatar_url_as(static_format='png')
+            url=self.bot.user.display_avatar.replace(static_format='png')
         )
 
         await ctx.send(embed=embed)
@@ -58,7 +58,7 @@ class Info(blink.Cog, name="Info"):
         )
         embed.add_field(name="To start:", value=";help for info on commands")
         embed.set_thumbnail(
-            url=self.bot.user.avatar_url_as(static_format='png')
+            url=self.bot.user.display_avatar.replace(static_format='png')
         )
         return await ctx.send(embed=embed)
 
@@ -66,7 +66,7 @@ class Info(blink.Cog, name="Info"):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def uptime(self, ctx):
         """Bots uptime"""
-        return await ctx.send(embed=discord.Embed(title="Bot uptime:", description=f"Cluster {self.bot.cluster.identifier} has been online for: {blink.prettydelta((datetime.datetime.utcnow() - self.bot.boottime).total_seconds())}", colour=self.bot.colour))
+        return await ctx.send(embed=discord.Embed(title="Bot uptime:", description=f"Cluster {self.bot.cluster.identifier} has been online for: {blink.prettydelta((discord.utils.utcnow() - self.bot.boottime).total_seconds())}", colour=self.bot.colour))
 
     @commands.command(name="hardware", aliases=["system", "sys"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -93,5 +93,5 @@ class Info(blink.Cog, name="Info"):
         ), content=None)
 
 
-def setup(bot):
-    bot.add_cog(Info(bot, "info"))
+async def setup(bot):
+    await bot.add_cog(Info(bot, "info"))

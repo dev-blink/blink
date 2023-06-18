@@ -674,5 +674,5 @@ class Music(blink.Cog):
                 return await ctx.send(f'{member.mention} is now the DJ.')
 
 
-def setup(bot):
-    bot.add_cog(Music(bot, "music"))
+async def setup(bot):
+    await bot.add_cog(Music(bot, "music"))
