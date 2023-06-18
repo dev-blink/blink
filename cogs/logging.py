@@ -51,7 +51,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             ("logging",)
         )
         self.message_push.start()
-        self.bot.add_cog(self)
+        await self.bot.add_cog(self)
 
     def cog_unload(self):
         self.message_push.cancel() # CANCEL TASK !
