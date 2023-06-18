@@ -26,9 +26,9 @@ async def api(route, method):
     try:
         async with timeout(5):
             async with aiohttp.ClientSession() as cs:
-                async with cs.request(method=method, url=f"{config.api}{route}", headers={"Authorization": secrets.api}) as res:
+                async with cs.request(method=method, url=f"{config.api}{route}", headers={"Authorization": "Grant " + secrets.api}) as res:
                     if res.status == 200:
-                        return (await res.json()).get("url")
+                        return (await res.json())['data']['url']
                     else:
                         return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
     except asyncio.TimeoutError:
@@ -388,11 +388,11 @@ class Social(blink.Cog):
 
     # fetch from api
     async def gen_kiss(self):
-        return await api("/social/images/kiss/", "GET")
+        return await api("/social/images/kiss", "GET")
 
     async def gen_hug(self):
-        return await api("/social/images/hug/", "GET")
- 
+        return await api("/social/images/hug", "GET")
+
     @commands.group(name="blocked", invoke_without_command=True)
     async def blocked(self, ctx):
         """Manage users blocked from using social commands on you"""

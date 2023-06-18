@@ -104,7 +104,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             await self._update_un(uid, str(after), tt) # update username
 
         # if avatars are different
-        if str(before.avatar_url) != str(after.avatar_url):
+        if str(before.display_avatar.key) != str(after.display_avatar.key):
             await self._update_av(uid, afterav, tt) # update avatar
 
     def _format(self, timestamp: float, string: str):#
