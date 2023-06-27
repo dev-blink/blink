@@ -120,7 +120,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
     async def _newuser(self, id, oldname, oldav, timestamp):
         """Create a new database entry"""
         name = [self._format(timestamp, oldname)]
-        oldav = await self._avurl(oldav, id) # create permanent avatar url
+        # oldav = await self._avurl(oldav, id) # create permanent avatar url
         avatar = [] # user assets are flushed on deletion now :(
         # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
         await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)", id, name, avatar) # insert both lists
