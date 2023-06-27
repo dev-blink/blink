@@ -121,7 +121,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         """Create a new database entry"""
         name = [self._format(timestamp, oldname)]
         oldav = await self._avurl(oldav, id) # create permanent avatar url
-        avatar = [self._format(timestamp, oldav)]
+        avatar = [] # user assets are flushed on deletion now :(
         # userlog format (id:bigint PRIMARY KEY, name:text ARRAY, avatar:text ARRAY)
         await self.bot.DB.execute("INSERT INTO userlog VALUES ($1,$2,$3)", id, name, avatar) # insert both lists
 
@@ -164,6 +164,9 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             r = await self.session.get(url)
             img_data = BytesIO(await r.read())
             # we shouldnt try more than twice
+
+        if len(img_data) < 256:
+            return await self.bot.warn(f"Failed to fetch image ({r.status}) {url}")
         path = f"avs/{id}/{uuid.uuid4()}.jpg"
         await self.storage.upload(config.cdn, path, img_data) # upload to cloud
         return f"https://{config.cdn}/{path}" # format url
