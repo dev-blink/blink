@@ -165,7 +165,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             img_data = BytesIO(await r.read())
             # we shouldnt try more than twice
 
-        if len(img_data) < 256:
+        if not r.content_length or r.content_length < 256:
             return await self.bot.warn(f"Failed to fetch image ({r.status}) {url}")
         path = f"avs/{id}/{uuid.uuid4()}.jpg"
         await self.storage.upload(config.cdn, path, img_data) # upload to cloud
