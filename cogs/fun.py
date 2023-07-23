@@ -171,7 +171,7 @@ class Fun(blink.Cog, name="Fun"):
         if not member2:
             member2 = ctx.author
         # random splice between member1:member2 and member2:member1
-        #takes half of each
+        # takes half of each
         choices = [f"{member1.display_name[:len(member1.display_name)//2]}{member2.display_name[len(member2.display_name)//2:]}",
                    f"{member2.display_name[:len(member2.display_name)//2]}{member1.display_name[len(member1.display_name)//2:]}"]
         await ctx.send(f"Together {member1.mention} and {member2.mention} are: **{random.choice(choices)}**!")

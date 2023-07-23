@@ -153,7 +153,7 @@ class Server(blink.Cog, name="Server"):
 
         embed = discord.Embed(colour=self.bot.colour)
         embed.set_author(
-            name=g.name, icon_url=g.icon_url_as(static_format="png"))
+            name=g.name, icon_url=ctx.guild.icon.replace(static_format="png") if ctx.guild.icon else None)
 
         cd = g.created_at # created date
         ge = str(g.explicit_content_filter) # guild explicit filter
@@ -242,7 +242,7 @@ class Server(blink.Cog, name="Server"):
         if ctx.guild.icon is None:
             return await ctx.send("Guild has no icon.")
         embed = discord.Embed(title=ctx.guild.name, colour=self.bot.colour)
-        embed.set_image(url=ctx.guild.icon_url_as(static_format="png"))
+        embed.set_image(url=ctx.guild.icon.replace(static_format="png") if ctx.guild.icon else None)
         await ctx.send(embed=embed)
 
     # status role command group
@@ -333,7 +333,7 @@ class Server(blink.Cog, name="Server"):
             )
         embed.set_author(
             name=f"Prefixes for {ctx.guild}",
-            icon_url=ctx.guild.icon_url_as(static_format="png")
+            icon_url=ctx.guild.icon.replace(static_format="png") if ctx.guild.icon else None
         )
         embed.set_footer(
             text=f"Hint: admins see '{ctx.clean_prefix}help prefix' for info on changing prefixes"
@@ -751,12 +751,10 @@ class Server(blink.Cog, name="Server"):
         # attachment checks
         if message.attachments:
             attachment = message.attachments[0]
-            if attachment.filename.endswith((".mov", ".mp4")):
+            if attachment.filename.endswith((".mov", ".mp4", ".mkv")):
                 if attachment.height:
                     return
-                if attachment.content_type not in ["video/quicktime", "video/mp4"]:
-                    return
-                if attachment.size > 5 * (10**6):
+                if attachment.content_type not in ["video/quicktime", "video/mp4", "video/x-matroska"]:
                     return
                 if attachment.size < 10**3:
                     return
