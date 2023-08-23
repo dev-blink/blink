@@ -428,7 +428,7 @@ class Server(blink.Cog, name="Server"):
 
         return embed
 
-    @commands.Command.listener("on_member_join")
+    @commands.Cog.listener("on_member_join")
     async def welcome_listener(self, member: discord.Member):
         await self.trigger_welcome(member)
 
