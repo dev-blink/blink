@@ -444,7 +444,9 @@ class Server(blink.Cog, name="Server"):
             webhook_data = server.value.get("welcome_webhook")
 
             text = server.value.get("welcome_text")
-            replaced = text.replace("{member}", member.mention).replace("{display}", member.display_name).replace("{username}", str(member))
+            replaced = text.replace("{member}", member.mention)
+            replaced = replaced.replace("{display}", member.display_name)
+            replaced = replaced.replace("{username}", str(member))
 
             async with aiohttp.ClientSession() as cs:
                 hook = discord.Webhook(
