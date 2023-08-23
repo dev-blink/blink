@@ -396,7 +396,7 @@ class Server(blink.Cog, name="Server"):
 
     def build_embed(self, data: dict) -> discord.Embed:
         embed = discord.Embed()
-        E = discord.embeds._EmptyEmbed
+        E = discord.Embed()
 
         if data.get("title"):
             embed.title = data.get("title")
