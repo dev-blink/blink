@@ -718,7 +718,7 @@ class Server(blink.Cog, name="Server"):
         else:
             await ctx.send("Image has been updated")
 
-    @commands.Cog.listener("on_member_update")
+    @commands.Cog.listener("on_presence_update")
     async def presence_checker(self, before, after: discord.Member):
         if before.activity == after.activity:
             return
