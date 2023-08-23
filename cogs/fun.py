@@ -140,7 +140,7 @@ class Fun(blink.Cog, name="Fun"):
         embed = discord.Embed(title="Random member with role " + role.name,
                              description=str(member), colour=0xf5a6b9)
         embed.set_author(name=str(ctx.author),
-                         icon_url=ctx.author.avatar_url_as(static_format='png'))
+                         icon_url=ctx.author.display_avatar.replace(static_format='png'))
         embed.set_footer(text="Chance : 1/" + str(len(role.members)))
         return await ctx.send(embed=embed)
 

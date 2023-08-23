@@ -118,7 +118,7 @@ class Player(wavelink.Player):
 
         embed = discord.Embed(colour=self.bot.colour,
                               description=f'[{track.title}]({track.uri})\n\n')
-        embed.set_author(name=f"Music Controller | {channel.name}", icon_url=self.dj.avatar_url_as(
+        embed.set_author(name=f"Music Controller | {channel.name}", icon_url=self.dj.display_avatar.replace(
             static_format="png"))
         embed.add_field(name='**Duration**',
                         value=str(blink.prettydelta(track.length // 1000)))

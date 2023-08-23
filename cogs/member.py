@@ -62,7 +62,6 @@ class Members(blink.Cog, name="Member"):
         embed = discord.Embed(colour=self.bot.colour)
         embed.set_author(name="Link", url=link)
         embed.set_image(url=link)
-        embed.set_footer(text="Press ↔️ to change to avatar")
         return embed
 
     @commands.command(name="joined", aliases=["joinedat", "joindate"])
@@ -121,7 +120,7 @@ class Members(blink.Cog, name="Member"):
             member: discord.Member = ctx.author
 
         embed = discord.Embed( # add badges from public flags using emoji dict
-            description=' '.join(flags[f] for f in member.public_flags.all()),
+            description=' '.join(flags.get(f) or "" for f in member.public_flags.all()),
             colour=self.bot.colour
         )
         embed.set_author( # set author badge to status icon image
