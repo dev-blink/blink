@@ -17,6 +17,7 @@ import blinksecrets as secrets
 
 EMBED_LIMITS = {
     "title": 256,
+    "content": 256,
     "description": 4096,
     "fields": 25,
     "field.name": 256,
@@ -428,7 +429,7 @@ class Server(blink.Cog, name="Server"):
 
         return embed
 
-    async def trigger_welcome(self, member):
+    async def trigger_welcome(self, member: discord.Member):
         if not member.guild:
             return
         server = self.bot.cache_or_create(
@@ -442,12 +443,15 @@ class Server(blink.Cog, name="Server"):
             embed = self.build_embed(embed_dict)
             webhook_data = server.value.get("welcome_webhook")
 
+            text = server.value.get("welcome_text")
+            replaced = text.replace("{member}", member.mention).replace("{display}", member.display_name).replace("{username}", str(member))
+
             async with aiohttp.ClientSession() as cs:
                 hook = discord.Webhook(
                     webhook_data,
                     session=cs
                 )
-                await hook.send(embed=embed)
+                await hook.send(embed=embed, content=replaced)
 
     @commands.group(name="welcome", invoke_without_command=True)
     @commands.has_guild_permissions(manage_guild=True)
@@ -497,6 +501,26 @@ class Server(blink.Cog, name="Server"):
     async def welcome_setup(self, ctx):
         """Manage the content of the welcome embed"""
         await ctx.send_help(ctx.command)
+
+    @welcome_setup.command(name="text")
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.bot_has_permissions(send_messages=True)
+    async def welcome_setup_text(self, ctx, *, text:str=None):
+        """
+        Set the text along with the embed, use {mention} to
+        mention, {display} for display name and {username}
+        for their username.
+        """
+        if await too_long(text, "content", ctx):
+            return
+
+        async with ctx.cache:
+            ctx.cache.value["text"] = text
+            await ctx.cache.save(ctx.guild.id, self.bot)
+        if text is None:
+            await ctx.send("Text has been reset")
+        else:
+            await ctx.send("Text has been updated")
 
     @welcome_setup.command(name="title")
     @commands.has_guild_permissions(manage_guild=True)
