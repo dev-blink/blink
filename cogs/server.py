@@ -445,7 +445,7 @@ class Server(blink.Cog, name="Server"):
 
             replaced = server.value.get("welcome_text")
             if replaced:
-                replaced = replaced.replace("{member}", member.mention)
+                replaced = replaced.replace("{mention}", member.mention)
                 replaced = replaced.replace("{display}", member.display_name)
                 replaced = replaced.replace("{username}", str(member))
 
