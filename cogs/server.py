@@ -443,10 +443,11 @@ class Server(blink.Cog, name="Server"):
             embed = self.build_embed(embed_dict)
             webhook_data = server.value.get("welcome_webhook")
 
-            text = server.value.get("welcome_text")
-            replaced = text.replace("{member}", member.mention)
-            replaced = replaced.replace("{display}", member.display_name)
-            replaced = replaced.replace("{username}", str(member))
+            replaced = server.value.get("welcome_text")
+            if replaced:
+                replaced = replaced.replace("{member}", member.mention)
+                replaced = replaced.replace("{display}", member.display_name)
+                replaced = replaced.replace("{username}", str(member))
 
             async with aiohttp.ClientSession() as cs:
                 hook = discord.Webhook(
@@ -517,7 +518,7 @@ class Server(blink.Cog, name="Server"):
             return
 
         async with ctx.cache:
-            ctx.cache.value["text"] = text
+            ctx.cache.value["welcome_text"] = text
             await ctx.cache.save(ctx.guild.id, self.bot)
         if text is None:
             await ctx.send("Text has been reset")
