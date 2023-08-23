@@ -131,7 +131,7 @@ class Moderation(blink.Cog, name="Moderation"):
                 def scheme(x): return x.user.id == user  # we check for id
         else:
             def scheme(x): return x.user == user  # noqa E731
-        ban = discord.utils.find(scheme, ctx.guild.bans()) # find exact match
+        ban = await discord.utils.find(scheme, ctx.guild.bans()) # find exact match
         if ban:
             await ctx.guild.unban(ban.user)
             await ctx.send(f"Unbanned {ban.user} {f'({ban.reason})' if ban.reason else ''}")

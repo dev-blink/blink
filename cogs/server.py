@@ -201,7 +201,7 @@ class Server(blink.Cog, name="Server"):
         )
 
         if g.banner:
-            embed.set_image(url=g.banner_url_as(format="png", size=128))
+            embed.set_image(url=g.banner.replace(format="png", size=128))
         # send before doing other requests to make faster
         m = await ctx.send(embed=embed)
 
