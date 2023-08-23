@@ -397,7 +397,6 @@ class Server(blink.Cog, name="Server"):
 
     def build_embed(self, data: dict) -> discord.Embed:
         embed = discord.Embed()
-        E = discord.Embed()
 
         if data.get("title"):
             embed.title = data.get("title")
@@ -410,15 +409,15 @@ class Server(blink.Cog, name="Server"):
         if author:
             embed.set_author(
                 name=author.get("name"),
-                url=author.get("url") or E,
-                icon_url=author.get("icon_url") or E
+                url=author.get("url"),
+                icon_url=author.get("icon_url")
             )
 
         footer = data.get("footer")
         if footer:
             embed.set_footer(
                 text=footer.get("text"),
-                icon_url=footer.get("icon_url") or E,
+                icon_url=footer.get("icon_url"),
             )
 
         if data.get("thumbnail"):
@@ -542,7 +541,7 @@ class Server(blink.Cog, name="Server"):
         else:
             await ctx.send("Title has been updated")
 
-    @welcome_setup.command(name="description")
+    @welcome_setup.command(name="description", aliases=["desc"])
     @commands.has_guild_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True)
     async def welcome_setup_description(self, ctx, *, description:str=None):
