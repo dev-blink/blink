@@ -445,7 +445,7 @@ class Server(blink.Cog, name="Server"):
             async with aiohttp.ClientSession() as cs:
                 hook = discord.Webhook(
                     webhook_data,
-                    adapter=discord.AsyncWebhookAdapter(cs)
+                    session=cs
                 )
                 await hook.send(embed=embed)
 
