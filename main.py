@@ -541,7 +541,6 @@ class Blink(commands.AutoShardedBot):
         """Close all internal loops and stop"""
         if cluster_up:
             await self.cluster.quit()
-        await self.logout()
         await self.close()
         await self.loop.close()
         sys.exit(0)
