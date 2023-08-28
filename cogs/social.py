@@ -20,21 +20,6 @@ import config
 URLREGEX = blink.urlregex
 
 
-async def api(route, method):
-    """Request something from the api, returns a dummy payload if not available"""
-    # we must always return an image
-    try:
-        async with timeout(5):
-            async with aiohttp.ClientSession() as cs:
-                async with cs.request(method=method, url=f"{config.api}{route}", headers={"Authorization": "Grant " + secrets.api}) as res:
-                    if res.status == 200:
-                        return (await res.json())['data']['url']
-                    else:
-                        return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
-    except asyncio.TimeoutError:
-        return "https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+TIMEOUT"
-
-
 class _Users(discord.AllowedMentions):
     """Allow only mentioning of users"""
     def __init__(self):
@@ -62,7 +47,7 @@ class Ship:
 
     async def gen_thumbnail(self):
         """Make api request for ship icon of colour"""
-        return await api(f"/social/images/ship/{self.colour:06}", "GET")
+        return await self.bot._cogs.social.api(f"/social/images/ship/{self.colour:06}", "GET")
 
     async def __aenter__(self):
         """Async with context manager"""
@@ -77,7 +62,7 @@ class Ship:
         return self
 
     async def __aexit__(self, error, error_type, traceback):
-        pass # we dont care about exceptions here 
+        pass # we dont care about exceptions here
 
     def format(self):
         """Set class attributes"""
@@ -320,14 +305,13 @@ class User:
             check = await self.elegible(scope="hug", recipient=recp)
             if not check.elegible:
                 return Action(success=False, reason=check.reason)
-            
+
             # work out number of hugs
             rentry, rcount, rindex, rhugs = await recp.decompile(scope="hugs", recipient=self.user)
             if rcount is None:
                 rcount = 0
 
         entry, count, index, hugs = await self.decompile(scope="hugs", recipient=recipient)
-
 
         # increment counter or set to 1 if not exists
         if index is None:
@@ -357,7 +341,7 @@ class User:
 
         entry, count, index, kisses = await self.decompile(scope="kisses", recipient=recipient)
 
-        # increment or set to 1 
+        # increment or set to 1
         if index is None:
             await self.db.execute("UPDATE social SET kisses=$1 WHERE id=$2", kisses + [f"{recipient}:1"], self.user)
             await self.cache.bot_invalidate(self.bot)
@@ -386,12 +370,34 @@ class User:
 class Social(blink.Cog):
     """Commands relating to social interactions"""
 
+    async def api(self, route, method):
+        """Request something from the api, returns a dummy payload if not available"""
+        # we must always return an image
+        try:
+            async with timeout(5):
+                async with aiohttp.ClientSession() as cs:
+                    async with cs.request(method=method, url=f"{config.api}{route}", headers={"Authorization": "Grant " + secrets.api}) as res:
+                        if res.status == 200:
+                            data = await res.json()
+                            if not data['success']:
+                                await self.bot.log(f"api error: {data['data']['message']}", False)
+                                return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{data['message']}"
+                            else:
+                                if data['data']['new']:
+                                    modify = humanize.naturaldelta(data['data']['modify_time'], minimum_unit="microseconds")
+                                    req = humanize.naturaldelta(data['data']['req_time'], minimum_unit="microseconds")
+                                    await self.bot.log(f"created new ship icon: modify: {modify}, req: {req}")
+                        else:
+                            return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
+        except asyncio.TimeoutError:
+            return "https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+TIMEOUT"
+
     # fetch from api
     async def gen_kiss(self):
-        return await api("/social/images/kiss", "GET")
+        return await self.api("/social/images/kiss", "GET")
 
     async def gen_hug(self):
-        return await api("/social/images/hug", "GET")
+        return await self.api("/social/images/hug", "GET")
 
     @commands.group(name="blocked", invoke_without_command=True)
     async def blocked(self, ctx):

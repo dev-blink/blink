@@ -4,9 +4,11 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import time
 import discord
 from discord.ext import commands, menus, tasks
 import asyncio
+from gcloud.aio.storage import Storage
 import datetime
 from io import BytesIO
 import aiohttp
@@ -35,6 +37,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         self.bot.logActions = 0 # statistics logging
         self.size = 512 # avatar size to push to cdn
         self.msgcache = {}
+        self.voice_active = {} # (user id, server id) -> unmuted since
+        self.voice_cache = {} # (user id, server id) -> activity seconds
         if not self.bot.beta:
             self.active = True # only log on production
         else:
@@ -43,18 +47,18 @@ class GlobalLogs(blink.Cog, name="Global logging"):
     async def init(self):  # Async init things
         self.session = aiohttp.ClientSession()
         if not self.bot.beta: # beta does not need to log!
-            from gcloud.aio.storage import Storage
             self.storage = Storage(
                 service_file='./creds.json')
         self.blacklist = self.bot.cache_or_create( # Might aswell create a cache
             "blacklist-logging", "SELECT snowflakes FROM blacklist WHERE scope=$1",
             ("logging",)
         )
-        self.message_push.start()
+        self.batch_db_commit.start()
         await self.bot.add_cog(self)
 
     def cog_unload(self):
-        self.message_push.cancel() # CANCEL TASK !
+        self.batch_db_commit.cancel() # CANCEL TASK !
+        self.bot.loop.create_task(self.session.close())
         super().cog_unload() # clear up client session
 
     # AVATAR DB TRANSACTIONS
@@ -284,22 +288,28 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
     # GLOBAL MESSAGES
     @commands.command(name="messages", aliases=["msgs"])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def view_messages(self, ctx):
         """Show tracked messages sent globally"""
         member = ctx.author
+
+        async with self.blacklist:
+            if ctx.author.id in self.blacklist.value["snowflakes"]:
+                return await ctx.send("This service is unavailable to you")
+
         count = await self.bot.DB.fetchrow("SELECT * FROM globalmsg WHERE id=$1", member.id)
         if not count:
             return await ctx.send("Nothing in our database.")
         # embed formatting
         embed = discord.Embed(
-            description=f'{count["messages"]} messages sent.',
+            description=f'{count["messages"]} global messages sent.',
             colour=self.bot.colour
         )
         embed.set_author(name=f"{member}", icon_url=member.display_avatar.replace(static_format="png"))
         return await ctx.send(embed=embed)
 
-    async def batch(self):
-        if self.msgcache == {} or self.active is False:
+    async def batch_message(self):
+        if self.msgcache:
             return
         # need to create a copy because it can be changed during iteration which is bad !
         cache = dict(self.msgcache)
@@ -311,14 +321,128 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             if not result:
                 await self.bot.DB.execute("INSERT INTO globalmsg VALUES ($1,$2)", user, count)
             else:
-                await self.bot.DB.execute("UPDATE globalmsg SET messages=$1 WHERE id=$2", result["messages"] + count, user)
+                await self.bot.DB.execute("UPDATE globalmsg SET messages=messages+$1 WHERE id=$2", count, user)
 
     @tasks.loop(seconds=300) # update database every 300s
-    async def message_push(self):
+    async def batch_db_commit(self):
         try:
-            await self.batch()
+            await self.batch_message()
         except Exception as e:
             await self.bot.warn(f"Exception in message cache, ({type(e)}) {e}", False)
+
+        try:
+            await self.batch_voice()
+        except Exception as e:
+            await self.bot.warn(f"Exception in voice cache, ({type(e)}) {e}", False)
+
+    async def batch_voice(self):
+        # copy pasted message cache update
+        # guild id is a primary key and guilds can only be on one
+        # shard so the data race condition of writing 2 at a time is avoided
+        if self.voice_cache == {}:
+            return
+        cache = dict(self.voice_cache)
+        self.voice_cache = {}
+        for ((user_id, guild_id), active_time) in cache.items():
+
+            seconds_active = int(active_time)
+            result = await self.bot.DB.fetchrow("SELECT * FROM voice_activity WHERE user_id=$1 AND server_id=$2", user_id, guild_id)
+            if not result:
+                await self.bot.DB.execute("INSERT INTO voice_activity VALUES ($1,$2,$3)", user_id, guild_id, seconds_active)
+            else:
+                await self.bot.DB.execute("UPDATE voice_activity SET seconds_active=seconds_active+$1 WHERE user_id=$2 AND server_id=$3", result["seconds_active"] + seconds_active, user_id, guild_id)
+
+    # Voice activity
+    @commands.Cog.listener("on_voice_state_update")
+    async def voice_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.bot:
+            return
+
+        async with self.blacklist:
+            if member.id in self.blacklist.value["snowflakes"]: # check blacklists
+                return
+
+        b_muted = before.mute or before.self_mute
+        a_muted = after.mute or after.self_mute
+
+        # user disconnected
+        if before.channel and not after.channel:
+            self.register_voice_update(member, False)
+
+        # user muted
+        if not b_muted and a_muted:
+            self.register_voice_update(member, False)
+
+        # user joins
+        if not before.channel and not a_muted and after.channel:
+            self.register_voice_update(member, True)
+
+        # user unmuted
+        if b_muted and not a_muted and after.channel:
+            self.register_voice_update(member, True)
+
+    def register_voice_update(self, member:discord.Member, active: bool):
+
+        key = (member.id, member.guild.id)
+
+        if active:
+            # already state registered
+            if self.voice_active.get(key):
+                return
+            else:
+                self.voice_active[key] = time.monotonic()
+
+        else:
+            # no state so ignore (we lose data here tho)
+            if not self.voice_active.get(key):
+                return
+            else:
+                dur = time.monotonic() - self.voice_active[key]
+                self.voice_cache[key] = (self.voice_cache.get(key) or 0 + dur)
+                del self.voice_active[key]
+
+    def compute_current_additional(self, user_id, guild_id):
+        # any current progress
+        current = self.voice_active.get((user_id, guild_id))
+        if current:
+            # compute current time
+            current_progress = int(time.monotonic() - current)
+        else:
+            current_progress = 0
+
+        cache = self.voice_cache.get((user_id, guild_id))
+        if cache:
+            return int(cache) + current_progress
+        else:
+            return current_progress
+
+    @commands.command(name="vc", aliaes=["vctime", "voicetime"])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def voice_time(self, ctx, member: discord.Member=None):
+        """Shows the amount of time spent in vc in this server"""
+        if not member:
+            member = ctx.author
+
+        async with self.blacklist:
+            if ctx.author.id in self.blacklist.value["snowflakes"]:
+                return await ctx.send("This service is unavailable to you")
+
+        result = await self.bot.DB.fetchrow("SELECT * FROM voice_activity WHERE user_id=$1 AND server_id=$2", member.id, member.guild.id)
+
+        if not result:
+            return await ctx.send("No data stored for this server")
+
+        seconds_active = result['seconds_active'] + self.compute_current_additional(member.id, member.guild.id)
+
+        embed = discord.Embed(description=f"{blink.prettydelta(seconds_active)} spent in vc.", colour=self.bot.colour)
+        embed.set_author(icon_url=member.display_avatar.replace(static_format="png"), name=member.display_name)
+
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="vctop", aliases=["vclb", "voicetop", "voiceleaderboard"])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def vctop(self, ctx):
+        """Shows the leaderboard for """
 
 
 async def setup(bot):

@@ -155,11 +155,11 @@ class Blink(commands.AutoShardedBot):
             "cogs.media",
             # "cogs.listing", why r lists so useless
             "cogs.sql",
-            "cogs.social"
+            "cogs.social",
+            "cogs.logging",
         ]
         self.startingcogs.append("jishaku")
         if not self.beta:  # Dont load these on beta as they will conflict with the live bot
-            self.startingcogs.append("cogs.logging")
             self.startingcogs.append("cogs.stats")
 
         # Global channel cooldown - to avoid spamming commands
@@ -386,9 +386,14 @@ class Blink(commands.AutoShardedBot):
         """
         time = discord.utils.utcnow()
         message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/WARNING] {message}"
-        await self.cluster.log_warns(message)
+        await self.get_partial_messageable(config.warns).send(message)
         if shouldRaise:
             raise blink.SilentWarning(message)
+
+    async def log(self, message: str):
+        time = discord.utils.utcnow()
+        message = f"{time.year}/{time.month}/{time.day} {time.hour}:{time.minute} [{self.cluster.identifier}/INFO] {message}"
+        await self.get_partial_messageable(config.info).send(message)
 
     async def create(self):
         """Do the initial setup of the bot after ready is called, this is only to be called once"""
@@ -436,7 +441,7 @@ class Blink(commands.AutoShardedBot):
 
         self.bootlog = "\n".join(boot)
         if not self.beta:
-            await self.cluster.log_startup(self.bootlog)
+            await self.get_partial_messageable(config.bootlog).send(self.bootlog)
 
         # Signal that this function is done
         self.created = True

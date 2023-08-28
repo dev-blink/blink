@@ -10,7 +10,6 @@ from discord.ext.commands import AutoShardedBot
 from string import ascii_uppercase as alphabet
 from async_timeout import timeout as TimeoutManager
 
-import blink
 import websockets
 import asyncio
 import json
@@ -137,19 +136,6 @@ class Cluster:
             "music": music,
         }
         self.ws.update(stats)
-
-    # Proxy functions to immitate abc.Messageable.send, can send messages without channels being cached
-    async def log_startup(self, content=None, tts=False, embed=None, nonce=None):
-        channel = blink.Config.startup()
-        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
-
-    async def log_errors(self, content=None, tts=False, embed=None, nonce=None):
-        channel = blink.Config.errors()
-        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
-
-    async def log_warns(self, content=None, tts=False, embed=None, nonce=None):
-        channel = blink.Config.warns()
-        return await self.bot.get_partial_messageable(channel).send(content, tts=tts, embed=embed, nonce=nonce)
 
     async def wait_cluster(self):
         await self.ws.wait_for_identify()

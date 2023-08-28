@@ -190,26 +190,6 @@ def ordinal(n: int):
     # 3 --> r, d
 
 
-# Deprecated configuration only used in clustering
-# could be moved but these are not volatile like other config settings
-class Config():
-    @classmethod
-    def newguilds(self):
-        return int(702201857606549646)
-
-    @classmethod
-    def errors(self):
-        return 702201821615358004
-
-    @classmethod
-    def startup(self):
-        return 702705386557276271
-
-    @classmethod
-    def warns(self):
-        return 722131357136060507
-
-
 def prettydelta(seconds):
     """Function to turn seconds into days minutes hours"""
     seconds = int(seconds)

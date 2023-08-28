@@ -8,7 +8,7 @@ import traceback
 from discord.ext import commands, menus
 import discord
 import blink
-import datetime
+import config
 import aiohttp
 import asyncpg
 import blinksecrets as secrets
@@ -163,7 +163,7 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
                 embed.set_author(name="UNCAUGHT EXCEPTION",
                                  url=data["html_url"])
 
-        await self.bot.cluster.log_errors(embed=embed)
+        await self.get_partial_messageable(config.errors).send(embed=embed)
 
 
 async def setup(bot):
