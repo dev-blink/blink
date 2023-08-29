@@ -58,6 +58,8 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
     def cog_unload(self):
         self.batch_db_commit.cancel() # CANCEL TASK !
+        self.bot.loop.create_task(self.batch_message())
+        self.bot.loop.create_task(self.batch_voice())
         self.bot.loop.create_task(self.session.close())
         super().cog_unload() # clear up client session
 
