@@ -441,11 +441,26 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
     @commands.command(name="vctop", aliases=["vclb", "voicetop", "voiceleaderboard"])
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def vctop(self, ctx):
-        """Shows the leaderboard for """
+    async def vctop(self, ctx: blink.Ctx):
+        """Shows the leaderboard for the current server"""
+        async with self.blacklist:
+            if ctx.author.id in self.blacklist.value["snowflakes"]:
+                return await ctx.send("This service is unavailable to you")
+
+        result = await self.bot.DB.fetch("SELECT * FROM voice_activity WHERE server_id=$2 LIMIT 10", ctx.guild.id)
+
+        res = sorted([(r['user_id'], r['seconds_active']) for r in result], key=lambda e: e[1], reverse=True)
+
+        embed = discord.Embed(
+            description='\n'.join((f"{ctx.guild.get_member(u) or u} - {blink.prettydelta(sec)}" for u, sec in res)),
+            colour=self.bot.colour
+        )
+        icon = (ctx.guild.icon or self.bot.user.avatar).replace(static_format="png")
+        embed.set_author(author=f"Vc leaderboard for {ctx.guild.name}", icon_url=icon)
+
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):
     cog = GlobalLogs(bot, "logging")
-    # cog needs async init so we spawn a task to do that before adding
     await cog.init()
