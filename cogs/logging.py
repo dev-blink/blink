@@ -451,7 +451,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
 
         result = await self.bot.DB.fetch("SELECT * FROM voice_activity WHERE server_id=$1 LIMIT 10", ctx.guild.id)
 
-        res = sorted([(r['user_id'], r['seconds_active'] + self.compute_current_additional(r['user_id'])) for r in result], key=lambda e: e[1], reverse=True)
+        res = sorted([(r['user_id'], r['seconds_active'] + self.compute_current_additional(r['user_id'], ctx.guild.id)) for r in result], key=lambda e: e[1], reverse=True)
 
         embed = discord.Embed(
             description='\n'.join((f"{ctx.guild.get_member(u) or u} - {blink.prettydelta(sec)}" for u, sec in res)),
