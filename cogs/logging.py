@@ -352,7 +352,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             if not result:
                 await self.bot.DB.execute("INSERT INTO voice_activity VALUES ($1,$2,$3)", user_id, guild_id, seconds_active)
             else:
-                await self.bot.DB.execute("UPDATE voice_activity SET seconds_active=seconds_active+$1 WHERE user_id=$2 AND server_id=$3", result["seconds_active"] + seconds_active, user_id, guild_id)
+                await self.bot.DB.execute("UPDATE voice_activity SET seconds_active=seconds_active+$1 WHERE user_id=$2 AND server_id=$3", seconds_active, user_id, guild_id)
 
     # Voice activity
     @commands.Cog.listener("on_voice_state_update")
