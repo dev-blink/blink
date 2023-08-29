@@ -383,10 +383,11 @@ class Social(blink.Cog):
                                 await self.bot.log(f"api error: {data['data']['message']}", False)
                                 return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{data['message']}"
                             else:
-                                if data['data']['new']:
-                                    modify = humanize.naturaldelta(data['data']['modify_time'], minimum_unit="microseconds")
-                                    req = humanize.naturaldelta(data['data']['req_time'], minimum_unit="microseconds")
-                                    await self.bot.log(f"created new ship icon: modify: {modify}, req: {req}")
+                                if data['data'].get("new"):
+                                    modify = round(data['data']['modify_time'] * 1000, 2)
+                                    req = round(data['data']['req_time'], 2)
+                                    await self.bot.log(f"created new ship icon: modify: {modify}ms, req: {req}ms")
+                                return data['data']['url']
                         else:
                             return f"https://dummyimage.com/1024x256/000000/f5a6b9.png&text=contact+support+-+{res.status}"
         except asyncio.TimeoutError:
