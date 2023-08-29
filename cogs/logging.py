@@ -458,7 +458,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             colour=self.bot.colour
         )
         icon = (ctx.guild.icon or self.bot.user.avatar).replace(static_format="png")
-        embed.set_author(author=f"Vc leaderboard for {ctx.guild.name}", icon_url=icon)
+        embed.set_author(name=f"Vc leaderboard for {ctx.guild.name}", icon_url=icon)
 
         await ctx.send(embed=embed)
 
