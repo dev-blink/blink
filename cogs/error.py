@@ -163,7 +163,7 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
                 embed.set_author(name="UNCAUGHT EXCEPTION",
                                  url=data["html_url"])
 
-        await self.get_partial_messageable(config.errors).send(embed=embed)
+        await self.bot.get_partial_messageable(config.errors).send(embed=embed)
 
 
 async def setup(bot):
