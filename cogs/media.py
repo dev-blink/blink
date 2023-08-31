@@ -27,7 +27,7 @@ class Media(blink.Cog, name="Media"):
             pass
         else:
             return discord.Embed(title=f"{r['error']} error...", colour=discord.Colour.red())
-        r = box.Box(r) # box turns dict key into object like type() but recursively 
+        r = box.Box(r) # box turns dict key into object like type() but recursively
         data = random.choice(r.data.children).data # random reddit post
         embed = discord.Embed(
             title=data.title,

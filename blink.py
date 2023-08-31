@@ -294,6 +294,18 @@ class Ctx(commands.Context):
                 kwargs["mention_author"] = False
         return await super().send(*args, **kwargs)
 
+    def get_best_display(self, user_id: int) -> str:
+        if self.guild:
+            member = self.guild.get_member(user_id)
+            if member:
+                return member.display_name
+        user = self.bot.get_user(user_id)
+
+        if user:
+            return str(user)
+        else:
+            return user_id
+
 
 class CogStorage:
     """Dummy object used as an attribute to store each individual cog"""#

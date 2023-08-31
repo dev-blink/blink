@@ -454,7 +454,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
         res = sorted([(r['user_id'], r['seconds_active'] + self.compute_current_additional(r['user_id'], ctx.guild.id)) for r in result], key=lambda e: e[1], reverse=True)
 
         embed = discord.Embed(
-            description='\n'.join((f"{ctx.guild.get_member(u) or u} - {blink.prettydelta(sec)}" for u, sec in res)),
+            description='\n'.join((f"{ctx.get_best_display(u)} - {blink.prettydelta(sec)}" for u, sec in res)),
             colour=self.bot.colour
         )
         icon = (ctx.guild.icon or self.bot.user.avatar).replace(static_format="png")
