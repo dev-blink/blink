@@ -449,7 +449,7 @@ class GlobalLogs(blink.Cog, name="Global logging"):
             if ctx.author.id in self.blacklist.value["snowflakes"]:
                 return await ctx.send("This service is unavailable to you")
 
-        result = await self.bot.DB.fetch("SELECT * FROM voice_activity WHERE server_id=$1 ORDER BY voice_activity DESC LIMIT 10", ctx.guild.id)
+        result = await self.bot.DB.fetch("SELECT * FROM voice_activity WHERE server_id=$1 ORDER BY seconds_active DESC LIMIT 10", ctx.guild.id)
 
         res = sorted([(r['user_id'], r['seconds_active'] + self.compute_current_additional(r['user_id'], ctx.guild.id)) for r in result], key=lambda e: e[1], reverse=True)
 
