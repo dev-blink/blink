@@ -253,8 +253,12 @@ class Fun(blink.Cog, name="Fun"):
             ref = ctx.message.reference
             if ref and ref.cached_message:
                 question = ref.cached_message.content
-        embed = discord.Embed(title="Poll", description=question + ("?" if not question.endswith("?") else ""))
-        msg = await ctx.send(embed=embed, colour=self.bot.colour)
+        embed = discord.Embed(
+            title="Poll",
+            description=question + ("?" if not question.endswith("?") else ""),
+            colour=self.bot.colour
+        )
+        msg = await ctx.send(embed=embed)
         await asyncio.gather(msg.add_reaction("✅"), msg.add_reaction("❎"))
 
 
