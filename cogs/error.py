@@ -135,6 +135,7 @@ class CommandErrorHandler(blink.Cog, name="ErrorHandler"):
                     description=f"To allow blink to access data directly from spotify use the {ctx.clean_prefix}spotifysync command",
                     colour=discord.Colour.red(),
                 ))
+            return await sendEmbedError(ctx, f"Unknown spotify api error occured ({error.status})")
         #
         # Error reporting
         #
