@@ -13,6 +13,7 @@ import contextlib
 from io import BytesIO
 from typing import Union
 import blinksecrets as secrets
+import re
 
 
 EMBED_LIMITS = {
@@ -43,6 +44,7 @@ async def too_long(value, scope, ctx):
 class Server(blink.Cog, name="Server"):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tiktok_regex = re.compile("(https://((www.tiktok.com/t/)|(vm.tiktok.com/))([0-9,a-z,A-Z]{8,10}))")
         self._transform_cooldown = commands.CooldownMapping.from_cooldown(
             1, 30, commands.BucketType.channel)
 
@@ -887,6 +889,36 @@ class Server(blink.Cog, name="Server"):
                 with contextlib.suppress(asyncio.TimeoutError):
                     await self.bot.wait_for("raw_reaction_add", check=lambda p: str(p.emoji) == "🗑" and p.user_id == message.author.id and p.message_id == msg.id, timeout=300)
                     await msg.delete()
+
+    @commands.Cog.listener("on_message")
+    async def tiktok_transform_listener(self, message: discord.Message):
+        if message.author.bot:
+            return
+        # blacklists
+        async with self.bot.cache_or_create("blacklist-transform", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("transform",)) as blacklist:
+            if message.author.id in blacklist.value["snowflakes"]:
+                return
+        async with self.bot.cache_or_create("blacklist-global", "SELECT snowflakes FROM blacklist WHERE scope=$1", ("global",)) as blacklist:
+            if message.author.id in blacklist.value["snowflakes"]:
+                return
+        # perm checks
+        p = message.channel.permissions_for(message.guild.me)
+        if not (p.send_messages and p.add_reactions and p.embed_links):
+            return
+
+        match = self.tiktok_regex.match(message.content)
+
+        if not match:
+            return
+        groups = match.groups()
+
+        if len(groups) == 5:
+            video_id = groups[4]
+
+            await message.reply(f"https://tiktok.ily.pink/{video_id}\n||use support to opt out||")
+
+
+
 
 
 async def setup(bot):

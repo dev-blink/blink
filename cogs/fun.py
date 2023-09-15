@@ -4,6 +4,7 @@
 # Written by Aidan Allen <allenaidan92@icloud.com>, 29 May 2021
 
 
+import asyncio
 import discord
 from discord.ext import commands
 from collections import deque
@@ -213,14 +214,6 @@ class Fun(blink.Cog, name="Fun"):
             member = ctx.author
         return await ctx.send(embed=discord.Embed(title=f"{member}'s gayness", description=f"{blink.prand(0.8526821782827291,member.id,0,100,True)}%", colour=self.bot.colour))
 
-    @commands.command(name="horny", aliases=["howhorny", "hornyrate"])
-    @commands.guild_only()
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def hornyrate(self, ctx, *, member: discord.Member = None):
-        if not member:
-            member = ctx.author
-        return await ctx.send(embed=discord.Embed(title=f"{member}'s horniness", description=f"{blink.prand(0.6950561467838507,member.id,60,100,True)}%", colour=self.bot.colour))
-
     @commands.command(name="nonce", aliases=["noncerate", "hownonce"])
     @commands.guild_only()
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -239,19 +232,30 @@ class Fun(blink.Cog, name="Fun"):
         """Mock some text"""
         await ctx.send("".join(random.choice([c.upper, c.lower])() for c in text or "mock what!??!"))
 
-    @commands.command(name="ramadan")
+    @commands.command(name="countdown")
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def countdown(self, ctx):
         return await ctx.send("no countdown active")
-        significant = datetime.datetime(2022, 5, 1, 19, 27) # MUST BE UTC
-        now = discord.utils.utcnow()
-        delta = significant - now
-        await ctx.send(f"{blink.prettydelta(delta.total_seconds())} until {ctx.command.name} ends (London UK)")
 
     @commands.command(name="nuke", hidden=True)
     @commands.bot_has_permissions(send_messages=True)
     async def nuke(self, ctx): # joke command
         await ctx.send("nuking <a:bloading:705202826946674718>")
+
+
+    @commands.command(name="poll")
+    @commands.bot_has_permissions(send_messages=True, embed_links=True, add_reactions=True)
+    async def poll(self, ctx: blink.Ctx, *, question: str=None):
+        """Start a reaction poll"""
+
+        # insane indenting..
+        if question is None:
+            ref = ctx.message.reference
+            if ref and ref.cached_message:
+                question = ref.cached_message.content
+        embed = discord.Embed(title="Poll", description=question + ("?" if not question.endswith("?") else ""))
+        msg = await ctx.send(embed=embed, colour=self.bot.colour)
+        await asyncio.gather(msg.add_reaction("✅"), msg.add_reaction("❎"))
 
 
 async def setup(bot):
