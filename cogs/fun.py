@@ -242,7 +242,6 @@ class Fun(blink.Cog, name="Fun"):
     async def nuke(self, ctx): # joke command
         await ctx.send("nuking <a:bloading:705202826946674718>")
 
-
     @commands.command(name="poll")
     @commands.bot_has_permissions(send_messages=True, embed_links=True, add_reactions=True)
     async def poll(self, ctx: blink.Ctx, *, question: str=None):
@@ -253,6 +252,9 @@ class Fun(blink.Cog, name="Fun"):
             ref = ctx.message.reference
             if ref and ref.cached_message:
                 question = ref.cached_message.content
+
+        if question is None:
+            question = "?"
         embed = discord.Embed(
             title="Poll",
             description=question + ("?" if not question.endswith("?") else ""),

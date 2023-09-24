@@ -229,8 +229,6 @@ class Server(blink.Cog, name="Server"):
             f"**Moderation requires 2FA** {'Yes' if g.mfa_level == 1 else 'No'}",
         ]
         # bans
-        if g.me.guild_permissions.ban_members:
-            other.append('**Bans** ' + str(len(await g.bans())))
         if disboard or topgg:
             other.append(
                 f"{disboard if disboard else ''} {topgg if topgg else ''}"
