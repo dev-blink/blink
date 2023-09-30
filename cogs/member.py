@@ -313,7 +313,7 @@ class Members(blink.Cog, name="Member"):
                     self.dead_tracks.add(track_id)
                     return None
 
-        if data['error']:
+        if data.get('error'):
             self.dead_tracks.add(track_id)
             return None
 
