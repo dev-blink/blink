@@ -67,7 +67,7 @@ class DBCache():
         self._current = False # If data is current
 
     def __repr__(self):
-        return f"<In memory DB cache - {self.statement}, {self.values}>"
+        return f"<In memory DB cache - {self.idenfitier}, {self.values}>"
 
     async def _set_value(self):
         """Fetch data from database"""
