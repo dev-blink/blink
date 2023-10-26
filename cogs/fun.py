@@ -12,6 +12,9 @@ import blink
 import pyfiglet
 import datetime
 import random
+from http import HTTPStatus
+
+HTTP_CODES = list(HTTPStatus)
 
 
 class Fun(blink.Cog, name="Fun"):
@@ -33,7 +36,7 @@ class Fun(blink.Cog, name="Fun"):
             return
         if len(message.content) == 1:
             return
-        
+
         # create 2dict if not exists
         g = self.snipes.get(message.guild.id)
         if g is None:
@@ -262,6 +265,13 @@ class Fun(blink.Cog, name="Fun"):
         )
         msg = await ctx.send(embed=embed)
         await asyncio.gather(msg.add_reaction("✅"), msg.add_reaction("❎"))
+
+    @commands.command(name="http", aliases=["httpcat",])
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def httpcat(self, ctx: blink.Ctx, code:int=None):
+        if code is None:
+            code = random.choice(HTTP_CODES)
+        return await ctx.send(f"https://http.cat/{code}")
 
 
 async def setup(bot):
